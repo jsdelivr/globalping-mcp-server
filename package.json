@@ -1,0 +1,49 @@
+{
+    "name": "@globalping/globalping-mcp",
+    "version": "1.0.0",
+    "description": "Give global network access to your AI LLM with Globalping MCP",
+    "main": "build/index.js",
+    "type": "module",
+    "bin": {
+        "globalping-mcp": "build/main.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node build/index.js",
+        "dev": "nodemon --watch src --ext ts --exec node --loader ts-node/esm src/index.ts",
+        "prepublishOnly": "npm run build",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "globalping",
+        "ai",
+        "agent"
+    ],
+    "author": "Globalping",
+    "homepage": "https://globalping.io/",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jsdelivr/globalping-mcp.git"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.8.0",
+        "axios": "^1.7",
+        "dotenv": "^16",
+        "zod": "^3"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "nodemon": "^3.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8"
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "bugs": {
+        "url": "https://github.com/jsdelivr/globalping-mcp/issues"
+    }
+}
