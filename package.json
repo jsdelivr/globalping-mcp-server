@@ -12,13 +12,15 @@
         "start": "node build/index.js",
         "dev": "nodemon --watch src --ext ts --exec node --loader ts-node/esm src/index.ts",
         "prepublishOnly": "npm run build",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "node --loader ts-node/esm tests/index.ts"
     },
     "keywords": [
         "mcp",
         "model-context-protocol",
         "globalping",
-        "ai",
+        "ping",
+        "traceroute",
+        "network",
         "agent"
     ],
     "author": "Globalping",
@@ -32,6 +34,7 @@
         "@modelcontextprotocol/sdk": "^1.8.0",
         "axios": "^1.7",
         "dotenv": "^16",
+        "ky": "^1.8.0",
         "zod": "^3"
     },
     "devDependencies": {
