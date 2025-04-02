@@ -1,282 +1,192 @@
-import ky, { HTTPError } from "ky";
-import type { Options as KyOptions } from "ky";
+/**
+ * Globalping API Client Module
+ * 
+ * This module provides functions to interact with the Globalping HTTP API.
+ * It handles creating measurements and polling for their results.
+ */
 
-// Define interfaces based on Globalping API documentation
-// These ensure type safety when interacting with the API.
+import axios, { AxiosError } from 'axios';
 
-// Base interface for measurement options
-interface BaseMeasurementOptions {
-  limit?: number;
-  locations?: { continent?: string; country?: string; state?: string, city?: string, asn?: number, network?: string, tags?: string[] }[];
-  measurementOptions?: {
-    // Common measurement options if any (e.g., packets for ping/mtr)
-    packets?: number;
-  };
-}
-
-// Specific measurement options
-export interface PingOptions extends BaseMeasurementOptions {
-  type: "ping";
-  target: string;
-  measurementOptions?: {
-    packets?: number; // Override base if needed
-  };
-}
-
-export interface TracerouteOptions extends BaseMeasurementOptions {
-  type: "traceroute";
-  target: string;
-  protocol?: "TCP" | "UDP" | "ICMP";
-   port?: number;
-   measurementOptions?: {
-      packets?: number; // Example, adjust based on actual API
-   }
-}
-
-export interface DnsOptions extends BaseMeasurementOptions {
-  type: "dns";
-  target: string;
-  query?: {
-    type?: "A" | "AAAA" | "CNAME" | "MX" | "NS" | "PTR" | "SOA" | "SRV" | "TXT";
-    resolver?: string;
-    protocol?: "UDP" | "TCP";
-    port?: number;
-  };
-}
-
-export interface MtrOptions extends BaseMeasurementOptions {
-    type: 'mtr';
-    target: string;
-    protocol?: 'TCP' | 'UDP' | 'ICMP';
-    port?: number;
-    measurementOptions?: {
-        packets?: number;
-    }
-}
-
-export interface HttpOptions extends BaseMeasurementOptions {
-    type: 'http';
-    target: string;
-    protocol?: 'HTTP' | 'HTTPS' | 'HTTP2';
-    port?: number;
-    request?: {
-        method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
-        path?: string;
-        query?: string;
-        headers?: Record<string, string>;
-        body?: string;
-    };
-}
-
-
-// Union type for all possible measurement requests
-export type MeasurementRequest = PingOptions | TracerouteOptions | DnsOptions | MtrOptions | HttpOptions;
-
-// Interface for the response when creating a measurement
-export interface CreateMeasurementResponse {
-  id: string;
-  probesCount: number;
-  // Add other relevant fields if needed
-}
-
-// Interface for the full measurement result
-export interface MeasurementResult {
-  id: string;
-  type: string;
-  status: "in-progress" | "finished" | "failed";
-  createdAt: string;
-  updatedAt: string;
-  target: string;
-  probesCount: number;
-  results: ProbeResult[];
-  // Add other relevant fields like stats if available
-  stats?: any; // Define more specific stats types if possible
-}
-
-export interface ProbeResult {
-    probe: {
-        continent: string;
-        region: string;
-        country: string;
-        state: string | null;
-        city: string;
-        asn: number;
-        longitude: number;
-        latitude: number;
-        network: string;
-        tags: string[];
-        resolvers?: string[];
-    };
-    result: {
-        status: 'finished' | 'failed' | 'timeout'; // etc.
-        rawOutput: string;
-        // Parsed results vary significantly by type
-        // Add specific result types (e.g., PingResult, DnsResult) if needed
-        [key: string]: any; // Placeholder for measurement-specific results
-    };
-}
-
-
+/**
+ * Constants for the Globalping API
+ */
 const GLOBALPING_API_URL = "https://api.globalping.io/v1";
-const USER_AGENT = "globalping-mcp-server/0.1.0"; // Identify your client
+const USER_AGENT = "Globalping-MCP-Server (https://github.com/jsdelivr/globalping-mcp-server)"; // Replace with your repo URL later
 
-// Helper to create Ky instance with common options
-function getApiClient(apiKey?: string): typeof ky {
-  const headers: Record<string, string> = {
-    "User-Agent": USER_AGENT,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-  if (apiKey) {
-    headers["Authorization"] = `Bearer ${apiKey}`;
-  }
-
-  return ky.create({
-    prefixUrl: GLOBALPING_API_URL,
-    headers: headers,
-    timeout: 30000, // 30 second timeout for API calls
-    throwHttpErrors: true, // Automatically throw for 4xx/5xx responses
-  });
+/**
+ * Basic interface for the measurement request payload
+ */
+export interface MeasurementRequest {
+    type: 'ping' | 'traceroute' | 'dns' | 'mtr' | 'http';
+    target: string;
+    locations?: { 
+        country?: string; 
+        continent?: string; 
+        region?: string; 
+        city?: string; 
+        asn?: number; 
+        network?: string; 
+        tag?: string; 
+        limit?: number 
+    }[];
+    measurementOptions?: {
+        packets?: number; // For ping, traceroute, mtr
+        port?: number; // For traceroute, dns, mtr, http
+        protocol?: string; // For traceroute, dns, mtr, http
+        ipVersion?: 4 | 6; // Global
+        // Add other measurement-specific options as needed
+        [key: string]: any; // Allow additional properties
+    };
+    limit?: number; // Global limit for probes
+    inProgressUpdates?: boolean; // Always false for HTTP API polling
 }
 
 /**
- * Creates a new measurement request on the Globalping API.
- * @param measurementRequest The measurement configuration.
- * @param apiKey Optional Globalping API key.
- * @returns The ID of the created measurement.
+ * Interface for the response when creating a measurement
+ */
+export interface CreateMeasurementResponse {
+    id: string;
+    probesCount: number;
+    probesRequested: number;
+    url: string; // URL to check measurement status/results
+}
+
+/**
+ * Interface for the measurement result (can be complex, start simple)
+ */
+export interface MeasurementResult {
+    id: string;
+    type: string;
+    status: 'in-progress' | 'finished' | 'failed';
+    createdAt: string;
+    updatedAt: string;
+    probesCount: number;
+    results: any[]; // Results structure varies greatly by type, 'any[]' for now
+}
+
+/**
+ * Creates a new measurement request via the Globalping HTTP API.
+ * 
+ * @param requestPayload - The measurement request details.
+ * @param apiToken - Optional Globalping API token.
+ * @returns The response from the API containing the measurement ID and URL.
  */
 export async function createMeasurement(
-  measurementRequest: MeasurementRequest,
-  apiKey?: string
-): Promise<string> {
-  const apiClient = getApiClient(apiKey);
-  console.log(
-    `Creating Globalping measurement: ${JSON.stringify(measurementRequest)}`
-  );
+    requestPayload: MeasurementRequest,
+    apiToken?: string
+): Promise<CreateMeasurementResponse | null> {
+    const url = `${GLOBALPING_API_URL}/measurements`;
+    const headers: Record<string, string> = {
+        'User-Agent': USER_AGENT,
+        'Content-Type': 'application/json',
+    };
 
-  try {
-    const response = await apiClient
-      .post("measurements", {
-        json: measurementRequest,
-      })
-      .json<CreateMeasurementResponse>();
-    console.log(
-      `Measurement created successfully. ID: ${response.id}, Probes: ${response.probesCount}`
-    );
-    return response.id;
-  } catch (error) {
-    console.error("Error creating Globalping measurement:", error);
-    if (error instanceof HTTPError) {
-      const responseBody = await error.response.text();
-      console.error("API Error Response:", responseBody);
-      throw new Error(
-        `Globalping API error (${error.response.status}): ${responseBody || error.message}`
-      );
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
     }
-    throw new Error(`Failed to create measurement: ${error}`);
-  }
+
+    // Ensure inProgressUpdates is false for HTTP polling
+    requestPayload.inProgressUpdates = false;
+
+    console.error(`[Globalping API] Creating measurement: ${requestPayload.type} to ${requestPayload.target}`); // Log to stderr
+
+    try {
+        const response = await axios.post<CreateMeasurementResponse>(url, requestPayload, { headers });
+        console.error(`[Globalping API] Measurement created successfully. ID: ${response.data.id}`); // Log to stderr
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error(`[Globalping API] Error creating measurement: ${axiosError.message}`); // Log to stderr
+        if (axiosError.response) {
+            console.error(`[Globalping API] Response Status: ${axiosError.response.status}`); // Log to stderr
+            console.error(`[Globalping API] Response Data:`, axiosError.response.data); // Log to stderr
+        }
+        return null;
+    }
 }
 
 /**
- * Retrieves the result of a specific measurement.
- * @param measurementId The ID of the measurement.
- * @param apiKey Optional Globalping API key.
+ * Fetches the result of a specific measurement by its ID.
+ * 
+ * @param measurementId - The ID of the measurement.
+ * @param apiToken - Optional Globalping API token.
  * @returns The measurement result object.
  */
 export async function getMeasurementResult(
-  measurementId: string,
-  apiKey?: string
-): Promise<MeasurementResult> {
-  const apiClient = getApiClient(apiKey);
-  console.log(`Fetching result for measurement ID: ${measurementId}`);
+    measurementId: string,
+    apiToken?: string
+): Promise<MeasurementResult | null> {
+    const url = `${GLOBALPING_API_URL}/measurements/${measurementId}`;
+    const headers: Record<string, string> = {
+        'User-Agent': USER_AGENT,
+    };
 
-  try {
-    const result = await apiClient
-      .get(`measurements/${measurementId}`)
-      .json<MeasurementResult>();
-    console.log(
-      `Fetched result for ${measurementId}. Status: ${result.status}`
-    );
-    return result;
-  } catch (error) {
-    console.error(
-      `Error fetching result for measurement ${measurementId}:`,
-      error
-    );
-    if (error instanceof HTTPError) {
-       const responseBody = await error.response.text();
-       console.error("API Error Response:", responseBody);
-      throw new Error(
-        `Globalping API error (${error.response.status}): ${responseBody || error.message}`
-      );
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
     }
-    throw new Error(`Failed to fetch measurement result: ${error}`);
-  }
+
+    // console.error(`[Globalping API] Fetching result for measurement ID: ${measurementId}`); // Potentially too verbose
+
+    try {
+        const response = await axios.get<MeasurementResult>(url, { headers });
+        return response.data;
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        // Don't log 404s excessively during polling, but log other errors
+        if (axiosError.response?.status !== 404) {
+            console.error(`[Globalping API] Error fetching measurement result for ${measurementId}: ${axiosError.message}`); // Log to stderr
+            if (axiosError.response) {
+                console.error(`[Globalping API] Response Status: ${axiosError.response.status}`); // Log to stderr
+                console.error(`[Globalping API] Response Data:`, axiosError.response.data); // Log to stderr
+            }
+        } else {
+            // Measurement might still be in progress or just created
+            // console.error(`[Globalping API] Measurement ${measurementId} not found yet (404).`);
+        }
+        return null;
+    }
 }
 
 /**
- * Polls for the measurement result until it's finished or failed, or timeout occurs.
- * @param measurementId The ID of the measurement.
- * @param apiKey Optional Globalping API key.
- * @param timeoutMs Maximum time to wait in milliseconds. Defaults to 5 minutes.
- * @param intervalMs Polling interval in milliseconds. Defaults to 5 seconds.
- * @returns The final measurement result.
- * @throws Error if the measurement fails or times out.
+ * Polls the Globalping API for the result of a measurement until it's finished or failed.
+ * 
+ * @param measurementId - The ID of the measurement to poll.
+ * @param apiToken - Optional Globalping API token.
+ * @param timeoutMs - Maximum time to poll in milliseconds.
+ * @param intervalMs - Interval between polling attempts in milliseconds.
+ * @returns The final measurement result, or null if timed out or an error occurred.
  */
-export async function pollMeasurementResult(
-  measurementId: string,
-  apiKey?: string,
-  timeoutMs: number = 5 * 60 * 1000, // 5 minutes default timeout
-  intervalMs: number = 5000 // 5 seconds default interval
-): Promise<MeasurementResult> {
-  const startTime = Date.now();
-  console.log(
-    `Polling for result of measurement ${measurementId} (Timeout: ${timeoutMs / 1000}s, Interval: ${intervalMs / 1000}s)`
-  );
+export async function pollForResult(
+    measurementId: string,
+    apiToken?: string,
+    timeoutMs: number = 60000, // Default timeout 60 seconds
+    intervalMs: number = 2000   // Default interval 2 seconds
+): Promise<MeasurementResult | null> {
+    const startTime = Date.now();
+    console.error(`[Globalping API] Polling for result of measurement ${measurementId}...`); // Log to stderr
 
-  return new Promise((resolve, reject) => {
-    const checkStatus = async () => {
-      if (Date.now() - startTime > timeoutMs) {
-        console.error(`Polling timed out for measurement ${measurementId}.`);
-        return reject(
-          new Error(`Polling timed out after ${timeoutMs / 1000} seconds.`)
-        );
-      }
+    while (Date.now() - startTime < timeoutMs) {
+        const result = await getMeasurementResult(measurementId, apiToken);
 
-      try {
-        const result = await getMeasurementResult(measurementId, apiKey);
-
-        if (result.status === "finished") {
-          console.log(`Measurement ${measurementId} finished.`);
-          return resolve(result);
-        } else if (result.status === "failed") {
-          console.error(`Measurement ${measurementId} failed.`);
-          // Attempt to include more failure details if available
-          const failureReason = result.results?.find(r => r.result.status === 'failed')?.result?.rawOutput || 'Unknown reason';
-          return reject(
-            new Error(`Measurement failed: ${failureReason}`)
-          );
+        if (result) {
+            if (result.status === 'finished') {
+                console.error(`[Globalping API] Measurement ${measurementId} finished.`); // Log to stderr
+                return result;
+            } else if (result.status === 'failed') {
+                console.error(`[Globalping API] Measurement ${measurementId} failed.`); // Log to stderr
+                // Consider returning the failed result object for more context
+                return result;
+            }
+            // If status is 'in-progress', continue polling
         } else {
-          // Status is 'in-progress' or potentially another state, continue polling
-          console.log(
-            `Measurement ${measurementId} status: ${result.status}. Polling again in ${intervalMs / 1000}s...`
-          );
-          setTimeout(checkStatus, intervalMs);
+            // getMeasurementResult returned null (e.g., 404 or other error)
+            // Continue polling, maybe the measurement is not ready yet
         }
-      } catch (error) {
-        console.error(
-          `Error during polling for measurement ${measurementId}:`,
-          error
-        );
-        // Decide if the error is fatal or if polling should continue
-        // For now, we reject on any API error during polling.
-        return reject(
-          new Error(`API error during polling: ${error}`)
-        );
-      }
-    };
 
-    // Initial check
-    checkStatus();
-  });
+        // Wait before the next poll
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    console.error(`[Globalping API] Polling timed out for measurement ${measurementId} after ${timeoutMs}ms.`); // Log to stderr
+    return null; // Timeout reached
 }

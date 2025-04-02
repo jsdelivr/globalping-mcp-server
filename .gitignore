@@ -1,5 +1,6 @@
-node_modules
-build
-.env
-*.log
 *.lock
+*.*rules
+dist
+build
+node_modules
+.env

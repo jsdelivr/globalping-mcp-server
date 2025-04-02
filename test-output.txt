@@ -1,0 +1,87 @@
+
+> @globalping/globalping-mcp@1.0.0 test
+> jest --verbose
+
+FAIL tests/globalping-api.test.ts (6.165 s)
+  Globalping API Client
+    createMeasurement
+      ΓêÜ should create a measurement successfully (2 ms)
+      ΓêÜ should include Authorization header when token is provided
+      ΓêÜ should handle errors and return null (1 ms)
+    getMeasurementResult
+      ΓêÜ should get measurement result successfully
+      ΓêÜ should include Authorization header when token is provided (1 ms)
+      ΓêÜ should handle 404 errors quietly
+      ΓêÜ should handle other errors and log them (1 ms)
+    pollForResult
+      ├ù should return result when measurement is finished (5014 ms)
+      ├ù should return result when measurement has failed (7 ms)
+      ├ù should timeout after specified duration (2 ms)
+
+  ΓùÅ Globalping API Client ΓÇ║ pollForResult ΓÇ║ should return result when measurement is finished
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      187 |         });
+      188 |
+    > 189 |         it('should return result when measurement is finished', async () => {
+          |         ^
+      190 |             // First call returns in-progress, second call returns finished
+      191 |             const inProgressResult = { ...finishedResult, status: 'in-progress' as const };
+      192 |             
+
+      at tests/globalping-api.test.ts:189:9
+      at tests/globalping-api.test.ts:168:5
+      at Object.<anonymous> (tests/globalping-api.test.ts:19:1)
+
+  ΓùÅ Globalping API Client ΓÇ║ pollForResult ΓÇ║ should return result when measurement has failed
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "createdAt": "2025-04-02T14:48:20Z",
+        "id": "test-measurement-id",
+        "probesCount": 5,
+        "results": Array [],
+    -   "status": "failed",
+    +   "status": "finished",
+        "type": "ping",
+        "updatedAt": "2025-04-02T14:48:30Z",
+      }
+
+      213 |             const result = await pollForResult(measurementId);
+      214 |             
+    > 215 |             expect(result).toEqual(failedResult);
+          |                            ^
+      216 |             expect(console.error).toHaveBeenCalledWith(
+      217 |                 expect.stringContaining('failed')
+      218 |             );
+
+      at Object.<anonymous> (tests/globalping-api.test.ts:215:28)
+
+  ΓùÅ Globalping API Client ΓÇ║ pollForResult ΓÇ║ should timeout after specified duration
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 5
+    Received number of calls: 1
+
+      235 |             
+      236 |             // Should have made approximately 5 calls (5000ms / 1000ms)
+    > 237 |             expect(mockedAxios.get).toHaveBeenCalledTimes(5);
+          |                                     ^
+      238 |             expect(result).toBeNull();
+      239 |             expect(console.error).toHaveBeenCalledWith(
+      240 |                 expect.stringContaining('Polling timed out')
+
+      at Object.<anonymous> (tests/globalping-api.test.ts:237:37)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 7 passed, 10 total
+Snapshots:   0 total
+Time:        6.372 s, estimated 8 s
+Ran all test suites.

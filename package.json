@@ -3,16 +3,14 @@
     "version": "1.0.0",
     "description": "Give global network access to your AI LLM with Globalping MCP",
     "main": "build/index.js",
-    "type": "module",
     "bin": {
         "globalping-mcp": "build/main.js"
     },
     "scripts": {
         "build": "tsc",
-        "start": "node build/index.js",
-        "dev": "nodemon --watch src --ext ts --exec node --loader ts-node/esm src/index.ts",
-        "prepublishOnly": "npm run build",
-        "test": "node --loader ts-node/esm tests/index.ts"
+        "start": "node dist/server.js",
+        "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+        "test": "jest --verbose"
     },
     "keywords": [
         "mcp",
@@ -34,14 +32,21 @@
         "@modelcontextprotocol/sdk": "^1.8.0",
         "axios": "^1.7",
         "dotenv": "^16",
-        "ky": "^1.8.0",
         "zod": "^3"
     },
     "devDependencies": {
-        "@types/node": "^20",
-        "nodemon": "^3.1",
+        "@babel/preset-env": "^7.26.9",
+        "@babel/preset-typescript": "^7.27.0",
+        "@types/axios-mock-adapter": "^1.9.0",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^20.17.30",
+        "axios-mock-adapter": "^2.1.0",
+        "babel-jest": "^29.7.0",
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.9",
+        "ts-jest": "^29.3.1",
         "ts-node": "^10.9.2",
-        "typescript": "^5.8"
+        "typescript": "^5.8.2"
     },
     "engines": {
         "node": ">=20"

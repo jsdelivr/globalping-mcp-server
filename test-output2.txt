@@ -1,0 +1,42 @@
+
+> @globalping/globalping-mcp@1.0.0 test
+> jest --verbose
+
+FAIL tests/globalping-api.test.ts (6.17 s)
+  Globalping API Client
+    createMeasurement
+      ΓêÜ should create a measurement successfully (2 ms)
+      ΓêÜ should include Authorization header when token is provided
+      ΓêÜ should handle errors and return null (1 ms)
+    getMeasurementResult
+      ΓêÜ should get measurement result successfully
+      ΓêÜ should include Authorization header when token is provided (1 ms)
+      ΓêÜ should handle 404 errors quietly
+      ΓêÜ should handle other errors and log them
+    pollForResult
+      ΓêÜ should return result when measurement is finished (1 ms)
+      ΓêÜ should return result when measurement has failed
+      ├ù should timeout after specified duration (5021 ms)
+
+  ΓùÅ Globalping API Client ΓÇ║ pollForResult ΓÇ║ should timeout after specified duration
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      230 |         });
+      231 |
+    > 232 |         it('should timeout after specified duration', async () => {
+          |         ^
+      233 |             // Always return in-progress to trigger timeout
+      234 |             const inProgressResult = { ...finishedResult, status: 'in-progress' as const };
+      235 |             
+
+      at tests/globalping-api.test.ts:232:9
+      at tests/globalping-api.test.ts:168:5
+      at Object.<anonymous> (tests/globalping-api.test.ts:19:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 9 passed, 10 total
+Snapshots:   0 total
+Time:        6.39 s, estimated 7 s
+Ran all test suites.
