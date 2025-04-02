@@ -14,29 +14,60 @@ const GLOBALPING_API_URL = "https://api.globalping.io/v1";
 const USER_AGENT = "Globalping-MCP-Server (https://github.com/jsdelivr/globalping-mcp-server)"; // Replace with your repo URL later
 
 /**
+ * Interface for location specifications
+ */
+export interface LocationSpecification {
+    country?: string;    // ISO country code (e.g., 'US', 'DE')
+    continent?: string;  // Continent name (e.g., 'Europe', 'North America')
+    region?: string;     // Region name (e.g., 'California', 'Bavaria')
+    city?: string;       // City name (e.g., 'New York', 'Tokyo')
+    asn?: number;        // Autonomous System Number (e.g., 13335 for Cloudflare)
+    network?: string;    // Network name 
+    tag?: string;        // Probe tag
+    limit?: number;      // Limit of probes from this location constraint
+}
+
+/**
+ * Interface for ping, traceroute and mtr measurement options
+ */
+export interface NetworkMeasurementOptions {
+    packets?: number;       // Number of packets to send
+    port?: number;          // Destination port (for TCP/UDP)
+    protocol?: 'ICMP' | 'UDP' | 'TCP'; // Protocol to use
+    ipVersion?: 4 | 6;      // IP version to use
+}
+
+/**
+ * Interface for DNS measurement options
+ */
+export interface DnsMeasurementOptions {
+    type?: 'A' | 'AAAA' | 'CNAME' | 'MX' | 'NS' | 'PTR' | 'SOA' | 'SRV' | 'TXT'; // DNS record type
+    resolver?: string;     // Custom DNS resolver
+    protocol?: 'UDP' | 'TCP'; // Protocol to use for DNS queries
+    port?: number;        // Port for DNS queries (default 53)
+    ipVersion?: 4 | 6;    // IP version to use
+}
+
+/**
+ * Interface for HTTP measurement options
+ */
+export interface HttpMeasurementOptions {
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS'; // HTTP method
+    protocol?: 'HTTP' | 'HTTPS'; // Protocol (usually determined from URL)
+    port?: number;       // Custom port
+    path?: string;       // Path to request
+    headers?: Record<string, string>; // HTTP headers
+    ipVersion?: 4 | 6;   // IP version to use
+}
+
+/**
  * Basic interface for the measurement request payload
  */
 export interface MeasurementRequest {
     type: 'ping' | 'traceroute' | 'dns' | 'mtr' | 'http';
     target: string;
-    locations?: { 
-        country?: string; 
-        continent?: string; 
-        region?: string; 
-        city?: string; 
-        asn?: number; 
-        network?: string; 
-        tag?: string; 
-        limit?: number 
-    }[];
-    measurementOptions?: {
-        packets?: number; // For ping, traceroute, mtr
-        port?: number; // For traceroute, dns, mtr, http
-        protocol?: string; // For traceroute, dns, mtr, http
-        ipVersion?: 4 | 6; // Global
-        // Add other measurement-specific options as needed
-        [key: string]: any; // Allow additional properties
-    };
+    locations?: LocationSpecification[];
+    measurementOptions?: NetworkMeasurementOptions | DnsMeasurementOptions | HttpMeasurementOptions;
     limit?: number; // Global limit for probes
     inProgressUpdates?: boolean; // Always false for HTTP API polling
 }
@@ -52,16 +83,38 @@ export interface CreateMeasurementResponse {
 }
 
 /**
- * Interface for the measurement result (can be complex, start simple)
+ * Interface for probe results
+ */
+export interface ProbeResult {
+    probe: {
+        continent: string;
+        region: string;
+        country: string;
+        city: string;
+        asn: number;
+        network: string;
+        latitude: number;
+        longitude: number;
+        [key: string]: any;
+    };
+    result: {
+        status: 'finished' | 'failed';
+        rawOutput?: string;
+        [key: string]: any; // Type-specific results
+    };
+}
+
+/**
+ * Interface for the measurement result
  */
 export interface MeasurementResult {
     id: string;
-    type: string;
+    type: 'ping' | 'traceroute' | 'dns' | 'mtr' | 'http';
     status: 'in-progress' | 'finished' | 'failed';
     createdAt: string;
     updatedAt: string;
     probesCount: number;
-    results: any[]; // Results structure varies greatly by type, 'any[]' for now
+    results: ProbeResult[]; // Array of probe results
 }
 
 /**

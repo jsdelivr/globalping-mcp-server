@@ -7,7 +7,16 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createMeasurement, pollForResult, MeasurementRequest, MeasurementResult } from './globalping/api.js';
+import { 
+    createMeasurement, 
+    pollForResult, 
+    MeasurementRequest,
+    MeasurementResult,
+    NetworkMeasurementOptions,
+    DnsMeasurementOptions,
+    HttpMeasurementOptions,
+    LocationSpecification
+} from './globalping/api.js';
 import {
     DEFAULT_PROBE_LIMIT,
     pingInputSchema,
@@ -22,22 +31,43 @@ import { z } from 'zod';
 // Define type for the parameters received from tool calls
 type ToolParams = Record<string, unknown>;
 
+// Type guard for HTTP measurement options
+function isHttpOptions(options: any): options is HttpMeasurementOptions {
+    return options && typeof options === 'object';
+}
+
+// Type guard for DNS measurement options
+function isDnsOptions(options: any): options is DnsMeasurementOptions {
+    return options && typeof options === 'object';
+}
+
+// Type guard for Network measurement options
+function isNetworkOptions(options: any): options is NetworkMeasurementOptions {
+    return options && typeof options === 'object';
+}
+
+// Helper function to safely cast string to enum types
+function safeCast<T extends string>(value: unknown, allowedValues: readonly T[]): T | undefined {
+    if (typeof value === 'string' && allowedValues.includes(value as T)) {
+        return value as T;
+    }
+    return undefined;
+}
+
 /**
  * Generic handler function for Globalping measurement requests
  * Handles the common logic for all measurement types
  * 
  * @param type - Measurement type ('ping', 'traceroute', etc.)
  * @param params - Parameters received from the MCP tool call
- * @param measurementOptions - Specific options for the measurement type
  * @returns MCP CallToolResult content
  */
 async function handleGlobalpingRequest(
     type: MeasurementRequest['type'],
-    params: ToolParams,
-    measurementOptions: MeasurementRequest['measurementOptions'] = {}
+    params: ToolParams
 ): Promise<{ content: { type: "text"; text: string }[], isError?: boolean }> {
     const target = params.target as string;
-    const apiToken = process.env.GLOBALPING_API_TOKEN;
+    const apiToken = process.env.GLOBALPING_API_TOKEN || params.apiToken as string;
 
     console.error(`[MCP Tool Handler] Processing ${type} for target: ${target}`);
 
@@ -45,67 +75,105 @@ async function handleGlobalpingRequest(
     const requestPayload: MeasurementRequest = {
         type: type,
         target: target,
-        locations: params.locations as MeasurementRequest['locations'] || undefined,
+        locations: params.locations as LocationSpecification[] || undefined,
         limit: (params.limit as number) ?? DEFAULT_PROBE_LIMIT,
-        measurementOptions: {
-            ...measurementOptions // Include any additional specific options
-        },
     };
 
     // Handle measurement-specific options differently based on type
     switch (type) {
         case 'ping':
         case 'traceroute':
-        case 'mtr':
-            // Options common to ping, traceroute, and mtr
-            requestPayload.measurementOptions = {
-                ...requestPayload.measurementOptions,
-                packets: params.packets as number || undefined,
-                port: params.port as number || undefined,
-                protocol: params.protocol as string || undefined,
-                ipVersion: params.ipVersion as (4 | 6) || undefined,
-            };
-            break;
-
-        case 'dns':
-            // DNS-specific options
-            // Map queryType parameter to the 'type' property in measurementOptions
-            requestPayload.measurementOptions = {
-                ...requestPayload.measurementOptions,
-                type: params.queryType as string || undefined,
-                resolver: params.resolver as string || undefined,
-                protocol: params.protocol as string || undefined,
-                port: params.port as number || undefined,
-                ipVersion: params.ipVersion as (4 | 6) || undefined,
-            };
-            break;
-
-        case 'http':
-            // HTTP-specific options
-            requestPayload.measurementOptions = {
-                ...requestPayload.measurementOptions,
-                method: params.method as string || undefined,
-                protocol: params.protocol as string || undefined,
-                port: params.port as number || undefined,
-                path: params.path as string || undefined,
-                ipVersion: params.ipVersion as (4 | 6) || undefined,
-            };
+        case 'mtr': {
+            // Network protocols allowed values
+            const allowedProtocols = ['ICMP', 'UDP', 'TCP'] as const;
             
-            // Handle headers separately to ensure proper formatting
-            if (params.headers && typeof params.headers === 'object') {
-                requestPayload.measurementOptions.headers = params.headers as Record<string, string>;
+            // Options common to ping, traceroute, and mtr
+            const networkOptions: NetworkMeasurementOptions = {
+                packets: typeof params.packets === 'number' ? params.packets : undefined,
+                port: typeof params.port === 'number' ? params.port : undefined,
+                protocol: safeCast(params.protocol, allowedProtocols),
+                ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
+            };
+
+            // Filter out undefined values
+            const filteredOptions: Partial<NetworkMeasurementOptions> = {};
+            for (const [key, value] of Object.entries(networkOptions)) {
+                if (value !== undefined) {
+                    // Type assertion to help TypeScript understand we're safely adding valid keys
+                    (filteredOptions as any)[key] = value;
+                }
+            }
+
+            if (Object.keys(filteredOptions).length > 0) {
+                requestPayload.measurementOptions = filteredOptions as NetworkMeasurementOptions;
             }
             break;
-    }
-
-    // Remove undefined options to keep payload clean
-    Object.keys(requestPayload.measurementOptions || {}).forEach(key => {
-        if (requestPayload.measurementOptions && requestPayload.measurementOptions[key] === undefined) {
-            delete requestPayload.measurementOptions[key];
         }
-    });
-    if (requestPayload.measurementOptions && Object.keys(requestPayload.measurementOptions).length === 0) {
-        delete requestPayload.measurementOptions;
+
+        case 'dns': {
+            // DNS record types allowed values
+            const allowedQueryTypes = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT'] as const;
+            // DNS protocols allowed values
+            const allowedProtocols = ['UDP', 'TCP'] as const;
+            
+            // DNS-specific options
+            const dnsOptions: DnsMeasurementOptions = {
+                type: safeCast(params.queryType, allowedQueryTypes),
+                resolver: typeof params.resolver === 'string' ? params.resolver : undefined,
+                protocol: safeCast(params.protocol, allowedProtocols),
+                port: typeof params.port === 'number' ? params.port : undefined,
+                ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
+            };
+
+            // Filter out undefined values
+            const filteredOptions: Partial<DnsMeasurementOptions> = {};
+            for (const [key, value] of Object.entries(dnsOptions)) {
+                if (value !== undefined) {
+                    // Type assertion to help TypeScript understand we're safely adding valid keys
+                    (filteredOptions as any)[key] = value;
+                }
+            }
+
+            if (Object.keys(filteredOptions).length > 0) {
+                requestPayload.measurementOptions = filteredOptions as DnsMeasurementOptions;
+            }
+            break;
+        }
+
+        case 'http': {
+            // HTTP methods allowed values
+            const allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
+            // HTTP protocols allowed values
+            const allowedProtocols = ['HTTP', 'HTTPS'] as const;
+            
+            // HTTP-specific options
+            const httpOptions: HttpMeasurementOptions = {
+                method: safeCast(params.method, allowedMethods),
+                protocol: safeCast(params.protocol, allowedProtocols),
+                port: typeof params.port === 'number' ? params.port : undefined,
+                path: typeof params.path === 'string' ? params.path : undefined,
+                ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
+            };
+
+            // Handle headers separately
+            if (params.headers && typeof params.headers === 'object') {
+                httpOptions.headers = params.headers as Record<string, string>;
+            }
+
+            // Filter out undefined values
+            const filteredOptions: Partial<HttpMeasurementOptions> = {};
+            for (const [key, value] of Object.entries(httpOptions)) {
+                if (value !== undefined) {
+                    // Type assertion to help TypeScript understand we're safely adding valid keys
+                    (filteredOptions as any)[key] = value;
+                }
+            }
+
+            if (Object.keys(filteredOptions).length > 0) {
+                requestPayload.measurementOptions = filteredOptions as HttpMeasurementOptions;
+            }
+            break;
+        }
     }
 
     try {
@@ -163,6 +231,7 @@ export function registerGlobalpingTools(server: McpServer): void {
             limit: z.number().int().positive().optional().describe("Overall maximum number of probes for the measurement"),
             packets: z.number().int().min(1).max(16).optional().describe("Number of ICMP Echo packets to send (1-16). Default is 3."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use (4 or 6)"),
+            apiToken: z.string().optional().describe("Optional Globalping API token to use for this measurement"),
         },
         async (params) => handleGlobalpingRequest('ping', params)
     );
@@ -179,6 +248,7 @@ export function registerGlobalpingTools(server: McpServer): void {
             protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("Protocol to use for traceroute (ICMP, UDP, or TCP). Default is ICMP."),
             packets: z.number().int().positive().optional().describe("Number of packets to send per hop. Default is 3."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use (4 or 6)"),
+            apiToken: z.string().optional().describe("Optional Globalping API token to use for this measurement"),
         },
         async (params) => handleGlobalpingRequest('traceroute', params)
     );
@@ -196,6 +266,7 @@ export function registerGlobalpingTools(server: McpServer): void {
             protocol: z.enum(['UDP', 'TCP']).optional().describe("Protocol to use for DNS queries (UDP or TCP). Default is UDP."),
             port: z.number().int().positive().optional().describe("Port to use for DNS queries. Default is 53."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use (4 or 6)"),
+            apiToken: z.string().optional().describe("Optional Globalping API token to use for this measurement"),
         },
         async (params) => handleGlobalpingRequest('dns', params)
     );
@@ -212,6 +283,7 @@ export function registerGlobalpingTools(server: McpServer): void {
             protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("Protocol to use for MTR (ICMP, UDP, or TCP). Default is ICMP."),
             packets: z.number().int().positive().optional().describe("Number of packets to send per hop. Default is 3."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use (4 or 6)"),
+            apiToken: z.string().optional().describe("Optional Globalping API token to use for this measurement"),
         },
         async (params) => handleGlobalpingRequest('mtr', params)
     );
@@ -230,6 +302,7 @@ export function registerGlobalpingTools(server: McpServer): void {
             path: z.string().startsWith('/').optional().describe("Path to request. This is usually determined from the target URL."),
             headers: z.record(z.string()).optional().describe("Custom HTTP headers to include with the request."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use (4 or 6)"),
+            apiToken: z.string().optional().describe("Optional Globalping API token to use for this measurement"),
         },
         async (params) => handleGlobalpingRequest('http', params)
     );
