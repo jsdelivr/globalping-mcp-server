@@ -5,8 +5,29 @@
  * Globalping API results for display to MCP clients.
  */
 
-import { MeasurementResult } from '../src/globalping/api';
-import { formatMeasurementResult } from '../src/server';
+// Set NODE_ENV to 'test' before any imports to prevent server initialization
+process.env.NODE_ENV = 'test';
+
+import { MeasurementResult } from '../src/globalping/api.js';
+import { formatMeasurementResult, __test__ } from '../src/server.js';
+
+// Mock the transport module to prevent server initialization
+jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
+  StdioServerTransport: jest.fn().mockImplementation(() => ({
+    // Add mock methods as needed
+    onDisconnect: jest.fn(),
+    close: jest.fn(),
+  })),
+}));
+
+// Mock server startup function
+jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
+  McpServer: jest.fn().mockImplementation(() => ({
+    // Mock necessary methods
+    connect: jest.fn(),
+    tool: jest.fn(),
+  })),
+}));
 
 describe('Globalping Result Formatting', () => {
     it('should format ping results correctly', () => {

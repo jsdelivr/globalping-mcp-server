@@ -494,13 +494,22 @@ async function startServer() {
 }
 // --- End Server Connection ---
 
-// Start the server
-startServer();
-
-// Export functions for testing
+// Exports for testing purposes - this will allow tests to access these functions
+// without initializing the server
 export { formatMeasurementResult };
 
-// For testing purposes only
+// For testing only - not used in production
 export const __test__ = {
-    handleGlobalpingRequest
+    handleGlobalpingRequest,
+    formatPingResults,
+    formatTracerouteResults,
+    formatDnsResults,
+    formatMtrResults,
+    formatHttpResults
 };
+
+// Don't initialize the server if this file is being imported by tests
+if (process.env.NODE_ENV !== 'test') {
+    // Start the server
+    startServer();
+}

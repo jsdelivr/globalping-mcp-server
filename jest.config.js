@@ -15,6 +15,11 @@ module.exports = {
       ],
     },
     extensionsToTreatAsEsm: ['.ts'], // Treat .ts files as ESM
+    
+    // Added settings to fix worker process exit issues
+    forceExit: true, // Force Jest to exit after all tests complete
+    detectOpenHandles: true, // Detect and report open handles preventing Node from exiting
+    testTimeout: 10000, // Increase test timeout to 10 seconds for async operations
   };
   
   
