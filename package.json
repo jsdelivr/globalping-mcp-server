@@ -2,15 +2,15 @@
     "name": "@globalping/globalping-mcp",
     "version": "1.0.0",
     "description": "Give global network access to your AI LLM with Globalping MCP",
-    "main": "build/index.js",
+    "main": "dist/src/server.js",
+    "type": "module",
     "bin": {
-        "globalping-mcp": "build/main.js"
+        "globalping-mcp": "dist/src/server.js"
     },
     "scripts": {
         "build": "tsc",
-        "start": "node dist/server.js",
-        "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
-        "test": "jest --verbose"
+        "start": "node dist/src/server.js",
+        "dev": "nodemon --watch src --ext ts --exec \"tsc && node dist/src/server.js\""
     },
     "keywords": [
         "mcp",
@@ -35,16 +35,8 @@
         "zod": "^3"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.26.9",
-        "@babel/preset-typescript": "^7.27.0",
-        "@types/axios-mock-adapter": "^1.9.0",
-        "@types/jest": "^29.5.14",
         "@types/node": "^20.17.30",
-        "axios-mock-adapter": "^2.1.0",
-        "babel-jest": "^29.7.0",
-        "jest": "^29.7.0",
         "nodemon": "^3.1.9",
-        "ts-jest": "^29.3.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.2"
     },
