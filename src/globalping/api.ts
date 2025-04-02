@@ -17,14 +17,16 @@ const USER_AGENT = "Globalping-MCP-Server (https://github.com/jsdelivr/globalpin
  * Interface for location specifications
  */
 export interface LocationSpecification {
-    country?: string;    // ISO country code (e.g., 'US', 'DE')
-    continent?: string;  // Continent name (e.g., 'Europe', 'North America')
-    region?: string;     // Region name (e.g., 'California', 'Bavaria')
-    city?: string;       // City name (e.g., 'New York', 'Tokyo')
+    continent?: "AF" | "AN" | "AS" | "EU" | "NA" | "OC" | "SA";  // Two-letter continent code
+    region?: string;     // Geographic region based on UN M49 standard
+    country?: string;    // Two-letter country code (ISO 3166-1 alpha-2)
+    state?: string | null; // Two-letter US state code
+    city?: string;       // City name in English
     asn?: number;        // Autonomous System Number (e.g., 13335 for Cloudflare)
-    network?: string;    // Network name 
-    tag?: string;        // Probe tag
-    limit?: number;      // Limit of probes from this location constraint
+    network?: string;    // Network name (e.g., "Google LLC")
+    tags?: string[];     // Array of probe tags for fine-tuning selection
+    magic?: string;      // String for fuzzy matching on multiple criteria
+    limit?: number;      // Limit of probes from this location constraint (default: 1, max: 200)
 }
 
 /**

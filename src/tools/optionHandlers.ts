@@ -51,15 +51,27 @@ export function addDnsMeasurementOptions(
     const allowedQueryTypes = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT'] as const;
     // DNS protocols allowed values
     const allowedProtocols = ['UDP', 'TCP'] as const;
+    // DNS trace mode values
+    const allowedTraceMode = [true, false] as const;
     
-    // DNS-specific options
-    const dnsOptions = {
-        type: safeCast(params.queryType, allowedQueryTypes),
+    // DNS-specific options with correct nesting structure
+    const dnsOptions: Record<string, any> = {
         resolver: typeof params.resolver === 'string' ? params.resolver : undefined,
         protocol: safeCast(params.protocol, allowedProtocols),
         port: typeof params.port === 'number' ? params.port : undefined,
         ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
+        trace: typeof params.trace === 'boolean' ? params.trace : undefined,
     };
+
+    // Add query type in the proper nested structure
+    if (params.queryType) {
+        const queryType = safeCast(params.queryType, allowedQueryTypes);
+        if (queryType) {
+            dnsOptions.query = {
+                type: queryType
+            };
+        }
+    }
 
     // Filter out undefined values
     const filteredOptions = filterUndefinedValues(dnsOptions);
@@ -81,26 +93,41 @@ export function addHttpMeasurementOptions(
 ): void {
     // HTTP methods allowed values
     const allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
-    // HTTP protocols allowed values
-    const allowedProtocols = ['HTTP', 'HTTPS'] as const;
+    // HTTP protocols allowed values - adding HTTP2 support
+    const allowedProtocols = ['HTTP', 'HTTPS', 'HTTP2'] as const;
     
-    // HTTP-specific options
+    // HTTP-specific options with proper nesting structure
     const httpOptions: Record<string, any> = {
-        method: safeCast(params.method, allowedMethods),
         protocol: safeCast(params.protocol, allowedProtocols),
+        ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
+        followRedirects: typeof params.followRedirects === 'boolean' ? params.followRedirects : undefined,
+    };
+
+    // Add request-specific options in the proper nested structure
+    const requestOptions: Record<string, any> = {
+        method: safeCast(params.method, allowedMethods),
         port: typeof params.port === 'number' ? params.port : undefined,
         path: typeof params.path === 'string' ? params.path : undefined,
-        ipVersion: typeof params.ipVersion === 'number' ? params.ipVersion as 4 | 6 : undefined,
     };
 
     // Handle headers separately
     if (params.headers && typeof params.headers === 'object') {
-        httpOptions.headers = params.headers as Record<string, string>;
+        requestOptions.headers = params.headers as Record<string, string>;
+    }
+
+    // Handle body separately
+    if (params.body && typeof params.body === 'string') {
+        requestOptions.body = params.body;
     }
 
     // Filter out undefined values
-    const filteredOptions = filterUndefinedValues(httpOptions);
+    const filteredRequestOptions = filterUndefinedValues(requestOptions);
+    if (Object.keys(filteredRequestOptions).length > 0) {
+        httpOptions.request = filteredRequestOptions;
+    }
 
+    // Filter out the main options
+    const filteredOptions = filterUndefinedValues(httpOptions);
     if (Object.keys(filteredOptions).length > 0) {
         requestPayload.measurementOptions = filteredOptions;
     }
