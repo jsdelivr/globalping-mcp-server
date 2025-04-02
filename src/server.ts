@@ -10,7 +10,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import dotenv from 'dotenv';
 import { z } from "zod";
-import { createMeasurement, pollForResult, MeasurementRequest } from './globalping/api.js';
+import { createMeasurement, pollForResult, MeasurementRequest, MeasurementResult } from './globalping/api.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -56,6 +56,327 @@ const ipVersionSchema = z.enum(['4', '6']).optional().describe("IP version to us
 const DEFAULT_PROBE_LIMIT = 3;
 
 /**
+ * Generic handler to create and poll for Globalping measurements.
+ * @param type Measurement type ('ping', 'traceroute', etc.)
+ * @param params Parameters received from the MCP tool call.
+ * @param measurementOptions Specific options for the measurement type.
+ * @returns MCP CallToolResult content.
+ */
+async function handleGlobalpingRequest(
+    type: MeasurementRequest['type'],
+    params: Record<string, unknown>,
+    measurementOptions: MeasurementRequest['measurementOptions'] = {}
+): Promise<{ content: { type: "text"; text: string }[], isError?: boolean }> {
+    const target = params.target as string; // Assume target is always present and string
+    const apiToken = process.env.GLOBALPING_API_TOKEN; // Read token from environment
+
+    console.error(`[MCP Tool Handler] Processing ${type} for target: ${target}`); // Log to stderr
+
+    // Construct the request payload for Globalping API
+    const requestPayload: MeasurementRequest = {
+        type: type,
+        target: target,
+        locations: params.locations as MeasurementRequest['locations'] || undefined, // Cast or validate
+        limit: (params.limit as number) ?? DEFAULT_PROBE_LIMIT, // Use default if not provided
+        measurementOptions: {
+            packets: params.packets as number || (type === 'ping' || type === 'traceroute' || type === 'mtr' ? 3 : undefined), // Default packets for relevant types
+            port: params.port as number || undefined,
+            protocol: params.protocol as string || undefined,
+            ipVersion: params.ipVersion as (4 | 6) || undefined,
+            // DNS specific
+            type: params.queryType as string || undefined, // queryType maps to 'type' in measurementOptions for DNS
+            resolver: params.resolver as string || undefined,
+            // HTTP specific
+            method: params.method as string || undefined,
+            path: params.path as string || undefined,
+            headers: params.headers as Record<string, string> || undefined,
+            ...measurementOptions // Include any additional specific options
+        },
+    };
+
+    // Remove undefined options to keep payload clean
+    Object.keys(requestPayload.measurementOptions || {}).forEach(key => {
+        if (requestPayload.measurementOptions && requestPayload.measurementOptions[key] === undefined) {
+            delete requestPayload.measurementOptions[key];
+        }
+    });
+    if (requestPayload.measurementOptions && Object.keys(requestPayload.measurementOptions).length === 0) {
+        delete requestPayload.measurementOptions;
+    }
+
+    try {
+        // 1. Create the measurement
+        const createResponse = await createMeasurement(requestPayload, apiToken);
+        if (!createResponse) {
+            return { 
+                content: [{ type: "text", text: `Failed to create ${type} measurement for ${target}. Check server logs.` }], 
+                isError: true 
+            };
+        }
+
+        // 2. Poll for the result
+        const finalResult = await pollForResult(createResponse.id, apiToken);
+        if (!finalResult) {
+            return { 
+                content: [{ type: "text", text: `Polling timed out or failed for ${type} measurement ${createResponse.id} for ${target}.` }], 
+                isError: true 
+            };
+        }
+
+        // 3. Format and return the result
+        // Format based on the measurement type
+        let formattedResult = formatMeasurementResult(finalResult, type, target);
+
+        return { 
+            content: [{ type: "text", text: formattedResult }], 
+            isError: finalResult.status === 'failed' 
+        };
+
+    } catch (error) {
+        console.error(`[MCP Tool Handler] Unhandled error during ${type} for ${target}:`, error); // Log to stderr
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { 
+            content: [{ type: "text", text: `An internal error occurred while processing the ${type} request for ${target}: ${errorMessage}` }], 
+            isError: true 
+        };
+    }
+}
+
+/**
+ * Formats the measurement result based on the type of measurement
+ * @param result The measurement result from the Globalping API
+ * @param type The type of measurement (ping, traceroute, etc.)
+ * @param target The target of the measurement
+ * @returns A formatted string representation of the result
+ */
+function formatMeasurementResult(result: MeasurementResult, type: string, target: string): string {
+    // Header with basic info
+    let output = `Globalping ${type} results for ${target} (ID: ${result.id})\n`;
+    output += `Status: ${result.status}\n`;
+    output += `Created: ${result.createdAt}\n`;
+    output += `Updated: ${result.updatedAt}\n`;
+    output += `Probes: ${result.probesCount}\n\n`;
+    
+    // Customize the output based on the measurement type
+    switch (type) {
+        case 'ping':
+            // For ping, highlight min/max/avg times
+            output += formatPingResults(result.results);
+            break;
+        case 'traceroute':
+            // For traceroute, show the path and hop details
+            output += formatTracerouteResults(result.results);
+            break;
+        case 'dns':
+            // For DNS, show the resolved records
+            output += formatDnsResults(result.results);
+            break;
+        case 'mtr':
+            // For MTR, show the combined ping and traceroute statistics
+            output += formatMtrResults(result.results);
+            break;
+        case 'http':
+            // For HTTP, show status codes, headers, and response timing
+            output += formatHttpResults(result.results);
+            break;
+        default:
+            // Default formatting for any other type
+            output += JSON.stringify(result.results, null, 2);
+    }
+    
+    return output;
+}
+
+/**
+ * Format ping results with a focus on min/max/avg times
+ */
+function formatPingResults(results: any[]): string {
+    let output = '';
+    
+    if (!results || results.length === 0) {
+        return 'No results returned.';
+    }
+    
+    // Iterate through each probe's results
+    results.forEach((probe, index) => {
+        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        
+        if (probe.result?.stats) {
+            const stats = probe.result.stats;
+            output += `  Min: ${stats.min}ms, Max: ${stats.max}ms, Avg: ${stats.avg}ms\n`;
+            output += `  Packet Loss: ${stats.packetLoss}%, Jitter: ${stats.stddev}ms\n`;
+        } else {
+            output += `  No statistics available\n`;
+        }
+        
+        if (probe.result?.packets) {
+            output += `  Individual packets:\n`;
+            probe.result.packets.forEach((packet: any, i: number) => {
+                output += `    #${i + 1}: ${packet.rtt}ms\n`;
+            });
+        }
+        
+        output += '\n';
+    });
+    
+    return output;
+}
+
+/**
+ * Format traceroute results to show the network path
+ */
+function formatTracerouteResults(results: any[]): string {
+    let output = '';
+    
+    if (!results || results.length === 0) {
+        return 'No results returned.';
+    }
+    
+    // Iterate through each probe's results
+    results.forEach((probe, index) => {
+        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        
+        if (probe.result?.hops && Array.isArray(probe.result.hops)) {
+            output += `  Hop  IP Address        RTT     Location\n`;
+            output += `  ---- ---------------- ------- -----------------\n`;
+            
+            probe.result.hops.forEach((hop: any) => {
+                const hopNum = hop.hop.toString().padEnd(4);
+                const ip = (hop.ip || '*').padEnd(16);
+                const rtt = (hop.rtt ? `${hop.rtt}ms` : '*').padEnd(7);
+                const location = hop.location ? `${hop.location.city || ''}, ${hop.location.country || ''}` : '';
+                
+                output += `  ${hopNum} ${ip} ${rtt} ${location}\n`;
+            });
+        } else {
+            output += `  No hop information available\n`;
+        }
+        
+        output += '\n';
+    });
+    
+    return output;
+}
+
+/**
+ * Format DNS results to show the resolved records
+ */
+function formatDnsResults(results: any[]): string {
+    let output = '';
+    
+    if (!results || results.length === 0) {
+        return 'No results returned.';
+    }
+    
+    // Iterate through each probe's results
+    results.forEach((probe, index) => {
+        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        
+        if (probe.result?.answers && Array.isArray(probe.result.answers)) {
+            output += `  DNS Records:\n`;
+            
+            probe.result.answers.forEach((answer: any) => {
+                output += `  Type: ${answer.type}, TTL: ${answer.ttl}\n`;
+                output += `  Data: ${answer.data}\n\n`;
+            });
+        } else {
+            output += `  No DNS records available\n`;
+        }
+        
+        output += '\n';
+    });
+    
+    return output;
+}
+
+/**
+ * Format MTR results combining ping and traceroute statistics
+ */
+function formatMtrResults(results: any[]): string {
+    let output = '';
+    
+    if (!results || results.length === 0) {
+        return 'No results returned.';
+    }
+    
+    // Iterate through each probe's results
+    results.forEach((probe, index) => {
+        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        
+        if (probe.result?.hops && Array.isArray(probe.result.hops)) {
+            output += `  Hop  IP Address        Loss%   Sent  Recv  Best  Avg   Worst  Last\n`;
+            output += `  ---- ---------------- ------ ----- ----- ----- ----- ----- -----\n`;
+            
+            probe.result.hops.forEach((hop: any) => {
+                const hopNum = hop.hop.toString().padEnd(4);
+                const ip = (hop.ip || '*').padEnd(16);
+                const loss = (hop.loss ? `${hop.loss}%` : '*').padEnd(6);
+                const sent = (hop.sent || '*').toString().padEnd(5);
+                const recv = (hop.recv || '*').toString().padEnd(5);
+                const best = (hop.best ? `${hop.best}ms` : '*').padEnd(5);
+                const avg = (hop.avg ? `${hop.avg}ms` : '*').padEnd(5);
+                const worst = (hop.worst ? `${hop.worst}ms` : '*').padEnd(5);
+                const last = (hop.last ? `${hop.last}ms` : '*').padEnd(5);
+                
+                output += `  ${hopNum} ${ip} ${loss} ${sent} ${recv} ${best} ${avg} ${worst} ${last}\n`;
+            });
+        } else {
+            output += `  No hop information available\n`;
+        }
+        
+        output += '\n';
+    });
+    
+    return output;
+}
+
+/**
+ * Format HTTP results to show status codes and response timing
+ */
+function formatHttpResults(results: any[]): string {
+    let output = '';
+    
+    if (!results || results.length === 0) {
+        return 'No results returned.';
+    }
+    
+    // Iterate through each probe's results
+    results.forEach((probe, index) => {
+        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        
+        if (probe.result) {
+            const statusCode = probe.result.statusCode || 'Unknown';
+            const totalTime = probe.result.timings?.total || 'Unknown';
+            
+            output += `  Status Code: ${statusCode}\n`;
+            output += `  Total Time: ${totalTime}ms\n`;
+            
+            if (probe.result.timings) {
+                output += `  Timing Breakdown:\n`;
+                output += `    DNS: ${probe.result.timings.dns || 0}ms\n`;
+                output += `    Connect: ${probe.result.timings.connect || 0}ms\n`;
+                output += `    TLS: ${probe.result.timings.tls || 0}ms\n`;
+                output += `    TTFB: ${probe.result.timings.ttfb || 0}ms\n`;
+                output += `    Download: ${probe.result.timings.download || 0}ms\n`;
+            }
+            
+            if (probe.result.headers) {
+                output += `  Response Headers:\n`;
+                for (const [key, value] of Object.entries(probe.result.headers)) {
+                    output += `    ${key}: ${value}\n`;
+                }
+            }
+        } else {
+            output += `  No HTTP result available\n`;
+        }
+        
+        output += '\n';
+    });
+    
+    return output;
+}
+
+/**
  * Globalping Ping Tool
  * Performs ICMP ping measurements to a target host or IP address from specified locations
  */
@@ -69,11 +390,7 @@ server.tool(
         packets: z.number().int().positive().optional().describe("Number of ping packets to send (default: 3)."),
         ipVersion: ipVersionSchema,
     },
-    async (params) => { // Placeholder handler
-        console.error(`[MCP Tool] Received 'globalping-ping' request for target: ${params.target}`);
-        // TODO: Implement Globalping API call and result handling in Step 4
-        return { content: [{ type: "text", text: `Placeholder: Ping tool called for ${params.target}. Results pending implementation.` }] };
-    }
+    async (params) => handleGlobalpingRequest('ping', params)
 );
 
 /**
@@ -92,11 +409,7 @@ server.tool(
         packets: z.number().int().positive().optional().describe("Number of packets per hop (default: 3)."),
         ipVersion: ipVersionSchema,
     },
-    async (params) => { // Placeholder handler
-        console.error(`[MCP Tool] Received 'globalping-traceroute' request for target: ${params.target}`);
-        // TODO: Implement Globalping API call and result handling in Step 4
-        return { content: [{ type: "text", text: `Placeholder: Traceroute tool called for ${params.target}. Results pending implementation.` }] };
-    }
+    async (params) => handleGlobalpingRequest('traceroute', params)
 );
 
 /**
@@ -116,11 +429,7 @@ server.tool(
         port: z.number().int().positive().optional().describe("DNS resolver port (default: 53)."),
         ipVersion: ipVersionSchema,
     },
-    async (params) => { // Placeholder handler
-        console.error(`[MCP Tool] Received 'globalping-dns' request for target: ${params.target}`);
-        // TODO: Implement Globalping API call and result handling in Step 4
-        return { content: [{ type: "text", text: `Placeholder: DNS tool called for ${params.target}. Results pending implementation.` }] };
-    }
+    async (params) => handleGlobalpingRequest('dns', params)
 );
 
 /**
@@ -139,11 +448,7 @@ server.tool(
         packets: z.number().int().positive().optional().describe("Number of packets per hop (default: 3)."),
         ipVersion: ipVersionSchema,
     },
-    async (params) => { // Placeholder handler
-        console.error(`[MCP Tool] Received 'globalping-mtr' request for target: ${params.target}`);
-        // TODO: Implement Globalping API call and result handling in Step 4
-        return { content: [{ type: "text", text: `Placeholder: MTR tool called for ${params.target}. Results pending implementation.` }] };
-    }
+    async (params) => handleGlobalpingRequest('mtr', params)
 );
 
 /**
@@ -166,11 +471,7 @@ server.tool(
         headers: z.record(z.string()).optional().describe("Custom HTTP headers as key-value pairs."),
         ipVersion: ipVersionSchema,
     },
-    async (params) => { // Placeholder handler
-        console.error(`[MCP Tool] Received 'globalping-http' request for target: ${params.target}`);
-        // TODO: Implement Globalping API call and result handling in Step 4
-        return { content: [{ type: "text", text: `Placeholder: HTTP tool called for ${params.target}. Results pending implementation.` }] };
-    }
+    async (params) => handleGlobalpingRequest('http', params)
 );
 
 // --- End Tool Registration ---
@@ -195,3 +496,11 @@ async function startServer() {
 
 // Start the server
 startServer();
+
+// Export functions for testing
+export { formatMeasurementResult };
+
+// For testing purposes only
+export const __test__ = {
+    handleGlobalpingRequest
+};

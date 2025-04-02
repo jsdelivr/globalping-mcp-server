@@ -4,14 +4,15 @@
     "module": "NodeNext",           /* Specify module code generation: 'NodeNext' for modern Node.js */
     "moduleResolution": "NodeNext", /* Specify module resolution strategy */
     "outDir": "./dist",             /* Redirect output structure to the directory */
-    "rootDir": "./src",             /* Specify the root directory of input files */
+    "rootDir": "./",                /* Update rootDir to include tests */
     "strict": true,                 /* Enable all strict type-checking options */
     "esModuleInterop": true,        /* Enables emit interoperability between CommonJS and ES Modules */
     "skipLibCheck": true,           /* Skip type checking of declaration files */
     "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file */
     "resolveJsonModule": true,      /* Include modules imported with .json extension */
-    "sourceMap": true               /* Generate corresponding '.map' file */
+    "sourceMap": true,              /* Generate corresponding '.map' file */
+    "isolatedModules": true         /* Add isolatedModules as required by error message */
   },
-  "include": ["src/**/*"],          /* Compile files in the src directory */
-  "exclude": ["node_modules", "dist", "tests"] /* Exclude node_modules, dist, and tests */
+  "include": ["src/**/*", "tests/**/*"],  /* Include both src and tests directories */
+  "exclude": ["node_modules", "dist"] /* Remove tests from excluded directories */
 }
