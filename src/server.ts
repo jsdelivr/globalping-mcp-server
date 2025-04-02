@@ -12,6 +12,29 @@ import dotenv from 'dotenv';
 import { z } from "zod";
 import { createMeasurement, pollForResult, MeasurementRequest, MeasurementResult } from './globalping/api.js';
 
+/**
+ * --- Role of this MCP Server ---
+ * This server provides tools to execute specific Globalping measurements (ping, traceroute, dns, mtr, http).
+ * It fetches and returns the raw or processed data from the Globalping network.
+ * 
+ * It does NOT perform comparisons (e.g., "is site A faster than site B?") or complex analysis
+ * (e.g., "summarize the DNS resolution path").
+ * 
+ * Such comparative or analytical tasks are the responsibility of the AI client connecting to this server.
+ * The client should make one or more calls to the tools provided here, receive the results,
+ * and then perform the comparison or analysis based on the returned data.
+ * 
+ * For example:
+ * - For "Is google.com faster than bing.com?", the AI client would call the globalping-http tool twice 
+ *   (once for each site) and then compare the timing results itself.
+ * - For "How does example.com resolve in Europe?", the AI client would call globalping-dns with 
+ *   appropriate target and location, then interpret the returned DNS records.
+ * 
+ * The tool descriptions are designed to help the AI client choose the right tools for gathering
+ * the specific data needed to answer the user's question.
+ * --- End Role Explanation ---
+ */
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -38,15 +61,15 @@ console.error("Globalping MCP Server starting..."); // Log to stderr
 
 // Common schema for location filtering
 const locationSchema = z.object({
-    country: z.string().length(2, "Must be a 2-letter country code (ISO 3166-1 alpha-2)").optional(),
-    continent: z.string().optional(),
-    region: z.string().optional(),
-    city: z.string().optional(),
-    asn: z.number().int().positive().optional(),
-    network: z.string().optional(),
-    tag: z.string().optional(),
-    limit: z.number().int().positive().optional().describe("Max number of probes from this location spec"),
-}).optional().describe("Specify geographic locations or networks for probes");
+    country: z.string().length(2, "Must be a 2-letter country code (ISO 3166-1 alpha-2)").optional().describe("Two-letter ISO country code (e.g., 'US', 'DE', 'JP'). Used to select probes from a specific country."),
+    continent: z.string().optional().describe("Continent name (e.g., 'Europe', 'North America', 'Asia'). Used to select probes from an entire continent."),
+    region: z.string().optional().describe("Geographic region within a continent (e.g., 'Western Europe', 'Southeast Asia'). More specific than continent but less specific than country."),
+    city: z.string().optional().describe("City name (e.g., 'New York', 'London', 'Tokyo'). Used to select probes from a specific metropolitan area."),
+    asn: z.number().int().positive().optional().describe("Autonomous System Number, identifying a specific network operator (e.g., 13335 for Cloudflare). Used to test from a specific provider's network."),
+    network: z.string().optional().describe("Network name or identifier. Alternative to ASN for selecting probes from specific network providers."),
+    tag: z.string().optional().describe("Special tag identifier for groups of probes with specific characteristics (e.g., 'residential', 'datacenter')."),
+    limit: z.number().int().positive().optional().describe("Maximum number of probes to use *from this specific location definition* (e.g., limit 2 probes from 'Europe'). Each location can have its own limit."),
+}).optional().describe("Specify geographic locations or networks for measurement probes. Multiple locations can be combined to create a diverse measurement profile.");
 
 // Common schema for global limit
 const globalLimitSchema = z.number().int().positive().optional().describe("Overall maximum number of probes for the measurement");
@@ -382,13 +405,13 @@ function formatHttpResults(results: any[]): string {
  */
 server.tool(
     "globalping-ping", // Tool name
-    "Perform ICMP ping measurements to a target host or IP address from specified locations.", // Description
+    "Measures network latency (round-trip time) to a target host or IP address using ICMP Echo requests. Executes from multiple Globalping probes distributed globally or in specified locations. Useful for checking reachability and basic network performance.", // Description
     { // Input schema using Zod
-        target: z.string().describe("The hostname or IP address to ping."),
-        locations: z.array(locationSchema).optional().describe("Array of location specifications."),
-        limit: globalLimitSchema,
-        packets: z.number().int().positive().optional().describe("Number of ping packets to send (default: 3)."),
-        ipVersion: ipVersionSchema,
+        target: z.string().describe("The hostname or IP address to ping. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        locations: z.array(locationSchema).optional().describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
+        limit: globalLimitSchema.describe("Overall maximum number of probes to use for this measurement. Default is 3 if unspecified."),
+        packets: z.number().int().min(1).max(16).optional().describe("Number of ICMP Echo request packets to send per probe. Default is 3 if unspecified. More packets provide more reliable statistics."),
+        ipVersion: ipVersionSchema.describe("IP version to use for the measurement - either '4' for IPv4 or '6' for IPv6. If omitted, the probe will select the appropriate version based on target resolution."),
     },
     async (params) => handleGlobalpingRequest('ping', params)
 );
@@ -399,15 +422,15 @@ server.tool(
  */
 server.tool(
     "globalping-traceroute",
-    "Perform traceroute measurements to trace the network path to a target host or IP address.",
+    "Maps the network path packets take to reach a target host or IP address, showing each router hop along the route and their response times. Useful for diagnosing routing issues, identifying bottlenecks, and understanding network topology between Globalping probes and the target.",
     {
-        target: z.string().describe("The hostname or IP address for the traceroute."),
-        locations: z.array(locationSchema).optional(),
-        limit: globalLimitSchema,
-        port: z.number().int().positive().optional().describe("Destination port for UDP/TCP traceroute."),
-        protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("Traceroute protocol (default: ICMP)."),
-        packets: z.number().int().positive().optional().describe("Number of packets per hop (default: 3)."),
-        ipVersion: ipVersionSchema,
+        target: z.string().describe("The hostname or IP address for the traceroute. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        locations: z.array(locationSchema).optional().describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
+        limit: globalLimitSchema.describe("Overall maximum number of probes to use for this measurement. Default is 3 if unspecified."),
+        port: z.number().int().positive().optional().describe("Destination port for UDP/TCP traceroute. Only relevant when protocol is UDP or TCP. For web servers, common values are 80 (HTTP) or 443 (HTTPS)."),
+        protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("Protocol to use for traceroute packets. ICMP is most common and reliable, UDP works through most firewalls, TCP tests specific services. Default is ICMP."),
+        packets: z.number().int().min(1).max(16).optional().describe("Number of probe packets to send per hop. Default is 3. More packets provide more reliable per-hop statistics."),
+        ipVersion: ipVersionSchema.describe("IP version to use for the measurement - either '4' for IPv4 or '6' for IPv6. If omitted, the probe will select the appropriate version based on target resolution."),
     },
     async (params) => handleGlobalpingRequest('traceroute', params)
 );
@@ -418,16 +441,16 @@ server.tool(
  */
 server.tool(
     "globalping-dns",
-    "Perform DNS lookups for a domain name from specified locations.",
+    "Performs DNS resolution queries from distributed Globalping probes to retrieve DNS records for a domain. Useful for verifying DNS propagation, troubleshooting DNS configuration, and checking how domain names resolve from different global locations or networks.",
     {
-        target: z.string().describe("The domain name to query."),
-        locations: z.array(locationSchema).optional(),
-        limit: globalLimitSchema,
-        queryType: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT']).optional().describe("DNS record type to query (default: A)."),
-        resolver: z.string().ip().optional().describe("Specific DNS resolver IP address to use."),
-        protocol: z.enum(['UDP', 'TCP']).optional().describe("DNS protocol (default: UDP)."),
-        port: z.number().int().positive().optional().describe("DNS resolver port (default: 53)."),
-        ipVersion: ipVersionSchema,
+        target: z.string().describe("The domain name to query (e.g., 'example.com'). For reverse DNS lookups, use the IP address when queryType is 'PTR'."),
+        locations: z.array(locationSchema).optional().describe("Array of location specifications defining where the DNS resolvers should run from. If omitted, resolvers will be selected from diverse global locations."),
+        limit: globalLimitSchema.describe("Overall maximum number of probes to use for this measurement. Default is 3 if unspecified."),
+        queryType: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT']).optional().describe("The type of DNS record to query (e.g., A for IPv4 addresses, AAAA for IPv6 addresses, MX for mail servers, TXT for text records). Defaults to 'A' if unspecified."),
+        resolver: z.string().ip().optional().describe("Specific DNS resolver IP address to use instead of the probe's default resolver. Useful for testing specific DNS providers."),
+        protocol: z.enum(['UDP', 'TCP']).optional().describe("DNS protocol to use. UDP is faster and standard for most queries, while TCP is used for larger responses and may bypass certain restrictions. Default is UDP."),
+        port: z.number().int().positive().optional().describe("DNS resolver port to connect to. Standard DNS port is 53, but some resolvers use alternative ports such as 5353 or 853 (for DNS over TLS)."),
+        ipVersion: ipVersionSchema.describe("IP version to use for connecting to the resolver - either '4' for IPv4 or '6' for IPv6. If omitted, the probe will use the appropriate version based on resolver availability."),
     },
     async (params) => handleGlobalpingRequest('dns', params)
 );
@@ -438,15 +461,15 @@ server.tool(
  */
 server.tool(
     "globalping-mtr",
-    "Perform MTR (My Traceroute) measurements, combining ping and traceroute, to a target host or IP.",
+    "Combines the functionality of ping and traceroute into a single diagnostic tool that provides continuous statistics for each network hop. MTR (My Traceroute) shows packet loss, latency, and jitter at each router in the path. Ideal for comprehensive network path analysis and identifying intermittent issues along routes.",
     {
-        target: z.string().describe("The hostname or IP address for the MTR measurement."),
-        locations: z.array(locationSchema).optional(),
-        limit: globalLimitSchema,
-        port: z.number().int().positive().optional().describe("Destination port for UDP/TCP MTR."),
-        protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("MTR protocol (default: ICMP)."),
-        packets: z.number().int().positive().optional().describe("Number of packets per hop (default: 3)."),
-        ipVersion: ipVersionSchema,
+        target: z.string().describe("The hostname or IP address for the MTR measurement. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        locations: z.array(locationSchema).optional().describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
+        limit: globalLimitSchema.describe("Overall maximum number of probes to use for this measurement. Default is 3 if unspecified."),
+        port: z.number().int().positive().optional().describe("Destination port for UDP/TCP MTR. Only relevant when protocol is UDP or TCP. For web servers, common values are 80 (HTTP) or 443 (HTTPS)."),
+        protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional().describe("Protocol to use for MTR packets. ICMP is most common and reliable, UDP works through most firewalls, TCP tests specific services. Default is ICMP."),
+        packets: z.number().int().min(1).max(16).optional().describe("Number of packets to send to each hop for gathering statistics. Default is 3. Higher values provide more accurate statistical information but take longer to complete."),
+        ipVersion: ipVersionSchema.describe("IP version to use for the measurement - either '4' for IPv4 or '6' for IPv6. If omitted, the probe will select the appropriate version based on target resolution."),
     },
     async (params) => handleGlobalpingRequest('mtr', params)
 );
@@ -457,19 +480,19 @@ server.tool(
  */
 server.tool(
     "globalping-http",
-    "Perform HTTP(S) requests to a target URL from specified locations.",
+    "Makes HTTP/HTTPS requests to URLs from distributed Globalping probes, measuring response times, status codes, and providing header information. Excellent for testing web application performance, CDN effectiveness, and availability from different regions. Provides detailed timing breakdown including DNS, connection, TLS handshake, and time to first byte (TTFB).",
     {
-        target: z.string().url("Must be a valid URL (e.g., https://example.com).").describe("The URL to request."),
-        locations: z.array(locationSchema).optional(),
-        limit: globalLimitSchema,
-        method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).optional().describe("HTTP method (default: GET)."),
+        target: z.string().url("Must be a valid URL (e.g., https://example.com).").describe("The complete URL to request, including protocol, hostname, path, and any query parameters (e.g., 'https://example.com/path?query=value')."),
+        locations: z.array(locationSchema).optional().describe("Array of location specifications defining where the HTTP probes should run from. If omitted, probes will be selected from diverse global locations."),
+        limit: globalLimitSchema.describe("Overall maximum number of probes to use for this measurement. Default is 3 if unspecified."),
+        method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).optional().describe("HTTP method to use for the request. GET is used to retrieve data, POST to submit data, etc. Default is GET if unspecified."),
         // Note: Globalping API might parse protocol/port/path from target URL automatically.
         // Explicit options might be needed for non-standard ports or specific overrides.
-        protocol: z.enum(['HTTP', 'HTTPS']).optional().describe("Protocol (usually inferred from target URL)."),
-        port: z.number().int().positive().optional().describe("Port (usually inferred from target URL)."),
-        path: z.string().startsWith('/').optional().describe("Path (usually inferred from target URL)."),
-        headers: z.record(z.string()).optional().describe("Custom HTTP headers as key-value pairs."),
-        ipVersion: ipVersionSchema,
+        protocol: z.enum(['HTTP', 'HTTPS']).optional().describe("Protocol to use, overriding what's in the target URL. Rarely needed as this is normally inferred from the target URL."),
+        port: z.number().int().positive().optional().describe("Port to connect to, overriding the default for the protocol (80 for HTTP, 443 for HTTPS) or what's specified in the target URL."),
+        path: z.string().startsWith('/').optional().describe("Path component to use, overriding what's in the target URL. Should start with a forward slash (e.g., '/api/v1/resource')."),
+        headers: z.record(z.string()).optional().describe("Custom HTTP headers to include in the request as key-value pairs. Useful for testing with specific authorization, content types, or user agents."),
+        ipVersion: ipVersionSchema.describe("IP version to use for the connection - either '4' for IPv4 or '6' for IPv6. If omitted, the probe will select the appropriate version based on target resolution."),
     },
     async (params) => handleGlobalpingRequest('http', params)
 );
