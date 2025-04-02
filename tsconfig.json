@@ -3,8 +3,8 @@
     "target": "ESNext",             /* Specify ECMAScript target version */
     "module": "NodeNext",           /* Specify module code generation: 'NodeNext' for modern Node.js */
     "moduleResolution": "NodeNext", /* Specify module resolution strategy */
-    "outDir": "./dist",             /* Redirect output structure to the directory */
-    "rootDir": "./",                /* Update rootDir to include tests */
+    "outDir": "./build",             /* Redirect output structure to the directory */
+    "rootDir": "./src",                /* Set rootDir to src to flatten output structure */
     "strict": true,                 /* Enable all strict type-checking options */
     "esModuleInterop": true,        /* Enables emit interoperability between CommonJS and ES Modules */
     "skipLibCheck": true,           /* Skip type checking of declaration files */
@@ -13,6 +13,6 @@
     "sourceMap": true,              /* Generate corresponding '.map' file */
     "isolatedModules": true         /* Add isolatedModules as required by error message */
   },
-  "include": ["src/**/*", "tests/**/*"],  /* Include both src and tests directories */
-  "exclude": ["node_modules", "dist"] /* Remove tests from excluded directories */
+  "include": ["**/*"],  /* Include all files under src directory */
+  "exclude": ["node_modules", "dist", "build"] /* Exclude node_modules, dist and build directories */
 }

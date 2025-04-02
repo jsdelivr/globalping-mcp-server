@@ -54,6 +54,9 @@ export function formatMeasurementResult(result: MeasurementResult, type: string,
 
 /**
  * Format ping results with a focus on min/max/avg times
+ * 
+ * @param results The ping measurement results from Globalping API
+ * @returns A formatted string representing the ping results
  */
 export function formatPingResults(results: any[]): string {
     let output = '';
@@ -64,21 +67,50 @@ export function formatPingResults(results: any[]): string {
     
     // Iterate through each probe's results
     results.forEach((probe, index) => {
-        output += `Probe ${index + 1} - Location: ${probe.location?.city || 'Unknown'}, ${probe.location?.country || 'Unknown'}\n`;
+        // Access location data from the probe object based on the API structure
+        const probeData = probe.probe || {};
+        const city = probeData.city || 'Unknown';
+        const country = probeData.country || 'Unknown';
+        const network = probeData.network || 'Unknown';
+        
+        output += `Probe ${index + 1} - Location: ${city}, ${country} (${network})\n`;
         
         if (probe.result?.stats) {
             const stats = probe.result.stats;
-            output += `  Min: ${stats.min}ms, Max: ${stats.max}ms, Avg: ${stats.avg}ms\n`;
-            output += `  Packet Loss: ${stats.packetLoss}%, Jitter: ${stats.stddev}ms\n`;
+            // Stats structure has min, max, avg, loss (not packetLoss), and mdev (instead of stddev)
+            const min = stats.min !== undefined ? stats.min : '0';
+            const max = stats.max !== undefined ? stats.max : '0';
+            const avg = stats.avg !== undefined ? stats.avg : '0';
+            const loss = stats.loss !== undefined ? stats.loss : '0';
+            // mdev is the jitter value in the ping stats
+            const jitter = stats.mdev !== undefined ? stats.mdev : '0';
+            
+            output += `  Min: ${min}ms, Max: ${max}ms, Avg: ${avg}ms\n`;
+            output += `  Packet Loss: ${loss}%, Jitter: ${jitter}ms\n`;
+            
+            // Add additional details about packet stats
+            if (stats.total !== undefined) {
+                output += `  Packets: ${stats.total} sent, ${stats.rcv || '0'} received\n`;
+            }
         } else {
             output += `  No statistics available\n`;
         }
         
-        if (probe.result?.packets) {
+        // Individual packet timing data
+        if (probe.result?.timings && probe.result.timings.length > 0) {
             output += `  Individual packets:\n`;
-            probe.result.packets.forEach((packet: any, i: number) => {
-                output += `    #${i + 1}: ${packet.rtt}ms\n`;
+            probe.result.timings.forEach((timing: any, i: number) => {
+                output += `    #${i + 1}: ${timing.rtt !== undefined ? timing.rtt : 'timeout'}ms (TTL: ${timing.ttl || 'unknown'})\n`;
             });
+        }
+        
+        // Show resolved address information if available
+        if (probe.result?.resolvedAddress) {
+            output += `  Resolved Address: ${probe.result.resolvedAddress}`;
+            if (probe.result.resolvedHostname) {
+                output += ` (${probe.result.resolvedHostname})`;
+            }
+            output += `\n`;
         }
         
         output += '\n';

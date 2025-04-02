@@ -40,7 +40,7 @@ dotenv.config();
 // Create the MCP Server instance
 const server = new McpServer({
     name: "globalping-mcp-server",
-    version: "0.1.0",
+    version: process.env.npm_package_version || "0.0.1",
     capabilities: {
         tools: {}, // Indicate tool support
         resources: {},

@@ -2,15 +2,15 @@
     "name": "@globalping/globalping-mcp",
     "version": "1.0.0",
     "description": "Give global network access to your AI LLM with Globalping MCP",
-    "main": "dist/src/server.js",
+    "main": "build/index.js",
     "type": "module",
     "bin": {
-        "globalping-mcp": "dist/src/server.js"
+        "globalping-mcp": "build/index.js"
     },
     "scripts": {
         "build": "tsc",
-        "start": "node dist/src/server.js",
-        "dev": "nodemon --watch src --ext ts --exec \"tsc && node dist/src/server.js\""
+        "start": "node build/index.js",
+        "dev": "nodemon --watch src --ext ts --exec \"tsc && node build/index.js\""
     },
     "keywords": [
         "mcp",
