@@ -30,7 +30,9 @@ export const ipVersionSchema = z.enum(['4', '6']).optional()
     .describe("IP version to use (4 or 6). Only applicable for hostname targets.");
 
 /**
- * Default number of probes if not specified by user/client
+ * Default number of probes to use for measurements
+ * This is used across all measurement types when no specific limit is provided
+ * The value of 3 provides a good balance between coverage and performance
  */
 export const DEFAULT_PROBE_LIMIT = 3;
 
@@ -120,14 +122,8 @@ export const mtrInputSchema = z.object({
  * Schema for HTTP measurement inputs
  */
 export const httpInputSchema = z.object({
-    target: z.string().transform(url => {
-        // Ensure URL has protocol prefix for validation
-        if (!url.match(/^https?:\/\//i)) {
-            return `https://${url}`;
-        }
-        return url;
-    })
-        .describe("The URL to request. Can be a domain (e.g., 'example.com') or a full URL (e.g., 'https://example.com/path'). If protocol is not specified, https:// will be added automatically."),
+    target: z.string()
+        .describe("The URL to request. Can be a domain (e.g., 'example.com') or a full URL (e.g., 'https://example.com/path'). If a full URL is provided, the protocol and path will be extracted automatically."),
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
@@ -141,14 +137,15 @@ export const httpInputSchema = z.object({
         method: z.enum(['HEAD', 'GET', 'OPTIONS']).optional()
             .describe("The HTTP method to use. Default: HEAD."),
         headers: z.record(z.string()).optional()
-            .describe("Additional request headers. Note that Host and User-Agent are reserved and internally overridden.")
+            .describe("Additional HTTP headers to include in the request. Note: Host and User-Agent headers are reserved.")
     }).optional()
-        .describe("The HTTP request properties."),
-    resolver: resolverSchema.optional(),
+        .describe("Optional HTTP request properties."),
+    resolver: z.string().optional()
+        .describe("A DNS resolver to use for the query. Default: probe's system resolver."),
     port: z.number().int().min(0).max(65535).optional()
-        .describe("Port number to use. Default: 80 for HTTP, 443 for HTTPS."),
+        .describe("The port number to use. Default: 80 for HTTP, 443 for HTTPS."),
     protocol: z.enum(['HTTP', 'HTTPS', 'HTTP2']).optional()
-        .describe("Transport protocol to use. Default: HTTPS."),
+        .describe("The transport protocol to use. Default: HTTPS. If the target includes a protocol (e.g., 'http://example.com'), it will override this value."),
     ipVersion: ipVersionSchema,
 });
 

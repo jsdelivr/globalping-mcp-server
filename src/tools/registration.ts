@@ -9,6 +9,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from 'zod';
 import { handleGlobalpingRequest } from './handlers.js';
+import { DEFAULT_PROBE_LIMIT } from '../schemas.js';
 
 /**
  * Magic field location schema for tool registration
@@ -17,6 +18,12 @@ import { handleGlobalpingRequest } from './handlers.js';
 const magicLocationSchema = z.object({
     magic: z.string().describe("Fuzzy matching location string that supports any location that a logical human could enter, including countries, continents, ASNs, ISP names, AWS and GCP region names, and network ASNs. Examples: 'europe', 'japan', 'AS15169' (Google's ASN), 'north america+datacenter-network'. Combine multiple locations to filter them with + ")
 }).describe("Location for the measurement probe using smart fuzzy matching.");
+
+/**
+ * The default limit description for all tools
+ * This explains the default number of probes and max limits
+ */
+const limitDescription = `Maximum number of probes to use. Default: ${DEFAULT_PROBE_LIMIT}, Max: 500. More probes provide broader coverage but take longer to complete.`;
 
 /**
  * Registers all Globalping measurement tools with the MCP server
@@ -48,7 +55,7 @@ function registerPingTool(server: McpServer): void {
         {
             target: z.string().describe("The hostname or IP address to ping (e.g., 'example.com' or '192.168.1.1')."),
             locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
-            limit: z.number().int().min(1).max(500).optional().describe("Maximum number of probes to use. Default: 3, Max: 500."),
+            limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             packets: z.number().int().min(1).max(16).optional().describe("Number of ICMP Echo packets to send. Min: 1, Max: 16. Default: 3."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use. Only applicable for hostname targets."),
             apiToken: z.string().optional().describe("Optional Globalping API token for higher rate limits.")
@@ -69,7 +76,7 @@ function registerTracerouteTool(server: McpServer): void {
         {
             target: z.string().describe("The hostname or IP address to trace the route to (e.g., 'example.com' or '192.168.1.1')."),
             locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
-            limit: z.number().int().min(1).max(500).optional().describe("Maximum number of probes to use. Default: 3, Max: 500."),
+            limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             port: z.number().int().min(0).max(65535).optional().describe("Destination port for TCP/UDP traceroutes. Ignored for ICMP. Default: 80."),
             protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe("Protocol to use for traceroute. Default: ICMP."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use. Only applicable for hostname targets."),
@@ -91,7 +98,7 @@ function registerDnsTool(server: McpServer): void {
         {
             target: z.string().describe("The domain name to query (e.g., 'example.com'). For reverse DNS, use the IP address with PTR query type."),
             locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
-            limit: z.number().int().min(1).max(500).optional().describe("Maximum number of probes to use. Default: 3, Max: 500."),
+            limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             query: z.object({
                 type: z.enum([
                     'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 
@@ -122,7 +129,7 @@ function registerMtrTool(server: McpServer): void {
         {
             target: z.string().describe("The hostname or IP address to perform MTR to (e.g., 'example.com' or '192.168.1.1')."),
             locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
-            limit: z.number().int().min(1).max(500).optional().describe("Maximum number of probes to use. Default: 3, Max: 500."),
+            limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             port: z.number().int().min(0).max(65535).optional().describe("Destination port for TCP/UDP MTR. Ignored for ICMP. Default: 80."),
             protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe("Protocol to use for MTR. Default: ICMP."),
             packets: z.number().int().min(1).max(16).optional().describe("Number of packets to send to each hop. Min: 1, Max: 16. Default: 3."),
@@ -143,26 +150,16 @@ function registerHttpTool(server: McpServer): void {
         "globalping-http",
         "Makes HTTP/HTTPS requests from distributed probes to measure web performance worldwide. Provides detailed timing breakdown (DNS, TCP, TLS, TTFB, download), status codes, headers, and response bodies. Perfect for testing CDN effectiveness, global availability, and identifying regional performance issues.",
         {
-            target: z.string().transform(url => {
-                // Ensure URL has protocol prefix
-                if (!url.match(/^https?:\/\//)) {
-                    return `https://${url}`;
-                }
-                return url;
-            }).describe("URL to request (e.g., 'example.com' or 'https://example.com/path'). If protocol is not specified, https:// is added automatically."),
+            target: z.string()
+                .describe("URL to request (e.g., 'example.com' or 'https://example.com/path'). If a full URL is provided, the protocol and path will be extracted and used appropriately."),
             locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
-            limit: z.number().int().min(1).max(500).optional().describe("Maximum number of probes to use. Default: 3, Max: 500."),
-            request: z.object({
-                host: z.string().optional().describe("Optional override for the Host header."),
-                path: z.string().optional().describe("Path portion of the URL."),
-                query: z.string().optional().describe("Query string portion of the URL."),
-                method: z.enum(['HEAD', 'GET', 'OPTIONS']).optional().describe("HTTP method to use. Default: HEAD."),
-                headers: z.record(z.string()).optional().describe("Additional request headers. Host and User-Agent are reserved.")
-            }).optional().describe("HTTP request properties."),
-            resolver: z.string().optional().describe("Custom DNS resolver (IPv4, IPv6, or hostname). Default: probe's system resolver."),
+            limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
+            method: z.enum(['HEAD', 'GET', 'OPTIONS']).optional().describe("HTTP method to use. Default: HEAD."),
+            protocol: z.enum(['HTTP', 'HTTPS', 'HTTP2']).optional().describe("Transport protocol to use. Default: HTTPS. If the target URL includes a protocol, it will override this value."),
             port: z.number().int().min(0).max(65535).optional().describe("Port to connect to. Default: 80 for HTTP, 443 for HTTPS."),
-            protocol: z.enum(['HTTP', 'HTTPS', 'HTTP2']).optional().describe("Transport protocol to use. Default: HTTPS."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use. Only applicable for hostname targets."),
+            resolver: z.string().optional().describe("Custom DNS resolver (IPv4, IPv6, or hostname). Default: probe's system resolver."),
+            path: z.string().optional().describe("The path portion of the URL. If the target includes a path, it will override this value."),
             apiToken: z.string().optional().describe("Optional Globalping API token for higher rate limits.")
         },
         async (params) => handleGlobalpingRequest('http', params)

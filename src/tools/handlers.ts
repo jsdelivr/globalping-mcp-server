@@ -2,6 +2,8 @@
  * Globalping MCP Server Tools - Request Handlers
  * 
  * This file contains the handler functions for Globalping measurement requests.
+ * These handlers process natural language requests from MCP clients and convert them
+ * to properly formatted Globalping API requests.
  */
 
 import { 
@@ -17,7 +19,8 @@ import { safeCast, filterUndefinedValues } from './utils.js';
 import { 
     addNetworkMeasurementOptions, 
     addDnsMeasurementOptions, 
-    addHttpMeasurementOptions 
+    addHttpMeasurementOptions,
+    processLocations 
 } from './optionHandlers.js';
 
 /**
@@ -41,9 +44,11 @@ export async function handleGlobalpingRequest(
     const requestPayload: MeasurementRequest = {
         type: type,
         target: target,
-        locations: params.locations as LocationSpecification[] || undefined,
-        limit: (params.limit as number) ?? DEFAULT_PROBE_LIMIT,
+        // No need to set locations or limit here as processLocations will handle this
     };
+
+    // Apply global location processing
+    processLocations(requestPayload, params);
 
     // Process measurement-specific options
     addMeasurementOptions(requestPayload, type, params);
@@ -67,15 +72,9 @@ export async function handleGlobalpingRequest(
             };
         }
 
-        // Debug logging to inspect the actual structure of the response
-        console.error(`[MCP Tool Handler] Full result structure for ${type} measurement ${createResponse.id}:`);
-        console.error(JSON.stringify(finalResult, null, 2));
+        // Log information about the probes used
+        console.error(`[MCP Tool Handler] Measurement completed with ${createResponse.probesCount} probes (requested: ${requestPayload.limit || DEFAULT_PROBE_LIMIT})`);
         
-        if (finalResult.results && finalResult.results.length > 0) {
-            console.error(`[MCP Tool Handler] Sample probe result structure:`);
-            console.error(JSON.stringify(finalResult.results[0], null, 2));
-        }
-
         // 3. Format and return the result
         // Use the formatter module to format the result based on measurement type
         const formattedResult = formatMeasurementResult(finalResult, type, target);
@@ -83,7 +82,12 @@ export async function handleGlobalpingRequest(
         return { 
             content: [{ type: "text", text: formattedResult }], 
             isError: finalResult.status === 'failed',
-            rawData: finalResult // Store the raw measurement data for advanced processing
+            rawData: finalResult, // Store the raw measurement data for advanced processing
+            metadata: {
+                probeLimitRequested: requestPayload.limit || DEFAULT_PROBE_LIMIT,
+                probesUsed: createResponse.probesCount,
+                measurementId: createResponse.id
+            }
         };
     } catch (error) {
         console.error(`[MCP Tool Handler] Unhandled error during ${type} for ${target}:`, error);
