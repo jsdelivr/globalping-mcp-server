@@ -98,7 +98,8 @@ export interface MeasurementResponse {
     status: 'pending' | 'in-progress' | 'completed' | 'failed';
     createdAt: string;
     updatedAt: string;
-    results?: MeasurementResult[];
+    probesCount?: number;
+    results?: ProbeResult[];
     error?: {
         message: string;
         code: string;
@@ -106,7 +107,25 @@ export interface MeasurementResponse {
 }
 
 /**
+ * Structure of a single probe result
+ */
+export interface ProbeResult {
+    probeId: string;
+    result: any; // Type varies based on measurement type
+    probe: {
+        continent: string;
+        country: string;
+        region?: string;
+        city?: string;
+        asn?: number;
+        network?: string;
+        tags?: string[];
+    };
+}
+
+/**
  * Structure of a single measurement result
+ * This is a legacy type kept for backward compatibility
  */
 export interface MeasurementResult {
     probeId: string;

@@ -507,7 +507,7 @@ export function formatHttpResults(results: any[]): string {
  * @param results Array of measurement results
  * @param rawMeasurements Array of raw measurement data from Globalping API
  * @param type The measurement type used for all targets
- * @param originalQuery The original natural language query
+ * @param originalQuery The original query
  * @returns Formatted comparative analysis
  */
 export function formatComparativeResult(
@@ -1305,7 +1305,11 @@ export function formatComparativeResults(results: Record<string, any[]>, measure
         output += '  Target              Average RTT    Packet Loss\n';
         output += '  ------------------- ------------- -----------\n';
         
-        const statsByTarget: Record<string, { avg: number, loss: number, validProbes: number }> = {};
+        const statsByTarget: Record<string, { 
+            avg: number, 
+            loss: number, 
+            validProbes: number
+        }> = {};
         
         // Calculate statistics for each target
         for (const target of targets) {

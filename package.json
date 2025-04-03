@@ -35,10 +35,10 @@
         "zod": "^3"
     },
     "devDependencies": {
-        "@types/node": "^20.17.30",
+        "@types/node": "^20",
         "nodemon": "^3.1.9",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.8.2"
+        "ts-node": "^10",
+        "typescript": "^5.8"
     },
     "engines": {
         "node": ">=20"

@@ -8,7 +8,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from 'zod';
 import { handleGlobalpingRequest } from './handlers.js';
-import { registerNaturalLanguageTool } from './natural.js';
 
 /**
  * Registers all Globalping measurement tools with the MCP server
@@ -17,9 +16,6 @@ import { registerNaturalLanguageTool } from './natural.js';
  */
 export function registerGlobalpingTools(server: McpServer): void {
     console.error("[Tool Registration] Registering Globalping tools...");
-
-    // Register the natural language interface tool (main entry point for AI clients)
-  //  registerNaturalLanguageTool(server);
     
     // Register individual measurement tools for direct access
     registerPingTool(server);
