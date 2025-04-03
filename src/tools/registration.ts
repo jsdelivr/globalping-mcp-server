@@ -8,7 +8,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from 'zod';
-import { handleGlobalpingRequest } from './handlers.js';
+import { handleGlobalpingRequest, handleRateLimitCheck } from './handlers.js';
 import { DEFAULT_PROBE_LIMIT } from '../schemas.js';
 
 /**
@@ -39,6 +39,7 @@ export function registerGlobalpingTools(server: McpServer): void {
     registerDnsTool(server);
     registerMtrTool(server);
     registerHttpTool(server);
+    registerRateLimitsTool(server);
 
     console.error("[Tool Registration] Globalping tools registered.");
 }
@@ -163,5 +164,21 @@ function registerHttpTool(server: McpServer): void {
             apiToken: z.string().optional().describe("Optional Globalping API token for higher rate limits.")
         },
         async (params) => handleGlobalpingRequest('http', params)
+    );
+}
+
+/**
+ * Registers the rate limits check tool with the MCP server
+ * 
+ * @param server - The MCP server to register tools with
+ */
+function registerRateLimitsTool(server: McpServer): void {
+    server.tool(
+        "globalping-limits",
+        "Checks current Globalping API rate limits and authentication status. Shows available and remaining measurement quotas, reset time, and whether your API token is valid. Useful for troubleshooting API access issues or monitoring usage before running multiple tests.",
+        {
+            apiToken: z.string().optional().describe("Optional Globalping API token to check authentication status and higher rate limits.")
+        },
+        async (params) => handleRateLimitCheck(params)
     );
 }

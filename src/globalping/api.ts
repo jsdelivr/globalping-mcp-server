@@ -205,6 +205,22 @@ export interface MeasurementResult {
 }
 
 /**
+ * Interface for rate limits response
+ */
+export interface RateLimits {
+    measurements: {
+        limit: number;     // Total measurement limit
+        remaining: number; // Remaining measurements
+        reset: number;     // Timestamp when the limit resets
+    };
+    credits?: {
+        limit: number;     // Total credits limit (authenticated users only)
+        remaining: number; // Remaining credits
+    };
+    isAuthenticated: boolean; // Whether the request was authenticated
+}
+
+/**
  * Helper function to determine if an error is likely transient and can be retried
  * 
  * @param error - The error to check
@@ -479,4 +495,72 @@ export async function pollForResult(
         endpoint: `GET /measurements/${measurementId}`,
         retryable: false
     });
+}
+
+/**
+ * Fetches current rate limits from the Globalping API
+ * 
+ * @param apiToken - Optional Globalping API token for authentication
+ * @returns The rate limits information
+ * @throws GlobalpingApiError if the request fails
+ */
+export async function getRateLimits(apiToken?: string): Promise<RateLimits> {
+    const endpoint = `${GLOBALPING_API_URL}/limits`;
+    console.error(`[Globalping API] Fetching rate limits from ${endpoint}`);
+    
+    try {
+        const headers: Record<string, string> = {
+            'User-Agent': USER_AGENT,
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip',
+        };
+        
+        // Add authorization header if token is provided
+        if (apiToken) {
+            headers['Authorization'] = `Bearer ${apiToken}`;
+        }
+        
+        const response = await axios.get(endpoint, { headers });
+        
+        // Create a properly structured response with defaults for missing fields
+        const rateLimits: RateLimits = {
+            // Always include measurements object with defaults
+            measurements: {
+                limit: response.data.measurements?.limit || 250,
+                remaining: response.data.measurements?.remaining || 0,
+                reset: response.data.measurements?.reset || Math.floor(Date.now() / 1000) + 3600
+            },
+            
+            // Only include credits if available in the response
+            ...(response.data.credits ? { 
+                credits: {
+                    limit: response.data.credits.limit || 0,
+                    remaining: response.data.credits.remaining || 0
+                } 
+            } : {}),
+            
+            // Determine authentication status based on presence of credits
+            // and validity of the API token
+            isAuthenticated: !!response.data.credits
+        };
+        
+        return rateLimits;
+    } catch (error) {
+        // For unauthorized requests (invalid token), create a default response
+        // instead of throwing an error
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+            console.error(`[Globalping API] Unauthorized request to rate limits endpoint: Invalid API token`);
+            
+            return {
+                measurements: {
+                    limit: 250,  // Default limit for unauthenticated users
+                    remaining: 250,
+                    reset: Math.floor(Date.now() / 1000) + 3600
+                },
+                isAuthenticated: false
+            };
+        }
+        
+        throw createStructuredError(error, endpoint);
+    }
 }

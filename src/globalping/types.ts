@@ -149,3 +149,25 @@ export interface GlobalpingApiErrorResponse {
     error: string;
     message: string;
 }
+
+/**
+ * Rate limits response from the Globalping API
+ * This structure contains information about the user's current rate limits
+ */
+export interface RateLimits {
+    // Measurement limits (always present)
+    measurements?: {
+        limit?: number;      // Max number of measurements per hour
+        remaining?: number;  // Remaining measurements in the current period
+        reset?: number;      // Unix timestamp for when the limit resets
+    };
+    
+    // Credits (only present for authenticated users)
+    credits?: {
+        limit?: number;      // Total credits available
+        remaining?: number;  // Remaining credits
+    };
+    
+    // Authentication status (added by our client)
+    isAuthenticated: boolean;
+}

@@ -9,10 +9,12 @@
 import { 
     createMeasurement, 
     pollForResult,
+    getRateLimits,
     MeasurementRequest,
-    LocationSpecification
+    LocationSpecification,
+    RateLimits
 } from '../globalping/api.js';
-import { formatMeasurementResult } from '../formatter.js';
+import { formatMeasurementResult, formatRateLimits } from '../formatter.js';
 import { DEFAULT_PROBE_LIMIT } from '../schemas.js';
 import { ToolParams, ToolResult, MeasurementType } from './types.js';
 import { safeCast, filterUndefinedValues } from './utils.js';
@@ -123,5 +125,47 @@ function addMeasurementOptions(
         case 'http':
             addHttpMeasurementOptions(requestPayload, params);
             break;
+    }
+}
+
+/**
+ * Handler function for checking Globalping API rate limits
+ * Verifies authentication status and returns current rate limits
+ * 
+ * @param params - Parameters received from the MCP tool call
+ * @returns MCP CallToolResult content
+ */
+export async function handleRateLimitCheck(params: any): Promise<ToolResult> {
+    // Clean up the params object to avoid empty objects in the output
+    const cleanParams = params || {};
+    const apiToken = process.env.GLOBALPING_API_TOKEN || cleanParams.apiToken;
+    
+    console.error(`[MCP Tool Handler] Checking rate limits ${apiToken ? 'with' : 'without'} API token`);
+    
+    try {
+        // Fetch rate limits from the Globalping API
+        const rateLimits = await getRateLimits(apiToken);
+        
+        // Format the response
+        const formattedResult = formatRateLimits(rateLimits);
+        
+        // Only include non-empty metadata
+        const metadata: Record<string, any> = { 
+            isAuthenticated: rateLimits.isAuthenticated
+        };
+        
+        return { 
+            content: [{ type: "text", text: formattedResult }], 
+            isError: false,
+            rawData: rateLimits,
+            metadata
+        };
+    } catch (error) {
+        console.error(`[MCP Tool Handler] Error checking rate limits:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { 
+            content: [{ type: "text", text: `Failed to check Globalping API rate limits: ${errorMessage}` }], 
+            isError: true 
+        };
     }
 }

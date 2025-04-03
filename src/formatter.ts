@@ -614,12 +614,6 @@ function compareDnsResults(
                 // Track probe count
                 dnsMetrics[target].probeCount = (dnsMetrics[target].probeCount || 0) + 1;
                 
-                // For simple DNS queries
-                if (probe.result.time !== undefined) {
-                    totalTime += probe.result.time;
-                    timeCount++;
-                }
-                
                 // Process DNS answers
                 if (probe.result.answers && Array.isArray(probe.result.answers)) {
                     recordCount += probe.result.answers.length;
@@ -634,6 +628,12 @@ function compareDnsResults(
                             minTtl = answer.ttl;
                         }
                     }
+                }
+                
+                // Process query time if available
+                if (probe.result.timings && probe.result.timings.total !== undefined) {
+                    totalTime += probe.result.timings.total;
+                    timeCount++;
                 }
             }
         }
@@ -1357,6 +1357,58 @@ export function formatComparativeResults(results: Record<string, any[]>, measure
     } else {
         output += `Comparison for ${measurementType} measurements is not yet supported.\n`;
         output += `Please view individual measurement results instead.\n`;
+    }
+    
+    return output;
+}
+
+/**
+ * Format rate limits response into a human-readable format
+ * 
+ * @param rateLimits The rate limits response from the Globalping API
+ * @returns A formatted string representing the rate limits
+ */
+export function formatRateLimits(rateLimits: any): string {
+    if (!rateLimits) {
+        return "Failed to retrieve rate limits information.";
+    }
+
+    let output = "## Globalping API Rate Limits\n\n";
+    
+    // Authentication status
+    output += `**Authentication Status**: ${rateLimits.isAuthenticated ? '✅ Authenticated' : '❌ Not Authenticated'}\n\n`;
+    
+    // Measurements limits - ensure all fields exist
+    if (rateLimits.measurements) {
+        output += "### Measurements\n";
+        output += `- **Limit**: ${rateLimits.measurements.limit || 'Unknown'} tests per hour\n`;
+        output += `- **Remaining**: ${rateLimits.measurements.remaining || 'Unknown'} tests\n`;
+        
+        // Only add reset time if it exists
+        if (rateLimits.measurements.reset) {
+            const resetDate = new Date(rateLimits.measurements.reset * 1000);
+            const now = new Date();
+            const resetMinutes = Math.round((resetDate.getTime() - now.getTime()) / 60000);
+            output += `- **Reset**: ${resetMinutes > 0 ? `in ${resetMinutes} minutes` : 'very soon'} (${resetDate.toLocaleString()})\n`;
+        }
+        output += "\n";
+    }
+    
+    // Credits (only for authenticated users)
+    if (rateLimits.credits) {
+        output += "### Credits\n";
+        output += `- **Limit**: ${rateLimits.credits.limit || 'Unknown'} credits\n`;
+        output += `- **Remaining**: ${rateLimits.credits.remaining || 'Unknown'} credits\n\n`;
+    }
+    
+    // Rate limit information
+    output += "### Rate Limit Information\n";
+    if (rateLimits.isAuthenticated) {
+        output += "- **Authenticated Users**: 500 tests/hour, 2 requests/second/measurement\n";
+        output += "- Additional tests can be performed by spending credits\n";
+    } else {
+        output += "- **Unauthenticated Users**: 250 tests/hour, 2 requests/second/measurement\n";
+        output += "- **Tip**: Authenticate with an API token to double your hourly test limit\n";
     }
     
     return output;

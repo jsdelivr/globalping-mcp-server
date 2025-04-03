@@ -5,8 +5,8 @@
  * It re-exports all the necessary functions and types for external use.
  */
 
-// Re-export the main handler function
-export { handleGlobalpingRequest } from './handlers.js';
+// Re-export the main handler functions
+export { handleGlobalpingRequest, handleRateLimitCheck } from './handlers.js';
 
 // Re-export the tool registration function
 export { registerGlobalpingTools } from './registration.js';
