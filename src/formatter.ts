@@ -130,7 +130,6 @@ export function formatPingResults(results: any[]): string {
 
 /**
  * Format DNS results to show the resolved records
- * Handles both simple and trace mode responses
  */
 export function formatDnsResults(results: any[]): string {
     let output = '';
@@ -157,35 +156,45 @@ export function formatDnsResults(results: any[]): string {
                 
                 probe.result.answers.forEach((answer: any) => {
                     output += `  Type: ${answer.type}, TTL: ${answer.ttl}\n`;
-                    output += `  Data: ${answer.data}\n\n`;
+                    output += `  Name: ${answer.name}\n`;
+                    output += `  Value: ${answer.value}\n\n`;
                 });
                 
                 // Show query time if available
-                if (probe.result.time !== undefined) {
-                    output += `  Query Time: ${probe.result.time}ms\n`;
+                if (probe.result.timings && probe.result.timings.total !== undefined) {
+                    output += `  Query Time: ${probe.result.timings.total}ms\n`;
+                }
+                
+                // Show status code if available
+                if (probe.result.statusCode !== undefined) {
+                    output += `  Status Code: ${probe.result.statusCode} (${probe.result.statusCodeName || 'Unknown'})\n`;
+                }
+                
+                // Show the resolver used if available
+                if (probe.result.resolver) {
+                    output += `  Resolver: ${probe.result.resolver}\n`;
                 }
             } else if (probe.result.hops && Array.isArray(probe.result.hops)) {
                 // Trace (recursive) mode - show each resolver step
                 output += `  DNS Trace (Recursive Query):\n`;
-                output += `  Server               RTT      Status   Answers\n`;
-                output += `  ------------------- -------- --------- ---------------\n`;
+                output += `  Server               RTT      Answers\n`;
+                output += `  ------------------- -------- ---------------\n`;
                 
                 probe.result.hops.forEach((hop: any) => {
                     const server = (hop.resolver || '*').padEnd(19);
-                    const rtt = (hop.rtt !== undefined ? `${hop.rtt}ms` : '*').padEnd(8);
-                    const status = (hop.status || 'unknown').padEnd(9);
+                    const rtt = (hop.timings && hop.timings.total !== undefined ? `${hop.timings.total}ms` : '*').padEnd(8);
                     
-                    output += `  ${server} ${rtt} ${status} `;
+                    output += `  ${server} ${rtt} `;
                     
                     if (hop.answers && Array.isArray(hop.answers) && hop.answers.length > 0) {
                         // For the first line, add the first answer
                         const firstAnswer = hop.answers[0];
-                        output += `${firstAnswer.type}: ${firstAnswer.data}\n`;
+                        output += `${firstAnswer.type}: ${firstAnswer.value}\n`;
                         
                         // For subsequent answers, indent and add each one
                         for (let i = 1; i < hop.answers.length; i++) {
                             const answer = hop.answers[i];
-                            output += `  ${' '.repeat(19 + 8 + 9)} ${answer.type}: ${answer.data}\n`;
+                            output += `  ${' '.repeat(19 + 8)} ${answer.type}: ${answer.value}\n`;
                         }
                     } else {
                         output += 'No records\n';
@@ -193,16 +202,6 @@ export function formatDnsResults(results: any[]): string {
                 });
             } else {
                 output += `  No DNS records available\n`;
-            }
-            
-            // Show query details if available
-            if (probe.result.query) {
-                output += `  Query: ${probe.result.query.type} ${probe.result.query.name}\n`;
-            }
-            
-            // Show the resolver used if available
-            if (probe.result.resolver) {
-                output += `  Resolver: ${probe.result.resolver}\n`;
             }
         } else {
             const status = probe.result ? probe.result.status : 'unknown';
@@ -240,23 +239,39 @@ export function formatTracerouteResults(results: any[]): string {
         
         if (probe.result && probe.result.status === 'finished') {
             if (probe.result.hops && Array.isArray(probe.result.hops)) {
-                output += `  Hop  IP Address        RTT     AS Number  Location\n`;
-                output += `  ---- ---------------- ------- ----------- -----------------\n`;
+                output += `  Hop  IP Address        RTT     Hostname\n`;
+                output += `  ---- ---------------- ------- -----------------------------\n`;
                 
-                probe.result.hops.forEach((hop: any) => {
-                    const hopNum = hop.hop.toString().padEnd(4);
+                probe.result.hops.forEach((hop: any, hopIndex: number) => {
+                    const hopNum = (hopIndex + 1).toString().padEnd(4);
                     const ip = (hop.resolvedAddress || '*').padEnd(16);
-                    const rtt = (hop.rtt !== undefined ? `${hop.rtt}ms` : '*').padEnd(7);
-                    const asn = (hop.asn || '').toString().padEnd(11);
-                    const location = hop.location ? `${hop.location.city || ''}, ${hop.location.country || ''}` : '';
                     
-                    output += `  ${hopNum} ${ip} ${rtt} ${asn} ${location}\n`;
+                    // Get RTT from the timings array if available
+                    let rttValue = '*';
+                    if (hop.timings && hop.timings.length > 0 && hop.timings[0].rtt !== undefined) {
+                        rttValue = `${hop.timings[0].rtt}ms`;
+                    }
+                    const rtt = rttValue.padEnd(7);
+                    
+                    const hostname = hop.resolvedHostname || '';
+                    
+                    output += `  ${hopNum} ${ip} ${rtt} ${hostname}\n`;
                 });
+                
+                // If we have ASPath information, display it
+                if (probe.result.asPath && Array.isArray(probe.result.asPath)) {
+                    output += `\n  AS Path: `;
+                    probe.result.asPath.forEach((asInfo: any, i: number) => {
+                        if (i > 0) output += " → ";
+                        output += `AS${asInfo.asn} (${asInfo.name || 'Unknown'})`;
+                    });
+                    output += '\n';
+                }
             } else {
                 output += `  No hop information available\n`;
             }
             
-            // Show resolved address information if available
+            // Show resolved target information if available
             if (probe.result.resolvedAddress) {
                 output += `  Resolved Target Address: ${probe.result.resolvedAddress}`;
                 if (probe.result.resolvedHostname) {
@@ -303,32 +318,34 @@ export function formatMtrResults(results: any[]): string {
                 output += `  Hop  IP Address        Loss%   Sent  Recv  Best  Avg   Worst  StdDev\n`;
                 output += `  ---- ---------------- ------ ----- ----- ----- ----- ----- -------\n`;
                 
-                probe.result.hops.forEach((hop: any) => {
-                    const hopNum = hop.hop.toString().padEnd(4);
+                probe.result.hops.forEach((hop: any, hopIndex: number) => {
+                    const hopNum = (hopIndex + 1).toString().padEnd(4);
                     const ip = (hop.resolvedAddress || '*').padEnd(16);
                     
-                    // Stats fields may be nested under a stats object
+                    // Stats fields from the API response
                     const stats = hop.stats || {};
                     const loss = (stats.loss !== undefined ? `${stats.loss}%` : '*').padEnd(6);
-                    const sent = (stats.sent || '*').toString().padEnd(5);
+                    const sent = (stats.total || '*').toString().padEnd(5);
                     const recv = (stats.rcv || '*').toString().padEnd(5);
                     const best = (stats.min !== undefined ? `${stats.min}ms` : '*').padEnd(5);
                     const avg = (stats.avg !== undefined ? `${stats.avg}ms` : '*').padEnd(5);
                     const worst = (stats.max !== undefined ? `${stats.max}ms` : '*').padEnd(5);
-                    const stdDev = (stats.mdev !== undefined ? `${stats.mdev}ms` : '*').padEnd(7);
+                    const stdDev = (stats.stDev !== undefined ? `${stats.stDev}ms` : '*').padEnd(7);
                     
                     output += `  ${hopNum} ${ip} ${loss} ${sent} ${recv} ${best} ${avg} ${worst} ${stdDev}\n`;
                 });
                 
-                // If we have ASPath information, display it
-                if (probe.result.asPath && Array.isArray(probe.result.asPath)) {
-                    output += `\n  AS Path: `;
-                    probe.result.asPath.forEach((asInfo: any, i: number) => {
-                        if (i > 0) output += " → ";
-                        output += `AS${asInfo.asn} (${asInfo.name || 'Unknown'})`;
-                    });
-                    output += '\n';
-                }
+                // Show ASN information if available
+                probe.result.hops.forEach((hop: any, hopIndex: number) => {
+                    if (hop.asn && hop.asn.length > 0) {
+                        output += `  Hop ${hopIndex + 1} ASN: `;
+                        hop.asn.forEach((asn: number, i: number) => {
+                            if (i > 0) output += ", ";
+                            output += `AS${asn}`;
+                        });
+                        output += '\n';
+                    }
+                });
             } else {
                 output += `  No hop information available\n`;
             }
@@ -377,59 +394,77 @@ export function formatHttpResults(results: any[]): string {
         
         if (probe.result && probe.result.status === 'finished') {
             const statusCode = probe.result.statusCode || 'Unknown';
-            const totalTime = probe.result.timings?.total || 'Unknown';
+            const statusCodeName = probe.result.statusCodeName || '';
             
-            output += `  Status Code: ${statusCode}\n`;
-            output += `  Total Time: ${totalTime}ms\n`;
+            output += `  Status Code: ${statusCode} ${statusCodeName ? `(${statusCodeName})` : ''}\n`;
             
-            // Output protocol version
-            if (probe.result.protocol) {
-                output += `  Protocol: ${probe.result.protocol}\n`;
-            }
-            
-            // Output timings with correct field names
+            // Output timings with correct field names from the API structure
             if (probe.result.timings) {
-                output += `  Timing Breakdown:\n`;
-                output += `    DNS Lookup: ${probe.result.timings.dns || 0}ms\n`;
-                output += `    TCP Connection: ${probe.result.timings.connect || 0}ms\n`;
-                output += `    TLS Handshake: ${probe.result.timings.tls || 0}ms\n`;
-                output += `    Time to First Byte: ${probe.result.timings.firstByte || 0}ms\n`;
-                output += `    Download: ${probe.result.timings.download || 0}ms\n`;
+                output += `  Timing Details:\n`;
+                output += `    Total: ${probe.result.timings.total || 0}ms\n`;
+                
+                if (probe.result.timings.dns !== undefined) {
+                    output += `    DNS Lookup: ${probe.result.timings.dns}ms\n`;
+                }
+                
+                if (probe.result.timings.tcp !== undefined) {
+                    output += `    TCP Connection: ${probe.result.timings.tcp}ms\n`;
+                }
+                
+                if (probe.result.timings.tls !== undefined) {
+                    output += `    TLS Handshake: ${probe.result.timings.tls}ms\n`;
+                }
+                
+                if (probe.result.timings.firstByte !== undefined) {
+                    output += `    Time to First Byte: ${probe.result.timings.firstByte}ms\n`;
+                }
+                
+                if (probe.result.timings.download !== undefined) {
+                    output += `    Download: ${probe.result.timings.download}ms\n`;
+                }
             }
             
             // Show TLS certificate information if available
             if (probe.result.tls) {
                 output += `  TLS Information:\n`;
-                if (probe.result.tls.established) {
-                    output += `    TLS Established: Yes\n`;
-                    
-                    if (probe.result.tls.protocol) {
-                        output += `    Protocol: ${probe.result.tls.protocol}\n`;
+                output += `    Protocol: ${probe.result.tls.protocol || 'Unknown'}\n`;
+                output += `    Cipher: ${probe.result.tls.cipherName || 'Unknown'}\n`;
+                output += `    Certificate Authorized: ${probe.result.tls.authorized ? 'Yes' : 'No'}\n`;
+                
+                if (probe.result.tls.error) {
+                    output += `    TLS Error: ${probe.result.tls.error}\n`;
+                }
+                
+                // Format certificate dates
+                if (probe.result.tls.createdAt && probe.result.tls.expiresAt) {
+                    output += `    Created: ${probe.result.tls.createdAt}\n`;
+                    output += `    Expires: ${probe.result.tls.expiresAt}\n`;
+                }
+                
+                // Certificate details
+                if (probe.result.tls.subject) {
+                    output += `    Subject: `;
+                    if (probe.result.tls.subject.CN) {
+                        output += `CN=${probe.result.tls.subject.CN}`;
                     }
-                    
-                    if (probe.result.tls.cipher) {
-                        output += `    Cipher: ${probe.result.tls.cipher}\n`;
+                    if (probe.result.tls.subject.alt) {
+                        output += `, alt=${probe.result.tls.subject.alt}`;
                     }
-                    
-                    // Certificate details
-                    if (probe.result.tls.certificate) {
-                        const cert = probe.result.tls.certificate;
-                        output += `    Certificate Subject: ${cert.subject || 'Unknown'}\n`;
-                        output += `    Certificate Issuer: ${cert.issuer || 'Unknown'}\n`;
-                        
-                        // Format dates for better readability
-                        if (cert.validFrom && cert.validTo) {
-                            const validFrom = new Date(cert.validFrom).toLocaleString();
-                            const validTo = new Date(cert.validTo).toLocaleString();
-                            output += `    Valid From: ${validFrom}\n`;
-                            output += `    Valid To: ${validTo}\n`;
-                        }
-                    }
-                } else {
-                    output += `    TLS Established: No\n`;
-                    if (probe.result.tls.error) {
-                        output += `    TLS Error: ${probe.result.tls.error}\n`;
-                    }
+                    output += `\n`;
+                }
+                
+                if (probe.result.tls.issuer) {
+                    output += `    Issuer: `;
+                    const issuerParts = [];
+                    if (probe.result.tls.issuer.C) issuerParts.push(`C=${probe.result.tls.issuer.C}`);
+                    if (probe.result.tls.issuer.O) issuerParts.push(`O=${probe.result.tls.issuer.O}`);
+                    if (probe.result.tls.issuer.CN) issuerParts.push(`CN=${probe.result.tls.issuer.CN}`);
+                    output += issuerParts.join(', ');
+                    output += `\n`;
+                }
+                
+                if (probe.result.tls.keyType) {
+                    output += `    Key Type: ${probe.result.tls.keyType} (${probe.result.tls.keyBits || 'Unknown'} bits)\n`;
                 }
             }
             
@@ -443,20 +478,18 @@ export function formatHttpResults(results: any[]): string {
             
             // Show resolved address information if available
             if (probe.result.resolvedAddress) {
-                output += `  Resolved Address: ${probe.result.resolvedAddress}`;
-                if (probe.result.resolvedHostname) {
-                    output += ` (${probe.result.resolvedHostname})`;
-                }
-                output += `\n`;
+                output += `  Resolved Address: ${probe.result.resolvedAddress}\n`;
+            }
+            
+            // Show if the body was truncated
+            if (probe.result.truncated) {
+                output += `  Note: Response body was truncated due to size constraints\n`;
             }
         } else {
             const status = probe.result ? probe.result.status : 'unknown';
             output += `  Test ${status}\n`;
             if (probe.result && probe.result.rawOutput) {
                 output += `  Raw output: ${probe.result.rawOutput}\n`;
-            }
-            if (probe.result && probe.result.errorMessage) {
-                output += `  Error: ${probe.result.errorMessage}\n`;
             }
         }
         
@@ -502,18 +535,14 @@ export function formatComparativeResult(
         // For ping, compare min/avg/max RTT and packet loss
         analysisText += comparePingResults(targets, results);
     } else if (type === 'dns') {
-        // For DNS, just present the results side by side
-        analysisText += `DNS comparison not available in comparative format.\n\n`;
-        analysisText += `Individual results:\n\n`;
-        
-        for (let i = 0; i < targets.length; i++) {
-            analysisText += `### ${targets[i]}\n`;
-            const contentItem = results[i].content[0];
-            if (contentItem.type === "text") {
-                analysisText += contentItem.text;
-            }
-            analysisText += '\n\n';
-        }
+        // For DNS, compare resolution times and record types
+        analysisText += compareDnsResults(targets, results, rawMeasurements);
+    } else if (type === 'traceroute') {
+        // For traceroute, compare path length, route differences, and RTT
+        analysisText += compareTracerouteResults(targets, results, rawMeasurements);
+    } else if (type === 'mtr') {
+        // For MTR, compare path metrics and packet loss patterns
+        analysisText += compareMtrResults(targets, results, rawMeasurements);
     } else {
         // For other types, just present the results side by side
         analysisText += `Detailed comparison not available for ${type} measurements.\n\n`;
@@ -536,17 +565,492 @@ export function formatComparativeResult(
 }
 
 /**
+ * Compares DNS resolution results between multiple targets
+ * 
+ * This function analyzes DNS resolution times, record types, and 
+ * TTL values to provide insights into comparative resolution performance.
+ * 
+ * @param targets Array of domain names that were measured
+ * @param results Array of measurement tool results
+ * @param rawMeasurements Array of raw measurement data from Globalping API
+ * @returns Formatted comparison text
+ */
+function compareDnsResults(
+    targets: string[],
+    results: ToolResult[],
+    rawMeasurements: any[]
+): string {
+    let output = "### DNS Resolution Comparison\n\n";
+    
+    // Extract average DNS resolution times for each target
+    const dnsMetrics: Record<string, { 
+        avgTime?: number, 
+        recordCount?: number,
+        recordTypes?: Set<string>,
+        minTtl?: number,
+        probeCount?: number
+    }> = {};
+    
+    // Process each target's raw measurements
+    for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        const rawData = rawMeasurements[i];
+        
+        dnsMetrics[target] = { recordTypes: new Set<string>() };
+        
+        // Skip if no raw data is available
+        if (!rawData || !rawData.results || !Array.isArray(rawData.results)) {
+            continue;
+        }
+        
+        let totalTime = 0;
+        let timeCount = 0;
+        let recordCount = 0;
+        let minTtl = Infinity;
+        
+        // Process each probe's results
+        for (const probe of rawData.results) {
+            if (probe.result && probe.result.status === 'finished') {
+                // Track probe count
+                dnsMetrics[target].probeCount = (dnsMetrics[target].probeCount || 0) + 1;
+                
+                // For simple DNS queries
+                if (probe.result.time !== undefined) {
+                    totalTime += probe.result.time;
+                    timeCount++;
+                }
+                
+                // Process DNS answers
+                if (probe.result.answers && Array.isArray(probe.result.answers)) {
+                    recordCount += probe.result.answers.length;
+                    
+                    // Track record types and TTL values
+                    for (const answer of probe.result.answers) {
+                        if (answer.type) {
+                            dnsMetrics[target].recordTypes?.add(answer.type);
+                        }
+                        
+                        if (answer.ttl !== undefined && answer.ttl < minTtl) {
+                            minTtl = answer.ttl;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Calculate average time if available
+        if (timeCount > 0) {
+            dnsMetrics[target].avgTime = totalTime / timeCount;
+        }
+        
+        // Store record count and min TTL
+        dnsMetrics[target].recordCount = recordCount;
+        dnsMetrics[target].minTtl = minTtl !== Infinity ? minTtl : undefined;
+    }
+    
+    // Compare resolution times
+    output += "#### DNS Resolution Times\n\n";
+    output += "| Target | Avg. Resolution Time | Record Count | Min TTL | Record Types |\n";
+    output += "|--------|----------------------|--------------|---------|-------------|\n";
+    
+    for (const target of targets) {
+        const metrics = dnsMetrics[target];
+        const avgTime = metrics.avgTime !== undefined ? `${metrics.avgTime.toFixed(2)}ms` : 'N/A';
+        const recordCount = metrics.recordCount !== undefined ? metrics.recordCount : 'N/A';
+        const minTtl = metrics.minTtl !== undefined ? metrics.minTtl : 'N/A';
+        const recordTypes = metrics.recordTypes ? Array.from(metrics.recordTypes).join(', ') : 'N/A';
+        
+        output += `| ${target} | ${avgTime} | ${recordCount} | ${minTtl} | ${recordTypes} |\n`;
+    }
+    
+    // Add comparative analysis
+    output += "\n#### Analysis\n\n";
+    
+    // Determine the fastest resolving domain
+    if (targets.length > 1) {
+        const validTargets = targets.filter(t => dnsMetrics[t].avgTime !== undefined);
+        
+        if (validTargets.length > 1) {
+            validTargets.sort((a, b) => {
+                const timeA = dnsMetrics[a].avgTime || Infinity;
+                const timeB = dnsMetrics[b].avgTime || Infinity;
+                return timeA - timeB;
+            });
+            
+            output += `- **${validTargets[0]}** has the fastest average DNS resolution time (${dnsMetrics[validTargets[0]].avgTime?.toFixed(2)}ms).\n`;
+            
+            // If there's a significant difference (>20% between fastest and slowest), highlight it
+            const fastest = dnsMetrics[validTargets[0]].avgTime || 0;
+            const slowest = dnsMetrics[validTargets[validTargets.length - 1]].avgTime || 0;
+            
+            if (fastest > 0 && (slowest - fastest) / fastest > 0.2) {
+                output += `- **${validTargets[validTargets.length - 1]}** is approximately ${((slowest / fastest) - 1).toFixed(1)}x slower to resolve.\n`;
+            }
+        }
+    }
+    
+    // Add individual results for reference
+    output += "\n### Individual DNS Results\n\n";
+    for (let i = 0; i < targets.length; i++) {
+        output += `#### ${targets[i]}\n`;
+        const contentItem = results[i].content[0];
+        if (contentItem.type === "text") {
+            // Extract just the results part to avoid cluttering
+            const lines = contentItem.text.split('\n');
+            const resultsStart = lines.findIndex(line => line.includes('DNS Records:'));
+            if (resultsStart !== -1) {
+                output += lines.slice(resultsStart).join('\n');
+            } else {
+                output += contentItem.text;
+            }
+        }
+        output += '\n\n';
+    }
+    
+    return output;
+}
+
+/**
+ * Compares traceroute results between multiple targets
+ * 
+ * This function analyzes network paths, highlighting differences in hop counts,
+ * latencies, and route overlaps to provide insights into network routing.
+ * 
+ * @param targets Array of targets that were measured
+ * @param results Array of measurement tool results
+ * @param rawMeasurements Array of raw measurement data from Globalping API
+ * @returns Formatted comparison text
+ */
+function compareTracerouteResults(
+    targets: string[],
+    results: ToolResult[],
+    rawMeasurements: any[]
+): string {
+    let output = "### Traceroute Path Comparison\n\n";
+    
+    // Extract key metrics for each target
+    const pathMetrics: Record<string, { 
+        avgHops?: number,
+        avgRtt?: number,
+        maxRtt?: number,
+        unreachable?: number,
+        probeCount?: number
+    }> = {};
+    
+    // Process each target's raw measurements
+    for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        const rawData = rawMeasurements[i];
+        
+        pathMetrics[target] = {};
+        
+        // Skip if no raw data is available
+        if (!rawData || !rawData.results || !Array.isArray(rawData.results)) {
+            continue;
+        }
+        
+        let totalHops = 0;
+        let hopCount = 0;
+        let totalEndRtt = 0;
+        let endRttCount = 0;
+        let maxRtt = 0;
+        let unreachableCount = 0;
+        
+        // Process each probe's results
+        for (const probe of rawData.results) {
+            if (probe.result && probe.result.status === 'finished') {
+                // Track probe count
+                pathMetrics[target].probeCount = (pathMetrics[target].probeCount || 0) + 1;
+                
+                // Process hop data
+                if (probe.result.hops && Array.isArray(probe.result.hops)) {
+                    const hops = probe.result.hops;
+                    totalHops += hops.length;
+                    hopCount++;
+                    
+                    // Check last hop RTT if available
+                    const lastHop = hops[hops.length - 1];
+                    if (lastHop && lastHop.rtt !== undefined && lastHop.rtt !== null) {
+                        totalEndRtt += lastHop.rtt;
+                        endRttCount++;
+                        
+                        if (lastHop.rtt > maxRtt) {
+                            maxRtt = lastHop.rtt;
+                        }
+                    }
+                    
+                    // Count unreachable hops
+                    for (const hop of hops) {
+                        if (hop.status === 'unreachable' || (!hop.rtt && hop.status !== 'success')) {
+                            unreachableCount++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Calculate averages
+        if (hopCount > 0) {
+            pathMetrics[target].avgHops = totalHops / hopCount;
+        }
+        
+        if (endRttCount > 0) {
+            pathMetrics[target].avgRtt = totalEndRtt / endRttCount;
+        }
+        
+        // Store max RTT and unreachable counts
+        pathMetrics[target].maxRtt = maxRtt || undefined;
+        pathMetrics[target].unreachable = unreachableCount;
+    }
+    
+    // Compare path metrics
+    output += "#### Network Path Summary\n\n";
+    output += "| Target | Avg. Hop Count | Avg. End-to-End RTT | Max RTT | Unreachable Hops |\n";
+    output += "|--------|---------------|---------------------|---------|----------------|\n";
+    
+    for (const target of targets) {
+        const metrics = pathMetrics[target];
+        const avgHops = metrics.avgHops !== undefined ? metrics.avgHops.toFixed(1) : 'N/A';
+        const avgRtt = metrics.avgRtt !== undefined ? `${metrics.avgRtt.toFixed(2)}ms` : 'N/A';
+        const maxRtt = metrics.maxRtt !== undefined ? `${metrics.maxRtt.toFixed(2)}ms` : 'N/A';
+        const unreachable = metrics.unreachable !== undefined ? metrics.unreachable : 'N/A';
+        
+        output += `| ${target} | ${avgHops} | ${avgRtt} | ${maxRtt} | ${unreachable} |\n`;
+    }
+    
+    // Add comparative analysis
+    output += "\n#### Analysis\n\n";
+    
+    // Determine the target with the shortest path
+    if (targets.length > 1) {
+        const validTargets = targets.filter(t => pathMetrics[t].avgHops !== undefined);
+        
+        if (validTargets.length > 1) {
+            validTargets.sort((a, b) => {
+                const hopsA = pathMetrics[a].avgHops || Infinity;
+                const hopsB = pathMetrics[b].avgHops || Infinity;
+                return hopsA - hopsB;
+            });
+            
+            output += `- **${validTargets[0]}** has the shortest average network path (${pathMetrics[validTargets[0]].avgHops?.toFixed(1)} hops).\n`;
+            
+            // Sort by end-to-end latency
+            validTargets.sort((a, b) => {
+                const rttA = pathMetrics[a].avgRtt || Infinity;
+                const rttB = pathMetrics[b].avgRtt || Infinity;
+                return rttA - rttB;
+            });
+            
+            if (pathMetrics[validTargets[0]].avgRtt !== undefined) {
+                output += `- **${validTargets[0]}** has the lowest average end-to-end latency (${pathMetrics[validTargets[0]].avgRtt?.toFixed(2)}ms).\n`;
+            }
+        }
+    }
+    
+    // Add individual results for reference
+    output += "\n### Individual Traceroute Results\n\n";
+    for (let i = 0; i < targets.length; i++) {
+        output += `#### ${targets[i]}\n`;
+        const contentItem = results[i].content[0];
+        if (contentItem.type === "text") {
+            output += contentItem.text;
+        }
+        output += '\n\n';
+    }
+    
+    return output;
+}
+
+/**
+ * Compares MTR results between multiple targets
+ * 
+ * This function analyzes MTR data to compare network path reliability and performance,
+ * highlighting differences in packet loss patterns and latency consistency.
+ * 
+ * @param targets Array of targets that were measured
+ * @param results Array of measurement tool results
+ * @param rawMeasurements Array of raw measurement data from Globalping API
+ * @returns Formatted comparison text
+ */
+function compareMtrResults(
+    targets: string[],
+    results: ToolResult[],
+    rawMeasurements: any[]
+): string {
+    let output = "### MTR Path Analysis Comparison\n\n";
+    
+    // Extract key metrics for each target
+    const mtrMetrics: Record<string, { 
+        avgLoss?: number,
+        worstLoss?: number,
+        avgLastHopRtt?: number,
+        jitter?: number,
+        probeCount?: number
+    }> = {};
+    
+    // Process each target's raw measurements
+    for (let i = 0; i < targets.length; i++) {
+        const target = targets[i];
+        const rawData = rawMeasurements[i];
+        
+        mtrMetrics[target] = {};
+        
+        // Skip if no raw data is available
+        if (!rawData || !rawData.results || !Array.isArray(rawData.results)) {
+            continue;
+        }
+        
+        let totalLoss = 0;
+        let lossCount = 0;
+        let worstLoss = 0;
+        let totalLastHopRtt = 0;
+        let lastHopRttCount = 0;
+        let minRtt = Infinity;
+        let maxRtt = 0;
+        
+        // Process each probe's results
+        for (const probe of rawData.results) {
+            if (probe.result && probe.result.status === 'finished') {
+                // Track probe count
+                mtrMetrics[target].probeCount = (mtrMetrics[target].probeCount || 0) + 1;
+                
+                // Process MTR data
+                if (probe.result.hops && Array.isArray(probe.result.hops)) {
+                    const hops = probe.result.hops;
+                    
+                    // Find the worst loss percentage across the path
+                    for (const hop of hops) {
+                        if (hop.loss !== undefined) {
+                            totalLoss += hop.loss;
+                            lossCount++;
+                            
+                            if (hop.loss > worstLoss) {
+                                worstLoss = hop.loss;
+                            }
+                        }
+                    }
+                    
+                    // Check last hop RTT statistics
+                    const lastHop = hops[hops.length - 1];
+                    if (lastHop && lastHop.avg !== undefined) {
+                        totalLastHopRtt += lastHop.avg;
+                        lastHopRttCount++;
+                        
+                        // Calculate jitter data
+                        if (lastHop.best !== undefined && lastHop.best < minRtt) {
+                            minRtt = lastHop.best;
+                        }
+                        
+                        if (lastHop.worst !== undefined && lastHop.worst > maxRtt) {
+                            maxRtt = lastHop.worst;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Calculate averages
+        if (lossCount > 0) {
+            mtrMetrics[target].avgLoss = totalLoss / lossCount;
+        }
+        
+        if (lastHopRttCount > 0) {
+            mtrMetrics[target].avgLastHopRtt = totalLastHopRtt / lastHopRttCount;
+        }
+        
+        // Store worst loss and jitter
+        mtrMetrics[target].worstLoss = worstLoss;
+        
+        // Calculate jitter if we have min and max RTT
+        if (minRtt !== Infinity && maxRtt > 0) {
+            mtrMetrics[target].jitter = maxRtt - minRtt;
+        }
+    }
+    
+    // Compare MTR metrics
+    output += "#### MTR Performance Summary\n\n";
+    output += "| Target | Avg. Packet Loss | Worst Loss | Avg. End-to-End RTT | RTT Jitter |\n";
+    output += "|--------|-----------------|------------|---------------------|------------|\n";
+    
+    for (const target of targets) {
+        const metrics = mtrMetrics[target];
+        const avgLoss = metrics.avgLoss !== undefined ? `${metrics.avgLoss.toFixed(2)}%` : 'N/A';
+        const worstLoss = metrics.worstLoss !== undefined ? `${metrics.worstLoss.toFixed(2)}%` : 'N/A';
+        const avgRtt = metrics.avgLastHopRtt !== undefined ? `${metrics.avgLastHopRtt.toFixed(2)}ms` : 'N/A';
+        const jitter = metrics.jitter !== undefined ? `${metrics.jitter.toFixed(2)}ms` : 'N/A';
+        
+        output += `| ${target} | ${avgLoss} | ${worstLoss} | ${avgRtt} | ${jitter} |\n`;
+    }
+    
+    // Add comparative analysis
+    output += "\n#### Analysis\n\n";
+    
+    // Determine the target with the best network reliability
+    if (targets.length > 1) {
+        const validTargets = targets.filter(t => mtrMetrics[t].avgLoss !== undefined);
+        
+        if (validTargets.length > 1) {
+            // Sort by average packet loss
+            validTargets.sort((a, b) => {
+                const lossA = mtrMetrics[a].avgLoss || Infinity;
+                const lossB = mtrMetrics[b].avgLoss || Infinity;
+                return lossA - lossB;
+            });
+            
+            output += `- **${validTargets[0]}** has the lowest average packet loss (${mtrMetrics[validTargets[0]].avgLoss?.toFixed(2)}%).\n`;
+            
+            // Sort by end-to-end latency
+            validTargets.sort((a, b) => {
+                const rttA = mtrMetrics[a].avgLastHopRtt || Infinity;
+                const rttB = mtrMetrics[b].avgLastHopRtt || Infinity;
+                return rttA - rttB;
+            });
+            
+            if (mtrMetrics[validTargets[0]].avgLastHopRtt !== undefined) {
+                output += `- **${validTargets[0]}** has the lowest average RTT (${mtrMetrics[validTargets[0]].avgLastHopRtt?.toFixed(2)}ms).\n`;
+            }
+            
+            // Sort by jitter (lower is better)
+            validTargets.sort((a, b) => {
+                const jitterA = mtrMetrics[a].jitter || Infinity;
+                const jitterB = mtrMetrics[b].jitter || Infinity;
+                return jitterA - jitterB;
+            });
+            
+            if (mtrMetrics[validTargets[0]].jitter !== undefined) {
+                output += `- **${validTargets[0]}** has the most consistent latency (jitter: ${mtrMetrics[validTargets[0]].jitter?.toFixed(2)}ms).\n`;
+            }
+        }
+    }
+    
+    // Add individual results for reference
+    output += "\n### Individual MTR Results\n\n";
+    for (let i = 0; i < targets.length; i++) {
+        output += `#### ${targets[i]}\n`;
+        const contentItem = results[i].content[0];
+        if (contentItem.type === "text") {
+            output += contentItem.text;
+        }
+        output += '\n\n';
+    }
+    
+    return output;
+}
+
+/**
  * Compares HTTP results between multiple targets
+ * 
+ * This function analyzes HTTP performance metrics including time to first byte,
+ * total load time, SSL handshake time, and HTTP status codes.
  * 
  * @param targets Array of targets that were measured
  * @param rawMeasurements Array of raw measurement data from Globalping API
  * @returns Formatted comparison text
  */
 function compareHttpResults(targets: string[], rawMeasurements: any[]): string {
-    let output = `### HTTP Performance Comparison\n\n`;
-    output += `| Target | Status | TTFB (avg) | Total Time (avg) | Success Rate |\n`;
-    output += `|--------|--------|------------|-----------------|-------------|\n`;
-
+    let output = "### HTTP Performance Comparison\n\n";
+    
+    // Extract performance metrics from each result
     const performanceData: Array<{
         target: string;
         ttfb: number;
@@ -555,7 +1059,7 @@ function compareHttpResults(targets: string[], rawMeasurements: any[]): string {
         statusCode: number;
     }> = [];
 
-    // Extract performance metrics from each result
+    // Process each target's raw measurements
     for (let i = 0; i < targets.length; i++) {
         try {
             // Use the raw measurement data directly
@@ -664,12 +1168,14 @@ function compareHttpResults(targets: string[], rawMeasurements: any[]): string {
 /**
  * Compares ping results between multiple targets
  * 
+ * This function analyzes ping performance metrics including min/avg/max RTT and packet loss.
+ * 
  * @param targets Array of targets that were measured
  * @param results Array of measurement results
  * @returns Formatted comparison text
  */
 function comparePingResults(targets: string[], results: ToolResult[]): string {
-    let output = `### Ping Latency Comparison\n\n`;
+    let output = "### Ping Latency Comparison\n\n";
     output += `| Target | Min | Avg | Max | Packet Loss |\n`;
     output += `|--------|-----|-----|-----|-------------|\n`;
 
@@ -736,5 +1242,118 @@ function comparePingResults(targets: string[], results: ToolResult[]): string {
         output += `This makes it ${latencyDifferences.join(', ')}.\n\n`;
     }
 
+    return output;
+}
+
+/**
+ * Formats results for comparative analysis of multiple targets
+ * Used for queries like "Which site is faster?"
+ */
+export function formatComparativeResults(results: Record<string, any[]>, measurementType: string): string {
+    let output = '';
+    
+    if (!results || Object.keys(results).length === 0) {
+        return 'No comparison results available.';
+    }
+    
+    const targets = Object.keys(results);
+    
+    if (measurementType.toLowerCase() === 'http') {
+        output += 'HTTP Response Time Comparison:\n\n';
+        output += '  Target              Average Total Time\n';
+        output += '  ------------------- -----------------\n';
+        
+        const averagesByTarget: Record<string, { time: number, count: number }> = {};
+        
+        // Calculate averages for each target
+        for (const target of targets) {
+            averagesByTarget[target] = { time: 0, count: 0 };
+            
+            for (const probe of results[target]) {
+                if (probe.result && 
+                    probe.result.status === 'finished' && 
+                    probe.result.timings && 
+                    probe.result.timings.total !== undefined) {
+                    averagesByTarget[target].time += probe.result.timings.total;
+                    averagesByTarget[target].count += 1;
+                }
+            }
+        }
+        
+        // Sort targets by average time (fastest first)
+        const sortedTargets = [...targets].sort((a, b) => {
+            const avgA = averagesByTarget[a].count > 0 ? averagesByTarget[a].time / averagesByTarget[a].count : Infinity;
+            const avgB = averagesByTarget[b].count > 0 ? averagesByTarget[b].time / averagesByTarget[b].count : Infinity;
+            return avgA - avgB;
+        });
+        
+        // Output the sorted results
+        for (const target of sortedTargets) {
+            const avg = averagesByTarget[target];
+            const displayTarget = target.padEnd(19);
+            const displayAvg = avg.count > 0 ? `${(avg.time / avg.count).toFixed(2)}ms` : 'N/A';
+            
+            output += `  ${displayTarget} ${displayAvg}\n`;
+        }
+        
+        // Add a conclusion 
+        if (sortedTargets.length > 1 && averagesByTarget[sortedTargets[0]].count > 0) {
+            output += `\nConclusion: ${sortedTargets[0]} is the fastest with an average response time of ${(averagesByTarget[sortedTargets[0]].time / averagesByTarget[sortedTargets[0]].count).toFixed(2)}ms.\n`;
+        }
+    } else if (measurementType.toLowerCase() === 'ping') {
+        output += 'Ping Latency Comparison:\n\n';
+        output += '  Target              Average RTT    Packet Loss\n';
+        output += '  ------------------- ------------- -----------\n';
+        
+        const statsByTarget: Record<string, { avg: number, loss: number, validProbes: number }> = {};
+        
+        // Calculate statistics for each target
+        for (const target of targets) {
+            statsByTarget[target] = { avg: 0, loss: 0, validProbes: 0 };
+            
+            for (const probe of results[target]) {
+                if (probe.result && 
+                    probe.result.status === 'finished' && 
+                    probe.result.stats) {
+                    
+                    if (probe.result.stats.avg !== undefined) {
+                        statsByTarget[target].avg += probe.result.stats.avg;
+                    }
+                    
+                    if (probe.result.stats.loss !== undefined) {
+                        statsByTarget[target].loss += probe.result.stats.loss;
+                    }
+                    
+                    statsByTarget[target].validProbes += 1;
+                }
+            }
+        }
+        
+        // Sort targets by average RTT (lowest first)
+        const sortedTargets = [...targets].sort((a, b) => {
+            const avgA = statsByTarget[a].validProbes > 0 ? statsByTarget[a].avg / statsByTarget[a].validProbes : Infinity;
+            const avgB = statsByTarget[b].validProbes > 0 ? statsByTarget[b].avg / statsByTarget[b].validProbes : Infinity;
+            return avgA - avgB;
+        });
+        
+        // Output the sorted results
+        for (const target of sortedTargets) {
+            const stats = statsByTarget[target];
+            const displayTarget = target.padEnd(19);
+            const displayAvg = stats.validProbes > 0 ? `${(stats.avg / stats.validProbes).toFixed(2)}ms`.padEnd(13) : 'N/A'.padEnd(13);
+            const displayLoss = stats.validProbes > 0 ? `${(stats.loss / stats.validProbes).toFixed(2)}%` : 'N/A';
+            
+            output += `  ${displayTarget} ${displayAvg} ${displayLoss}\n`;
+        }
+        
+        // Add a conclusion
+        if (sortedTargets.length > 1 && statsByTarget[sortedTargets[0]].validProbes > 0) {
+            output += `\nConclusion: ${sortedTargets[0]} has the lowest latency with an average RTT of ${(statsByTarget[sortedTargets[0]].avg / statsByTarget[sortedTargets[0]].validProbes).toFixed(2)}ms.\n`;
+        }
+    } else {
+        output += `Comparison for ${measurementType} measurements is not yet supported.\n`;
+        output += `Please view individual measurement results instead.\n`;
+    }
+    
     return output;
 }
