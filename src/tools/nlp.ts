@@ -199,16 +199,30 @@ export enum QueryType {
  * required for all Globalping measurements.
  * 
  * @param query - The natural language query
+ * @param measurementType - Optional measurement type to format targets accordingly
  * @returns Array of target hostnames/IPs extracted
  */
-function extractTargets(query: string): string[] {
+function extractTargets(query: string, measurementType?: MeasurementType): string[] {
     const domains = query.match(DOMAIN_REGEX) || [];
     const ipv4s = query.match(IPV4_REGEX) || [];
     const ipv6s = query.match(IPV6_REGEX) || [];
     
     // Combine all matches and remove duplicates
     const allTargets = [...domains, ...ipv4s, ...ipv6s];
-    return [...new Set(allTargets)];
+    const uniqueTargets = [...new Set(allTargets)];
+    
+    // If this is an HTTP measurement, ensure all targets have proper URL format
+    if (measurementType === 'http') {
+        return uniqueTargets.map(target => {
+            // If the target doesn't start with http:// or https://, add https://
+            if (!target.match(/^https?:\/\//i)) {
+                return `https://${target}`;
+            }
+            return target;
+        });
+    }
+    
+    return uniqueTargets;
 }
 
 /**
@@ -645,25 +659,10 @@ function determineMeasurementType(query: string): MeasurementType {
  * @returns Structured information extracted from the query
  */
 export function processNaturalLanguageQuery(query: string): ParsedQuery {
-    // Extract targets from the query
-    const targets = extractTargets(query);
-    
-    if (targets.length === 0) {
-        return {
-            targets: [],
-            measurementType: 'ping', // Default
-            locations: [],
-            error: 'No valid targets found in the query. Please provide a domain, IP address, or URL to measure.'
-        };
-    }
-    
-    // Extract locations mentioned in the query
-    const locations = extractLocations(query);
-    
+    // Determine the appropriate measurement type first
     // Detect if this is a comparative query (comparing multiple targets)
     const isComparative = isComparativeQuery(query);
     
-    // Determine the appropriate measurement type
     let measurementType: MeasurementType;
     
     if (isComparative) {
@@ -690,6 +689,21 @@ export function processNaturalLanguageQuery(query: string): ParsedQuery {
         // based on the full query context
         measurementType = determineMeasurementType(query);
     }
+    
+    // Now that we know the measurement type, extract targets properly formatted for that type
+    const targets = extractTargets(query, measurementType);
+    
+    if (targets.length === 0) {
+        return {
+            targets: [],
+            measurementType: 'ping', // Default
+            locations: [],
+            error: 'No valid targets found in the query. Please provide a domain, IP address, or URL to measure.'
+        };
+    }
+    
+    // Extract locations mentioned in the query
+    const locations = extractLocations(query);
     
     // Determine if we need special measurement options based on the query context
     const options = determineMeasurementOptions(query, measurementType);

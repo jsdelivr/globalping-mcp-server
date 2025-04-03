@@ -673,7 +673,45 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                                 data: measurementResult
                             });
                         } catch (error) {
-                            results.push(handleMeasurementError(error, target));
+                            console.error(`[Natural Language Tool] Error in measurement for ${target}:`, error);
+                            
+                            // If this is an HTTP measurement and the error appears to be related to URL formatting,
+                            // try again with explicit https:// prefix
+                            if (measurementType === 'http' && 
+                                error instanceof Error && 
+                                (error.message.includes('Invalid URL') || error.message.includes('validation')) &&
+                                !target.startsWith('http')) {
+                                
+                                try {
+                                    const httpsTarget = `https://${target}`;
+                                    console.error(`[Natural Language Tool] Retrying with HTTPS prefix: ${httpsTarget}`);
+                                    
+                                    const retryParams = {
+                                        ...measurementParams,
+                                        target: httpsTarget
+                                    };
+                                    
+                                    const measurement = await createMeasurement(retryParams, apiToken);
+                                    console.error(`[Natural Language Tool] Created measurement ${measurement.id} for ${httpsTarget}`);
+                                    
+                                    const measurementResult = await pollMeasurementResults(measurement.id, apiToken);
+                                    rawMeasurements.push({
+                                        target: httpsTarget,
+                                        result: measurementResult
+                                    });
+                                    
+                                    results.push({
+                                        code: RESULT_CODE.SUCCESS,
+                                        target: httpsTarget,
+                                        message: `Completed ${measurementType} measurement for ${httpsTarget}`,
+                                        data: measurementResult
+                                    });
+                                } catch (retryError) {
+                                    results.push(handleMeasurementError(retryError, target));
+                                }
+                            } else {
+                                results.push(handleMeasurementError(error, target));
+                            }
                         }
                     }
                     
@@ -705,11 +743,42 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                             measurementOptions: parsedQuery.options
                         };
                         
-                        const measurement = await createMeasurement(measurementParams, apiToken);
-                        console.error(`[Natural Language Tool] Created measurement ${measurement.id} for ${target}`);
+                        let measurement;
+                        let measurementResult;
                         
-                        // Poll until the measurement is complete
-                        const measurementResult = await pollMeasurementResults(measurement.id, apiToken);
+                        try {
+                            measurement = await createMeasurement(measurementParams, apiToken);
+                            console.error(`[Natural Language Tool] Created measurement ${measurement.id} for ${target}`);
+                            
+                            // Poll until the measurement is complete
+                            measurementResult = await pollMeasurementResults(measurement.id, apiToken);
+                        } catch (error) {
+                            // If this is an HTTP measurement and the error appears to be related to URL formatting,
+                            // try again with explicit https:// prefix
+                            if (measurementType === 'http' && 
+                                error instanceof Error && 
+                                (error.message.includes('Invalid URL') || error.message.includes('validation')) &&
+                                !target.startsWith('http')) {
+                                
+                                const httpsTarget = `https://${target}`;
+                                console.error(`[Natural Language Tool] Retrying with HTTPS prefix: ${httpsTarget}`);
+                                
+                                const retryParams = {
+                                    ...measurementParams,
+                                    target: httpsTarget
+                                };
+                                
+                                measurement = await createMeasurement(retryParams, apiToken);
+                                console.error(`[Natural Language Tool] Created measurement ${measurement.id} for ${httpsTarget}`);
+                                
+                                measurementResult = await pollMeasurementResults(measurement.id, apiToken);
+                                
+                                // Update the target to the HTTPS version
+                                measurementParams.target = httpsTarget;
+                            } else {
+                                throw error;
+                            }
+                        }
                         
                         // Format the results
                         const formattedResults = formatMeasurementResults(

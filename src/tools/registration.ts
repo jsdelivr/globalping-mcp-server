@@ -19,7 +19,7 @@ export function registerGlobalpingTools(server: McpServer): void {
     console.error("[Tool Registration] Registering Globalping tools...");
 
     // Register the natural language interface tool (main entry point for AI clients)
-    registerNaturalLanguageTool(server);
+  //  registerNaturalLanguageTool(server);
     
     // Register individual measurement tools for direct access
     registerPingTool(server);
@@ -132,7 +132,13 @@ function registerHttpTool(server: McpServer): void {
         "globalping-http",
         "Makes HTTP/HTTPS requests to URLs from distributed Globalping probes, measuring response times, status codes, and providing header information. Excellent for testing web application performance, CDN effectiveness, and availability from different regions. Provides detailed timing breakdown including DNS, connection, TLS handshake, and time to first byte (TTFB).",
         {
-            target: z.string().url("Must be a valid URL (e.g., https://example.com).").describe("The complete URL to request, including protocol, hostname, path, and any query parameters (e.g., 'https://example.com/path?query=value')."),
+            target: z.string().transform(url => {
+                // Ensure URL has protocol prefix
+                if (!url.match(/^https?:\/\//)) {
+                    return `https://${url}`;
+                }
+                return url;
+            }).describe("The URL to request. If protocol is not specified, https:// will be added automatically. E.g., 'example.com' or 'https://example.com/path'."),
             locations: z.array(z.any()).optional().describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
             limit: z.number().int().positive().optional().describe("Overall maximum number of probes for the measurement"),
             method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).optional().describe("HTTP method to use for the request. Default is GET."),
