@@ -246,7 +246,7 @@ export function formatTracerouteResults(results: any[]): string {
                 probe.result.hops.forEach((hop: any) => {
                     const hopNum = hop.hop.toString().padEnd(4);
                     const ip = (hop.resolvedAddress || '*').padEnd(16);
-                    const rtt = (hop.rtt !== undefined && hop.rtt !== null ? `${hop.rtt}ms` : '*').padEnd(7);
+                    const rtt = (hop.rtt !== undefined ? `${hop.rtt}ms` : '*').padEnd(7);
                     const asn = (hop.asn || '').toString().padEnd(11);
                     const location = hop.location ? `${hop.location.city || ''}, ${hop.location.country || ''}` : '';
                     
@@ -471,7 +471,8 @@ export function formatHttpResults(results: any[]): string {
  * Used for queries like "Which site is faster?"
  * 
  * @param targets Array of targets that were measured (e.g., domain names)
- * @param results Array of measurement results in the same order as targets
+ * @param results Array of measurement results
+ * @param rawMeasurements Array of raw measurement data from Globalping API
  * @param type The measurement type used for all targets
  * @param originalQuery The original natural language query
  * @returns Formatted comparative analysis
@@ -479,6 +480,7 @@ export function formatHttpResults(results: any[]): string {
 export function formatComparativeResult(
     targets: string[],
     results: ToolResult[],
+    rawMeasurements: any[],
     type: string,
     originalQuery: string
 ): ToolResult {
@@ -495,7 +497,7 @@ export function formatComparativeResult(
     // Create a summary of key metrics based on measurement type
     if (type === 'http') {
         // For HTTP, compare TTFB, total load times, status codes
-        analysisText += compareHttpResults(targets, results);
+        analysisText += compareHttpResults(targets, rawMeasurements);
     } else if (type === 'ping') {
         // For ping, compare min/avg/max RTT and packet loss
         analysisText += comparePingResults(targets, results);
@@ -506,7 +508,10 @@ export function formatComparativeResult(
         
         for (let i = 0; i < targets.length; i++) {
             analysisText += `### ${targets[i]}\n`;
-            analysisText += results[i].content[0].text;
+            const contentItem = results[i].content[0];
+            if (contentItem.type === "text") {
+                analysisText += contentItem.text;
+            }
             analysisText += '\n\n';
         }
     } else {
@@ -516,7 +521,10 @@ export function formatComparativeResult(
         
         for (let i = 0; i < targets.length; i++) {
             analysisText += `### ${targets[i]}\n`;
-            analysisText += results[i].content[0].text;
+            const contentItem = results[i].content[0];
+            if (contentItem.type === "text") {
+                analysisText += contentItem.text;
+            }
             analysisText += '\n\n';
         }
     }
@@ -531,10 +539,10 @@ export function formatComparativeResult(
  * Compares HTTP results between multiple targets
  * 
  * @param targets Array of targets that were measured
- * @param results Array of measurement results
+ * @param rawMeasurements Array of raw measurement data from Globalping API
  * @returns Formatted comparison text
  */
-function compareHttpResults(targets: string[], results: ToolResult[]): string {
+function compareHttpResults(targets: string[], rawMeasurements: any[]): string {
     let output = `### HTTP Performance Comparison\n\n`;
     output += `| Target | Status | TTFB (avg) | Total Time (avg) | Success Rate |\n`;
     output += `|--------|--------|------------|-----------------|-------------|\n`;
@@ -549,47 +557,89 @@ function compareHttpResults(targets: string[], results: ToolResult[]): string {
 
     // Extract performance metrics from each result
     for (let i = 0; i < targets.length; i++) {
-        const resultText = results[i].content[0].text;
-        
-        // Extract metrics using regex (simplified for demonstration)
-        const ttfbMatch = resultText.match(/TTFB:?\s*(\d+(\.\d+)?)/i);
-        const totalMatch = resultText.match(/Total:?\s*(\d+(\.\d+)?)/i);
-        const statusMatch = resultText.match(/Status:?\s*(\d+)/i);
-        
-        // Default values if not found
-        const ttfb = ttfbMatch ? parseFloat(ttfbMatch[1]) : 0;
-        const total = totalMatch ? parseFloat(totalMatch[1]) : 0;
-        const statusCode = statusMatch ? parseInt(statusMatch[1]) : 0;
-        const success = statusCode >= 200 && statusCode < 400;
-        
-        performanceData.push({
-            target: targets[i],
-            ttfb,
-            total,
-            success,
-            statusCode
-        });
-        
-        // Add to table
-        output += `| ${targets[i]} | ${statusCode} | ${ttfb}ms | ${total}ms | ${success ? '✅' : '❌'} |\n`;
-    }
-
-    // Determine the fastest site
-    let fastestSite = performanceData[0];
-    for (let i = 1; i < performanceData.length; i++) {
-        if (
-            performanceData[i].success && 
-            (!fastestSite.success || performanceData[i].total < fastestSite.total)
-        ) {
-            fastestSite = performanceData[i];
+        try {
+            // Use the raw measurement data directly
+            const measurementData = rawMeasurements[i];
+            const probesData = measurementData?.results || [];
+            
+            // Calculate averages from all probes
+            let totalTtfb = 0;
+            let totalTime = 0;
+            let successCount = 0;
+            let statusCode = 0;
+            let validProbeCount = 0;
+            
+            for (const probe of probesData) {
+                if (probe.result && probe.result.status === 'finished') {
+                    validProbeCount++;
+                    
+                    // Get the status code
+                    if (probe.result.statusCode) {
+                        statusCode = probe.result.statusCode;
+                    }
+                    
+                    // Check if timings are available
+                    if (probe.result.timings) {
+                        const timings = probe.result.timings;
+                        
+                        // Add TTFB if available
+                        if (timings.firstByte && typeof timings.firstByte === 'number') {
+                            totalTtfb += timings.firstByte;
+                        }
+                        
+                        // Add total time if available
+                        if (timings.total && typeof timings.total === 'number') {
+                            totalTime += timings.total;
+                            successCount++;
+                        }
+                    }
+                }
+            }
+            
+            // Calculate averages
+            const avgTtfb = validProbeCount > 0 ? Math.round(totalTtfb / validProbeCount) : 0;
+            const avgTotal = successCount > 0 ? Math.round(totalTime / successCount) : 0;
+            const success = statusCode >= 200 && statusCode < 400;
+            const successRate = validProbeCount > 0 ? Math.round((successCount / validProbeCount) * 100) : 0;
+            
+            performanceData.push({
+                target: targets[i],
+                ttfb: avgTtfb,
+                total: avgTotal,
+                success,
+                statusCode
+            });
+            
+            // Add to table
+            output += `| ${targets[i]} | ${statusCode} | ${avgTtfb}ms | ${avgTotal}ms | ${successRate}% |\n`;
+        } catch (error) {
+            // If we can't extract the data, add a row with error indication
+            performanceData.push({
+                target: targets[i],
+                ttfb: 0,
+                total: 0,
+                success: false,
+                statusCode: 0
+            });
+            
+            output += `| ${targets[i]} | Error | - | - | 0% |\n`;
+            console.error(`[Formatter] Error comparing HTTP results for ${targets[i]}: ${error}`);
         }
     }
 
+    // Determine the fastest site among sites with successful measurements
+    const successfulSites = performanceData.filter(data => data.success && data.total > 0);
+    
     output += `\n### Result\n\n`;
     
-    if (fastestSite.success) {
-        const speedDifferences = performanceData
-            .filter(data => data.target !== fastestSite.target && data.success)
+    if (successfulSites.length > 0) {
+        // Find the fastest among the successful ones
+        const fastestSite = successfulSites.reduce(
+            (prev, current) => (current.total < prev.total) ? current : prev
+        );
+        
+        const speedDifferences = successfulSites
+            .filter(data => data.target !== fastestSite.target)
             .map(data => {
                 const difference = data.total - fastestSite.total;
                 const percentageFaster = (difference / data.total) * 100;
@@ -604,19 +654,8 @@ function compareHttpResults(targets: string[], results: ToolResult[]): string {
         
         output += `.\n\n`;
     } else {
-        // If the "fastest" site had errors, check if any were successful
-        const successfulSites = performanceData.filter(data => data.success);
-        
-        if (successfulSites.length > 0) {
-            // Find the fastest among the successful ones
-            const fastestSuccessful = successfulSites.reduce(
-                (prev, current) => (current.total < prev.total) ? current : prev
-            );
-            
-            output += `**${fastestSuccessful.target}** is the fastest site with an average load time of ${fastestSuccessful.total}ms.\n\n`;
-        } else {
-            output += `None of the sites loaded successfully during testing.\n\n`;
-        }
+        output += `Could not determine the fastest site because none of the sites loaded successfully during testing.\n\n`;
+        output += `This might be due to connection issues or an invalid configuration. Try running the test again or check the individual measurement results for more details.\n\n`;
     }
 
     return output;
@@ -644,7 +683,10 @@ function comparePingResults(targets: string[], results: ToolResult[]): string {
 
     // Extract performance metrics from each result
     for (let i = 0; i < targets.length; i++) {
-        const resultText = results[i].content[0].text;
+        const contentItem = results[i].content[0];
+        if (contentItem.type !== "text") continue;
+        
+        const resultText = contentItem.text;
         
         // Extract metrics using regex
         const minMatch = resultText.match(/Min:?\s*(\d+(\.\d+)?)/i);

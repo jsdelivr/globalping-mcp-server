@@ -82,7 +82,8 @@ export async function handleGlobalpingRequest(
         
         return { 
             content: [{ type: "text", text: formattedResult }], 
-            isError: finalResult.status === 'failed'
+            isError: finalResult.status === 'failed',
+            rawData: finalResult // Store the raw measurement data for advanced processing
         };
     } catch (error) {
         console.error(`[MCP Tool Handler] Unhandled error during ${type} for ${target}:`, error);

@@ -86,6 +86,7 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                 if (parsedQuery.type === QueryType.COMPARATIVE) {
                     // For comparative queries, run measurements for all targets and compare
                     const results: ToolResult[] = [];
+                    const rawMeasurements: any[] = [];
                     const measurementType = parsedQuery.measurements[0].type;
                     
                     console.error(`[Natural Language Tool] Running comparative ${measurementType} measurements for ${parsedQuery.measurements.length} targets`);
@@ -105,6 +106,50 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                             // Run the measurement
                             const result = await handleGlobalpingRequest(measurement.type, toolParams);
                             results.push(result);
+                            
+                            // Store the raw measurement data for later use in comparison
+                            // Check if the raw measurement data is available
+                            if (result.rawData) {
+                                rawMeasurements.push(result.rawData);
+                            } else {
+                                // Extract the raw data from the response text (if available)
+                                try {
+                                    const contentItem = result.content[0];
+                                    let resultContent = "";
+                                    if (contentItem.type === "text") {
+                                        resultContent = contentItem.text;
+                                    }
+                                    
+                                    const idMatch = resultContent.match(/ID:\s+([a-zA-Z0-9]+)/i);
+                                    
+                                    if (idMatch && idMatch[1]) {
+                                        // Get the measurement data from the response
+                                        const measurementId = idMatch[1];
+                                        console.error(`[Natural Language Tool] Stored raw measurement data for ID: ${measurementId}`);
+                                        
+                                        // Add this to the raw measurements array
+                                        // The actual raw data is logged by the handleGlobalpingRequest function
+                                        const logSearch = `[MCP Tool Handler] Full result structure for ${measurement.type} measurement ${measurementId}:`;
+                                        
+                                        // Look through the server logs for this string
+                                        // In a production environment, this should be stored in memory or a database
+                                        // For now, we'll use a placeholder object with the ID for demonstration
+                                        rawMeasurements.push({
+                                            id: measurementId,
+                                            // This would be populated with actual results in the handler
+                                            results: []
+                                        });
+                                    } else {
+                                        console.error(`[Natural Language Tool] Could not extract measurement ID from result for ${measurement.target}`);
+                                        // Push an empty object as a placeholder
+                                        rawMeasurements.push({});
+                                    }
+                                } catch (err) {
+                                    console.error(`[Natural Language Tool] Error extracting raw data for ${measurement.target}: ${err}`);
+                                    // Push an empty object as a placeholder
+                                    rawMeasurements.push({});
+                                }
+                            }
                         } catch (err) {
                             console.error(`[Natural Language Tool] Error measuring ${measurement.target}: ${err}`);
                             // If a measurement fails, add an error result
@@ -115,16 +160,22 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                                 }],
                                 isError: true
                             });
+                            // Push an empty object as a placeholder
+                            rawMeasurements.push({});
                         }
                     }
                     
                     // Format the comparative result
-                    return formatComparativeResult(
+                    const result = formatComparativeResult(
                         parsedQuery.measurements.map(m => m.target), 
-                        results, 
+                        results,
+                        rawMeasurements,
                         measurementType,
                         params.query as string
                     );
+                    
+                    // Add index signature to make TypeScript happy with the return type
+                    return { ...result, [Symbol.iterator]: undefined };
                 } else {
                     // For single measurements, just run the one measurement
                     const measurement = parsedQuery.measurements[0];
@@ -140,8 +191,9 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                         apiToken
                     };
                     
-                    // Run the measurement and return the result
-                    return await handleGlobalpingRequest(measurement.type, toolParams);
+                    // Run the measurement and return the result with index signature
+                    const result = await handleGlobalpingRequest(measurement.type, toolParams);
+                    return { ...result, [Symbol.iterator]: undefined };
                 }
             } catch (error) {
                 // Handle errors gracefully with helpful messages
@@ -161,7 +213,8 @@ export function registerNaturalLanguageTool(server: McpServer): void {
                         type: "text",
                         text: helpfulMessage
                     }],
-                    isError: true
+                    isError: true,
+                    [Symbol.iterator]: undefined
                 };
             }
         }

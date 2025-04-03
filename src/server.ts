@@ -37,6 +37,9 @@ import { registerGlobalpingTools } from './tools.js';
 // Load environment variables from .env file
 dotenv.config();
 
+// Flag to track if we've already connected to prevent reconnection loops
+let isConnected = false;
+
 // Create the MCP Server instance
 const server = new McpServer({
     name: "globalping-mcp-server",
@@ -59,16 +62,36 @@ registerGlobalpingTools(server); // Register all Globalping tools
  * Starts the MCP server and connects it via stdio transport
  */
 async function startServer() {
+    // Prevent multiple connection attempts
+    if (isConnected) {
+        console.error("Server already connected, ignoring redundant connection attempt");
+        return;
+    }
+    
     try {
+        isConnected = true; // Set before connecting to prevent race conditions
         const transport = new StdioServerTransport();
         await server.connect(transport);
         console.error("Globalping MCP Server connected via stdio and ready.");
+        
+        // Handle process signals to ensure clean shutdown
+        process.once('SIGINT', () => {
+            console.error("Received SIGINT, shutting down...");
+            process.exit(0);
+        });
+        
+        process.once('SIGTERM', () => {
+            console.error("Received SIGTERM, shutting down...");
+            process.exit(0);
+        });
     } catch (error) {
         console.error("Failed to start Globalping MCP Server:", error);
+        // Reset the connected flag so we can try again if needed
+        isConnected = false;
         process.exit(1);
     }
 }
 // --- End Server Connection ---
 
-// Start the server
+// Start the server only once
 startServer();
