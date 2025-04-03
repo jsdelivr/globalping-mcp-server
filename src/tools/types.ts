@@ -30,6 +30,23 @@ export type ToolResult = {
 export type MeasurementType = MeasurementRequest['type'];
 
 /**
+ * Type for location specifications in measurement requests
+ * This mirrors the location options structure from the Globalping API
+ */
+export interface LocationSpecification {
+    continent?: "AF" | "AN" | "AS" | "EU" | "NA" | "OC" | "SA";
+    region?: string;
+    country?: string;
+    state?: string | null;
+    city?: string;
+    asn?: number;
+    network?: string;
+    tags?: string[];
+    magic?: string;
+    limit?: number;
+}
+
+/**
  * Re-export measurement types for easy access
  */
 export type {

@@ -6,6 +6,7 @@
  */
 
 import { MeasurementResult } from './globalping/api.js';
+import { ToolResult } from './tools/types.js';
 
 /**
  * Formats the measurement result based on the type of measurement
@@ -462,5 +463,236 @@ export function formatHttpResults(results: any[]): string {
         output += '\n';
     });
     
+    return output;
+}
+
+/**
+ * Formats results for comparative analysis of multiple targets
+ * Used for queries like "Which site is faster?"
+ * 
+ * @param targets Array of targets that were measured (e.g., domain names)
+ * @param results Array of measurement results in the same order as targets
+ * @param type The measurement type used for all targets
+ * @param originalQuery The original natural language query
+ * @returns Formatted comparative analysis
+ */
+export function formatComparativeResult(
+    targets: string[],
+    results: ToolResult[],
+    type: string,
+    originalQuery: string
+): ToolResult {
+    // Handle errors - if any result has an error, return it
+    for (let i = 0; i < results.length; i++) {
+        if (results[i].isError) {
+            return results[i];
+        }
+    }
+
+    let analysisText = `## Comparative Analysis: ${targets.join(' vs. ')}\n\n`;
+    analysisText += `Query: "${originalQuery}"\n\n`;
+
+    // Create a summary of key metrics based on measurement type
+    if (type === 'http') {
+        // For HTTP, compare TTFB, total load times, status codes
+        analysisText += compareHttpResults(targets, results);
+    } else if (type === 'ping') {
+        // For ping, compare min/avg/max RTT and packet loss
+        analysisText += comparePingResults(targets, results);
+    } else if (type === 'dns') {
+        // For DNS, just present the results side by side
+        analysisText += `DNS comparison not available in comparative format.\n\n`;
+        analysisText += `Individual results:\n\n`;
+        
+        for (let i = 0; i < targets.length; i++) {
+            analysisText += `### ${targets[i]}\n`;
+            analysisText += results[i].content[0].text;
+            analysisText += '\n\n';
+        }
+    } else {
+        // For other types, just present the results side by side
+        analysisText += `Detailed comparison not available for ${type} measurements.\n\n`;
+        analysisText += `Individual results:\n\n`;
+        
+        for (let i = 0; i < targets.length; i++) {
+            analysisText += `### ${targets[i]}\n`;
+            analysisText += results[i].content[0].text;
+            analysisText += '\n\n';
+        }
+    }
+
+    return {
+        content: [{ type: "text", text: analysisText }],
+        isError: false
+    };
+}
+
+/**
+ * Compares HTTP results between multiple targets
+ * 
+ * @param targets Array of targets that were measured
+ * @param results Array of measurement results
+ * @returns Formatted comparison text
+ */
+function compareHttpResults(targets: string[], results: ToolResult[]): string {
+    let output = `### HTTP Performance Comparison\n\n`;
+    output += `| Target | Status | TTFB (avg) | Total Time (avg) | Success Rate |\n`;
+    output += `|--------|--------|------------|-----------------|-------------|\n`;
+
+    const performanceData: Array<{
+        target: string;
+        ttfb: number;
+        total: number;
+        success: boolean;
+        statusCode: number;
+    }> = [];
+
+    // Extract performance metrics from each result
+    for (let i = 0; i < targets.length; i++) {
+        const resultText = results[i].content[0].text;
+        
+        // Extract metrics using regex (simplified for demonstration)
+        const ttfbMatch = resultText.match(/TTFB:?\s*(\d+(\.\d+)?)/i);
+        const totalMatch = resultText.match(/Total:?\s*(\d+(\.\d+)?)/i);
+        const statusMatch = resultText.match(/Status:?\s*(\d+)/i);
+        
+        // Default values if not found
+        const ttfb = ttfbMatch ? parseFloat(ttfbMatch[1]) : 0;
+        const total = totalMatch ? parseFloat(totalMatch[1]) : 0;
+        const statusCode = statusMatch ? parseInt(statusMatch[1]) : 0;
+        const success = statusCode >= 200 && statusCode < 400;
+        
+        performanceData.push({
+            target: targets[i],
+            ttfb,
+            total,
+            success,
+            statusCode
+        });
+        
+        // Add to table
+        output += `| ${targets[i]} | ${statusCode} | ${ttfb}ms | ${total}ms | ${success ? '✅' : '❌'} |\n`;
+    }
+
+    // Determine the fastest site
+    let fastestSite = performanceData[0];
+    for (let i = 1; i < performanceData.length; i++) {
+        if (
+            performanceData[i].success && 
+            (!fastestSite.success || performanceData[i].total < fastestSite.total)
+        ) {
+            fastestSite = performanceData[i];
+        }
+    }
+
+    output += `\n### Result\n\n`;
+    
+    if (fastestSite.success) {
+        const speedDifferences = performanceData
+            .filter(data => data.target !== fastestSite.target && data.success)
+            .map(data => {
+                const difference = data.total - fastestSite.total;
+                const percentageFaster = (difference / data.total) * 100;
+                return `${percentageFaster.toFixed(1)}% faster than ${data.target}`;
+            });
+
+        output += `**${fastestSite.target}** is the fastest site with an average load time of ${fastestSite.total}ms`;
+        
+        if (speedDifferences.length > 0) {
+            output += ` (${speedDifferences.join(', ')})`;
+        }
+        
+        output += `.\n\n`;
+    } else {
+        // If the "fastest" site had errors, check if any were successful
+        const successfulSites = performanceData.filter(data => data.success);
+        
+        if (successfulSites.length > 0) {
+            // Find the fastest among the successful ones
+            const fastestSuccessful = successfulSites.reduce(
+                (prev, current) => (current.total < prev.total) ? current : prev
+            );
+            
+            output += `**${fastestSuccessful.target}** is the fastest site with an average load time of ${fastestSuccessful.total}ms.\n\n`;
+        } else {
+            output += `None of the sites loaded successfully during testing.\n\n`;
+        }
+    }
+
+    return output;
+}
+
+/**
+ * Compares ping results between multiple targets
+ * 
+ * @param targets Array of targets that were measured
+ * @param results Array of measurement results
+ * @returns Formatted comparison text
+ */
+function comparePingResults(targets: string[], results: ToolResult[]): string {
+    let output = `### Ping Latency Comparison\n\n`;
+    output += `| Target | Min | Avg | Max | Packet Loss |\n`;
+    output += `|--------|-----|-----|-----|-------------|\n`;
+
+    const performanceData: Array<{
+        target: string;
+        min: number;
+        avg: number;
+        max: number;
+        packetLoss: number;
+    }> = [];
+
+    // Extract performance metrics from each result
+    for (let i = 0; i < targets.length; i++) {
+        const resultText = results[i].content[0].text;
+        
+        // Extract metrics using regex
+        const minMatch = resultText.match(/Min:?\s*(\d+(\.\d+)?)/i);
+        const avgMatch = resultText.match(/Avg:?\s*(\d+(\.\d+)?)/i);
+        const maxMatch = resultText.match(/Max:?\s*(\d+(\.\d+)?)/i);
+        const lossMatch = resultText.match(/Loss:?\s*(\d+(\.\d+)?)/i);
+        
+        // Default values if not found
+        const min = minMatch ? parseFloat(minMatch[1]) : 0;
+        const avg = avgMatch ? parseFloat(avgMatch[1]) : 0;
+        const max = maxMatch ? parseFloat(maxMatch[1]) : 0;
+        const packetLoss = lossMatch ? parseFloat(lossMatch[1]) : 0;
+        
+        performanceData.push({
+            target: targets[i],
+            min,
+            avg,
+            max,
+            packetLoss
+        });
+        
+        // Add to table
+        output += `| ${targets[i]} | ${min}ms | ${avg}ms | ${max}ms | ${packetLoss}% |\n`;
+    }
+
+    // Determine the lowest latency site
+    let lowestLatencySite = performanceData[0];
+    for (let i = 1; i < performanceData.length; i++) {
+        if (performanceData[i].avg < lowestLatencySite.avg) {
+            lowestLatencySite = performanceData[i];
+        }
+    }
+
+    output += `\n### Result\n\n`;
+    output += `**${lowestLatencySite.target}** has the lowest average latency at ${lowestLatencySite.avg}ms.\n\n`;
+
+    // Add percentage differences
+    const latencyDifferences = performanceData
+        .filter(data => data.target !== lowestLatencySite.target)
+        .map(data => {
+            const difference = data.avg - lowestLatencySite.avg;
+            const percentageFaster = (difference / data.avg) * 100;
+            return `${percentageFaster.toFixed(1)}% faster than ${data.target}`;
+        });
+
+    if (latencyDifferences.length > 0) {
+        output += `This makes it ${latencyDifferences.join(', ')}.\n\n`;
+    }
+
     return output;
 }
