@@ -13,7 +13,7 @@
  * be used to increase these limits.
  */
 
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 /**
  * Constants for the Globalping API

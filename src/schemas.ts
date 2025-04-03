@@ -10,38 +10,24 @@ import { z } from "zod";
 
 /**
  * Schema for location filtering in Globalping measurements
- * Allows specifying geographic locations or networks for measurement probes
+ * Allows specifying probe locations using the magic field
  */
 export const locationSchema = z.object({
-    country: z.string().length(2, "Must be a 2-letter country code (ISO 3166-1 alpha-2)").optional()
-        .describe("Two-letter ISO country code (e.g., 'US', 'DE', 'JP'). Used to select probes from a specific country."),
-    continent: z.string().optional()
-        .describe("Continent name (e.g., 'Europe', 'North America', 'Asia'). Used to select probes from an entire continent."),
-    region: z.string().optional()
-        .describe("Geographic region within a continent (e.g., 'Western Europe', 'Southeast Asia'). More specific than continent but less specific than country."),
-    city: z.string().optional()
-        .describe("City name (e.g., 'New York', 'London', 'Tokyo'). Used to select probes from a specific metropolitan area."),
-    asn: z.number().int().positive().optional()
-        .describe("Autonomous System Number, identifying a specific network operator (e.g., 13335 for Cloudflare). Used to test from a specific provider's network."),
-    network: z.string().optional()
-        .describe("Network name or identifier. Alternative to ASN for selecting probes from specific network providers."),
-    tag: z.string().optional()
-        .describe("Special tag identifier for groups of probes with specific characteristics (e.g., 'residential', 'datacenter')."),
-    limit: z.number().int().positive().optional()
-        .describe("Maximum number of probes to use *from this specific location definition* (e.g., limit 2 probes from 'Europe'). Each location can have its own limit."),
-}).optional().describe("Specify geographic locations or networks for measurement probes. Multiple locations can be combined to create a diverse measurement profile.");
+    magic: z.string()
+        .describe("Fuzzy matching location string that supports multiple criteria combined with + (AND). Examples: 'north america', 'europe+datacenter-network', 'AS15169' (Google's ASN). This is the recommended way to specify locations.")
+}).describe("Specify probe locations using a single magic string that supports fuzzy matching on multiple criteria.");
 
 /**
  * Common schema for global probe limit
  */
-export const globalLimitSchema = z.number().int().positive().optional()
-    .describe("Overall maximum number of probes for the measurement");
+export const globalLimitSchema = z.number().int().min(1).max(500).optional()
+    .describe("Overall maximum number of probes for the measurement. Min: 1, Max: 500. Default: 3.");
 
 /**
  * Schema for IP version selection
  */
 export const ipVersionSchema = z.enum(['4', '6']).optional()
-    .describe("IP version to use (4 or 6)");
+    .describe("IP version to use (4 or 6). Only applicable for hostname targets.");
 
 /**
  * Default number of probes if not specified by user/client
@@ -49,16 +35,22 @@ export const ipVersionSchema = z.enum(['4', '6']).optional()
 export const DEFAULT_PROBE_LIMIT = 3;
 
 /**
+ * Schema for resolver specification (used in DNS and HTTP measurements)
+ */
+export const resolverSchema = z.string()
+    .describe("DNS resolver to use for the query. Can be an IPv4 address, IPv6 address, or hostname. Defaults to probe system resolver.");
+
+/**
  * Schema for ping measurement inputs
  */
 export const pingInputSchema = z.object({
     target: z.string()
-        .describe("The hostname or IP address to ping. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        .describe("The hostname or IP address to ping (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
     packets: z.number().int().min(1).max(16).optional()
-        .describe("Number of ICMP Echo packets to send (1-16). Default is 3."),
+        .describe("Number of ICMP Echo packets to send. Min: 1, Max: 16. Default: 3."),
     ipVersion: ipVersionSchema,
 });
 
@@ -67,16 +59,14 @@ export const pingInputSchema = z.object({
  */
 export const tracerouteInputSchema = z.object({
     target: z.string()
-        .describe("The hostname or IP address to trace the route to. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        .describe("The hostname or IP address to trace the route to (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
-    port: z.number().int().positive().optional()
-        .describe("Destination port for TCP/UDP traceroutes. Ignored for ICMP."),
-    protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional()
-        .describe("Protocol to use for traceroute (ICMP, UDP, or TCP). Default is ICMP."),
-    packets: z.number().int().positive().optional()
-        .describe("Number of packets to send per hop. Default is 3."),
+    port: z.number().int().min(0).max(65535).optional()
+        .describe("Destination port for TCP/UDP traceroutes. Ignored for ICMP. Default: 80."),
+    protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional()
+        .describe("Protocol to use for traceroute. Default: ICMP."),
     ipVersion: ipVersionSchema,
 });
 
@@ -89,15 +79,23 @@ export const dnsInputSchema = z.object({
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
-    queryType: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TXT']).optional()
-        .describe("Type of DNS record to query. Default is 'A'."),
-    resolver: z.string().ip().optional()
-        .describe("Custom DNS resolver IP address to use instead of the probe's default resolver."),
+    query: z.object({
+        type: z.enum([
+            'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 
+            'HTTPS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 
+            'SOA', 'TXT', 'SRV', 'SVCB'
+        ]).optional()
+            .describe("Type of DNS record to query. Default: A.")
+    }).optional()
+        .describe("The DNS query properties."),
+    resolver: resolverSchema.optional(),
     protocol: z.enum(['UDP', 'TCP']).optional()
-        .describe("Protocol to use for DNS queries (UDP or TCP). Default is UDP."),
-    port: z.number().int().positive().optional()
-        .describe("Port to use for DNS queries. Default is 53."),
+        .describe("Protocol to use for DNS queries. Default: UDP."),
+    port: z.number().int().min(0).max(65535).optional()
+        .describe("Port to use for DNS queries. Default: 53."),
     ipVersion: ipVersionSchema,
+    trace: z.boolean().optional()
+        .describe("Toggles tracing of the delegation path from root servers to target domain. Default: false.")
 });
 
 /**
@@ -105,16 +103,16 @@ export const dnsInputSchema = z.object({
  */
 export const mtrInputSchema = z.object({
     target: z.string()
-        .describe("The hostname or IP address to perform MTR to. Can be a domain name (e.g., 'example.com') or an IP address (e.g., '192.168.1.1')."),
+        .describe("The hostname or IP address to perform MTR to (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
-    port: z.number().int().positive().optional()
-        .describe("Destination port for TCP/UDP MTR. Ignored for ICMP."),
-    protocol: z.enum(['ICMP', 'UDP', 'TCP']).optional()
-        .describe("Protocol to use for MTR (ICMP, UDP, or TCP). Default is ICMP."),
-    packets: z.number().int().positive().optional()
-        .describe("Number of packets to send per hop. Default is 3."),
+    port: z.number().int().min(0).max(65535).optional()
+        .describe("Destination port for TCP/UDP MTR. Ignored for ICMP. Default: 80."),
+    protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional()
+        .describe("Protocol to use for MTR. Default: ICMP."),
+    packets: z.number().int().min(1).max(16).optional()
+        .describe("Number of packets to send to each hop. Min: 1, Max: 16. Default: 3."),
     ipVersion: ipVersionSchema,
 });
 
@@ -122,20 +120,40 @@ export const mtrInputSchema = z.object({
  * Schema for HTTP measurement inputs
  */
 export const httpInputSchema = z.object({
-    target: z.string().url("Must be a valid URL (e.g., https://example.com).")
-        .describe("The complete URL to request, including protocol, hostname, path, and any query parameters (e.g., 'https://example.com/path?query=value')."),
+    target: z.string().transform(url => {
+        // Ensure URL has protocol prefix for validation
+        if (!url.match(/^https?:\/\//i)) {
+            return `https://${url}`;
+        }
+        return url;
+    })
+        .describe("The URL to request. Can be a domain (e.g., 'example.com') or a full URL (e.g., 'https://example.com/path'). If protocol is not specified, https:// will be added automatically."),
     locations: z.array(locationSchema).optional()
         .describe("Array of location specifications defining where the probes should run from. If omitted, probes will be selected from diverse global locations."),
     limit: globalLimitSchema,
-    method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']).optional()
-        .describe("HTTP method to use for the request. Default is GET."),
-    protocol: z.enum(['HTTP', 'HTTPS']).optional()
-        .describe("Protocol to use (HTTP or HTTPS). This is usually determined from the target URL."),
-    port: z.number().int().positive().optional()
-        .describe("Custom port to connect to. Default is 80 for HTTP and 443 for HTTPS."),
-    path: z.string().startsWith('/').optional()
-        .describe("Path to request. This is usually determined from the target URL."),
-    headers: z.record(z.string()).optional()
-        .describe("Custom HTTP headers to include with the request."),
+    request: z.object({
+        host: z.string().optional()
+            .describe("An optional override for the Host header. Default is based on the target."),
+        path: z.string().optional()
+            .describe("The path portion of the URL."),
+        query: z.string().optional()
+            .describe("The query string portion of the URL."),
+        method: z.enum(['HEAD', 'GET', 'OPTIONS']).optional()
+            .describe("The HTTP method to use. Default: HEAD."),
+        headers: z.record(z.string()).optional()
+            .describe("Additional request headers. Note that Host and User-Agent are reserved and internally overridden.")
+    }).optional()
+        .describe("The HTTP request properties."),
+    resolver: resolverSchema.optional(),
+    port: z.number().int().min(0).max(65535).optional()
+        .describe("Port number to use. Default: 80 for HTTP, 443 for HTTPS."),
+    protocol: z.enum(['HTTP', 'HTTPS', 'HTTP2']).optional()
+        .describe("Transport protocol to use. Default: HTTPS."),
     ipVersion: ipVersionSchema,
 });
+
+/**
+ * API token schema for optional authentication
+ */
+export const apiTokenSchema = z.string().optional()
+    .describe("Optional Globalping API token to use for this measurement. Provides higher rate limits.");
