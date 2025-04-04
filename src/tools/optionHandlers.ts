@@ -24,7 +24,15 @@ export function processLocations(
     // Set the global limit (default to 3 if not specified)
     requestPayload.limit = typeof params.limit === 'number' ? params.limit : DEFAULT_PROBE_LIMIT;
     
-    // Process locations if provided
+    // Check if locations is a string (measurement ID for comparison)
+    if (params.locations && typeof params.locations === 'string') {
+        // Direct assignment for measurement ID (probe reuse mode)
+        console.error(`[Location Processing] Using previous measurement ID for probe reuse: ${params.locations}`);
+        requestPayload.locations = params.locations;
+        return;
+    }
+    
+    // Process locations if provided as an array
     if (params.locations && Array.isArray(params.locations)) {
         // Ensure all locations use the magic field format
         const formattedLocations = params.locations

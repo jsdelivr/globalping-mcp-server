@@ -31,6 +31,15 @@ import { z } from "zod";
  * - For "How does example.com resolve in Europe?", the AI client would call globalping-dns with 
  *   appropriate target and location, then interpret the returned DNS records.
  * 
+ * IMPORTANT: When performing comparison between two targets, the client MUST reuse the exact same probes
+ * for both measurements to ensure a fair comparison. This is achieved by:
+ * 1. Making the first measurement with desired locations
+ * 2. Using the returned measurement ID as the 'locations' parameter for the second measurement
+ * 
+ * For example:
+ * 1. First call: globalping-http for site A with locations in US → returns measurementId: "abc123"
+ * 2. Second call: globalping-http for site B with locations: "abc123" → reuses the same probes as the first test
+ * 
  * The tool descriptions are designed to help the AI client choose the right tools for gathering
  * the specific data needed to answer the user's question.
  * --- End Role Explanation ---

@@ -153,7 +153,7 @@ export interface HttpMeasurementOptions {
 export interface MeasurementRequest {
     type: 'ping' | 'traceroute' | 'dns' | 'mtr' | 'http';
     target: string;
-    locations?: LocationSpecification[];
+    locations?: LocationSpecification[] | string; // Array of location objects OR a measurement ID string to reuse probes
     measurementOptions?: NetworkMeasurementOptions | DnsMeasurementOptions | HttpMeasurementOptions;
     limit?: number; // Global limit for probes
     inProgressUpdates?: boolean; // Always false for HTTP API polling
@@ -299,8 +299,10 @@ export async function createMeasurement(
     apiToken?: string
 ): Promise<CreateMeasurementResponse> {
     // Set proper limit to 1 if not specified and there's only one location
+    // Only apply this for location objects, not for measurement ID strings
     if (!requestPayload.limit && 
         requestPayload.locations && 
+        Array.isArray(requestPayload.locations) &&
         requestPayload.locations.length === 1 && 
         !requestPayload.locations[0].limit) {
         requestPayload.locations[0].limit = 1;

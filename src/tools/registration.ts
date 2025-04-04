@@ -26,6 +26,19 @@ const magicLocationSchema = z.object({
 const limitDescription = `Maximum number of probes to use. Default: ${DEFAULT_PROBE_LIMIT}, Max: 500. More probes provide broader coverage but take longer to complete.`;
 
 /**
+ * Additional description for locations parameter to explain measurement ID reuse
+ */
+const locationsDescription = "Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution. IMPORTANT FOR COMPARISONS: When comparing two targets (e.g., sites A and B), use the measurement ID from the first test as the locations parameter for the second test to ensure the exact same probes are used.";
+
+/**
+ * Location parameter that can be string (measurement ID) for comparisons
+ */
+const locationParameter = z.union([
+    z.array(magicLocationSchema),
+    z.string().describe("For comparisons: a previous measurement ID to reuse the exact same probes")
+]).optional().describe(locationsDescription);
+
+/**
  * Registers all Globalping measurement tools with the MCP server
  * 
  * @param server - The MCP server to register tools with
@@ -55,7 +68,7 @@ function registerPingTool(server: McpServer): void {
         "Measures network latency (round-trip time) to a target host using ICMP Echo requests from globally distributed probes. Use to check global reachability, latency, and packet loss from different regions or networks. Results include min/avg/max times and packet loss statistics.",
         {
             target: z.string().describe("The hostname or IP address to ping (e.g., 'example.com' or '192.168.1.1')."),
-            locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
+            locations: locationParameter,
             limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             packets: z.number().int().min(1).max(16).optional().describe("Number of ICMP Echo packets to send. Min: 1, Max: 16. Default: 3."),
             ipVersion: z.enum(['4', '6']).optional().describe("IP version to use. Only applicable for hostname targets."),
@@ -76,7 +89,7 @@ function registerTracerouteTool(server: McpServer): void {
         "Maps network paths between Globalping probes and a target, showing router hops and latency. Useful for identifying routing issues, network bottlenecks, and understanding geographic paths of network traffic. Supports multiple protocols (ICMP, TCP, UDP).",
         {
             target: z.string().describe("The hostname or IP address to trace the route to (e.g., 'example.com' or '192.168.1.1')."),
-            locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
+            locations: locationParameter,
             limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             port: z.number().int().min(0).max(65535).optional().describe("Destination port for TCP/UDP traceroutes. Ignored for ICMP. Default: 80."),
             protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe("Protocol to use for traceroute. Default: ICMP."),
@@ -98,7 +111,7 @@ function registerDnsTool(server: McpServer): void {
         "Performs DNS resolution queries from distributed probes to verify DNS propagation and configuration. Useful for checking DNS resolution from different regions, validating DNS changes, and diagnosing DNS-related issues. Supports all common DNS record types.",
         {
             target: z.string().describe("The domain name to query (e.g., 'example.com'). For reverse DNS, use the IP address with PTR query type."),
-            locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
+            locations: locationParameter,
             limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             query: z.object({
                 type: z.enum([
@@ -129,7 +142,7 @@ function registerMtrTool(server: McpServer): void {
         "Combines traceroute and ping for comprehensive path analysis with detailed statistics per hop. Shows packet loss, latency (min/avg/max), jitter, and standard deviation for each network segment. Excellent for debugging complex network issues and performance problems.",
         {
             target: z.string().describe("The hostname or IP address to perform MTR to (e.g., 'example.com' or '192.168.1.1')."),
-            locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
+            locations: locationParameter,
             limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             port: z.number().int().min(0).max(65535).optional().describe("Destination port for TCP/UDP MTR. Ignored for ICMP. Default: 80."),
             protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe("Protocol to use for MTR. Default: ICMP."),
@@ -153,7 +166,7 @@ function registerHttpTool(server: McpServer): void {
         {
             target: z.string()
                 .describe("URL to request (e.g., 'example.com' or 'https://example.com/path'). If a full URL is provided, the protocol and path will be extracted and used appropriately."),
-            locations: z.array(magicLocationSchema).optional().describe("Locations to run the test from. Each entry should contain a 'magic' field with a fuzzy location descriptor. If omitted, uses default global distribution."),
+            locations: locationParameter,
             limit: z.number().int().min(1).max(500).optional().describe(limitDescription),
             method: z.enum(['HEAD', 'GET', 'OPTIONS']).optional().describe("HTTP method to use. Default: HEAD."),
             protocol: z.enum(['HTTP', 'HTTPS', 'HTTP2']).optional().describe("Transport protocol to use. Default: HTTPS. If the target URL includes a protocol, it will override this value."),

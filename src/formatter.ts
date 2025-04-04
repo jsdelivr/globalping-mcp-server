@@ -23,6 +23,10 @@ export function formatMeasurementResult(result: MeasurementResult, type: string,
     output += `Updated: ${result.updatedAt}\n`;
     output += `Probes: ${result.probesCount}\n\n`;
     
+    // Add measurement ID reuse instructions for comparisons
+    output += `For comparative analysis: To compare this ${target} with another target using the same probes,\n`;
+    output += `use "${result.id}" as the locations parameter in your next measurement request.\n\n`;
+    
     // Customize the output based on the measurement type
     switch (type) {
         case 'ping':
