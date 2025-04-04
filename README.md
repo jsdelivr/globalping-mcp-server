@@ -153,3 +153,19 @@ With authentication (using your Globalping API token):
 
 Get your free API token at [dash.globalping.io](https://dash.globalping.io).
 
+
+## Development
+
+This repository uses GitHub Actions for continuous integration and deployment:
+
+- **Build Verification**: Runs on every push and pull request to the main branch to verify the package can build successfully
+- **Publish to npm**: Runs on tag creation (format: `v*.*.*`) to automatically:
+  - Extract the version from the tag
+  - Update the version in package.json
+  - Build the package
+  - Publish to npm registry
+  - Create a GitHub release
+
+To publish a new version:
+1. Create and push a new tag with the version: `git tag v1.2.3 && git push origin v1.2.3`
+2. The workflow will automatically update the package.json version to match the tag
