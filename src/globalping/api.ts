@@ -531,18 +531,18 @@ export async function getRateLimits(apiToken?: string): Promise<RateLimits> {
                 reset: response.data.measurements?.reset || Math.floor(Date.now() / 1000) + 3600
             },
             
-            // Only include credits if available in the response
-            ...(response.data.credits ? { 
-                credits: {
-                    limit: response.data.credits.limit || 0,
-                    remaining: response.data.credits.remaining || 0
-                } 
-            } : {}),
-            
             // Determine authentication status based on presence of credits
             // and validity of the API token
             isAuthenticated: !!response.data.credits
         };
+        
+        // Only add credits if they exist in the response
+        if (response.data.credits) {
+            rateLimits.credits = {
+                limit: response.data.credits.limit || 0,
+                remaining: response.data.credits.remaining || 0
+            };
+        }
         
         return rateLimits;
     } catch (error) {

@@ -1,0 +1,184 @@
+# Globalping MCP Server
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-probe/main/docs/img/logo.svg" alt="Globalping Logo" width="180"/>
+</p>
+
+<p align="center">
+  <b>Enable AI models to interact with a global network measurement platform through natural language</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/jsdelivr/globalping-mcp/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
+  </a>
+  <a href="https://www.npmjs.com/package/@globalping/globalping-mcp">
+    <img src="https://img.shields.io/npm/v/@globalping/globalping-mcp.svg" alt="npm version">
+  </a>
+  <a href="https://github.com/modelcontextprotocol/modelcontextprotocol">
+    <img src="https://img.shields.io/badge/MCP-compatible-brightgreen.svg" alt="MCP Compatible">
+  </a>
+</p>
+
+## What is Globalping?
+
+[Globalping](https://github.com/jsdelivr/globalping) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network measurements (ping, traceroute, DNS, MTR, HTTP) from hundreds of locations worldwide.
+
+## What is the Globalping MCP Server?
+
+The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models like OpenAI's GPT and Anthropic's Claude to interact with Globalping's network measurement capabilities through natural language.
+
+### Key Features
+
+- 🌐 **Global Network Access**: Run measurements from hundreds of probes worldwide
+- 🤖 **AI-Friendly Interface**: Natural language processing of network testing requests
+- 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
+- 🔍 **Smart Context Handling**: Intelligent measurement type selection based on query context
+- 🔄 **Comparative Analysis**: Compare network performance between different targets
+- 🔑 **Token Support**: Use your own Globalping API token for higher rate limits
+
+## Installation
+
+### Requirements
+
+- Node.js 20 or higher
+
+### Global Installation
+
+```bash
+npm install -g @globalping/globalping-mcp
+```
+
+Then run it:
+
+```bash
+globalping-mcp
+```
+
+### NPX (No Installation)
+
+Run directly without installing:
+
+```bash
+npx -y @globalping/globalping-mcp
+```
+
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GLOBALPING_API_TOKEN` | Your Globalping API token | None (uses IP-based rate limits) |
+| `PORT` | HTTP port for SSE transport | `3000` |
+| `DEFAULT_PROBE_LIMIT` | Default number of probes to use | `3` |
+
+
+You can create a `.env` file in the directory where you run the server, or set these environment variables through your system.
+
+### Using with MCP Clients
+
+The Globalping MCP Server can be configured in different MCP-compatible clients:
+
+#### Claude Desktop App
+
+Add to your Claude Desktop configuration file:
+
+```json
+{
+  "mcpServers": {
+    "globalping": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@globalping/globalping-mcp"
+      ],
+      "env": {
+        "GLOBALPING_API_TOKEN": "your-token-from-dash.globalping.io"
+      }
+    }
+  }
+}
+```
+
+#### Continue Extension
+
+Add to your Continue configuration:
+
+```json
+{
+  "tools": {
+    "globalping": {
+      "command": "npx -y @globalping/globalping-mcp"
+    }
+  }
+}
+```
+
+#### Custom HTTP/SSE Endpoint
+
+When running as a standalone server, connect to:
+
+```
+http://localhost:3000/mcp
+```
+
+## Usage Examples
+
+Once connected to an AI model through a compatible MCP client, you can interact with Globalping using natural language:
+
+```
+Ping google.com from 3 locations in Europe
+```
+
+```
+Run a traceroute to github.com from Japan and compare with traceroute from the US
+```
+
+```
+Check the DNS resolution of example.com using Google DNS (8.8.8.8)
+```
+
+```
+Is jsdelivr.com reachable from China? Test with both ping and HTTP
+```
+
+```
+What's the average response time for cloudflare.com across different continents?
+```
+
+## Supported Measurement Types
+
+The Globalping MCP Server supports all measurement types available in the Globalping API:
+
+- **ping**: ICMP/TCP ping tests
+- **traceroute**: Network route tracing
+- **dns**: DNS resolution tests
+- **mtr**: My Traceroute (combined ping and traceroute)
+- **http**: HTTP/HTTPS requests
+
+## Compatible MCP Clients
+
+This MCP server is compatible with any client that supports the Model Context Protocol tools interface, including:
+
+- [Claude Desktop App](https://claude.ai/download)
+- [Continue](https://github.com/continuedev/continue)
+- [Cursor](https://cursor.com)
+- [Cline](https://github.com/cline/cline)
+- [Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
+- [5ire](https://github.com/nanbingxyz/5ire)
+- And [many more](https://modelcontextprotocol.io/clients)
+
+## Rate Limits
+
+Without authentication, the Globalping API allows:
+- 250 measurements per hour
+- 2 requests per second per measurement
+
+With authentication (using your Globalping API token):
+- 500 measurements per hour
+- 2 requests per second per measurement
+
+Get your free API token at [dash.globalping.io](https://dash.globalping.io).
+
