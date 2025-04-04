@@ -1,7 +1,7 @@
 # Globalping MCP Server
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-probe/main/docs/img/logo.svg" alt="Globalping Logo" width="180"/>
+  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-media/refs/heads/master/logo/full_colored_light.svg" alt="Globalping Logo" width="180"/>
 </p>
 
 <p align="center">
@@ -9,9 +9,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jsdelivr/globalping-mcp/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
-  </a>
   <a href="https://www.npmjs.com/package/@globalping/globalping-mcp">
     <img src="https://img.shields.io/npm/v/@globalping/globalping-mcp.svg" alt="npm version">
   </a>
@@ -22,7 +19,7 @@
 
 ## What is Globalping?
 
-[Globalping](https://github.com/jsdelivr/globalping) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network measurements (ping, traceroute, DNS, MTR, HTTP) from hundreds of locations worldwide.
+[Globalping](https://globalping.io) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network measurements (ping, traceroute, DNS, MTR, HTTP) from hundreds of locations worldwide.
 
 ## What is the Globalping MCP Server?
 
@@ -30,39 +27,12 @@ The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://
 
 ### Key Features
 
-- 🌐 **Global Network Access**: Run measurements from hundreds of probes worldwide
-- 🤖 **AI-Friendly Interface**: Natural language processing of network testing requests
+- 🌐 **Global Network Access**: Run measurements from thousands of probes worldwide
+- 🤖 **AI-Friendly Interface**: Any LLM will easily parse the data and run new measurements as needed
 - 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
-- 🔍 **Smart Context Handling**: Intelligent measurement type selection based on query context
-- 🔄 **Comparative Analysis**: Compare network performance between different targets
-- 🔑 **Token Support**: Use your own Globalping API token for higher rate limits
-
-## Installation
-
-### Requirements
-
-- Node.js 20 or higher
-
-### Global Installation
-
-```bash
-npm install -g @globalping/globalping-mcp
-```
-
-Then run it:
-
-```bash
-globalping-mcp
-```
-
-### NPX (No Installation)
-
-Run directly without installing:
-
-```bash
-npx -y @globalping/globalping-mcp
-```
-
+- 🔍 **Smart Context Handling**: Allows for intelligent measurement type selection based on query context
+- 🔄 **Comparative Analysis**: Allows to compare network performance between different targets
+- 🔑 **Token Support**: Free to use without authentication. Use your own Globalping API token for higher rate limits
 
 ## Configuration
 
@@ -179,6 +149,7 @@ Without authentication, the Globalping API allows:
 With authentication (using your Globalping API token):
 - 500 measurements per hour
 - 2 requests per second per measurement
+- [Host a probe](https://github.com/jsdelivr/globalping-probe) to passively generate free credits
 
 Get your free API token at [dash.globalping.io](https://dash.globalping.io).
 
