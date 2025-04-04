@@ -10,6 +10,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import dotenv from 'dotenv';
 import { registerGlobalpingTools } from './tools.js';
+import { ListResourcesRequestSchema, ListPromptsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from "zod";
 
 /**
  * --- Role of this MCP Server ---
@@ -46,8 +48,8 @@ const server = new McpServer({
     version: process.env.npm_package_version || "0.0.1",
     capabilities: {
         tools: {}, // Indicate tool support
-        resources: {},
-        prompts: {},
+        resources: {}, // Add empty resources handler
+        prompts: {}, // Add empty prompts handler
     },
 });
 
@@ -56,6 +58,23 @@ console.error("Globalping MCP Server starting...");
 // --- Register Tools ---
 registerGlobalpingTools(server); // Register all Globalping tools
 // --- End Tool Registration ---
+
+// Add empty handlers:
+server.resource(
+    "config",
+    "config://app",
+    async (uri) => ({
+      contents: []
+    })
+  );
+
+  server.prompt(
+    "config",
+    "config://app",
+    async (uri) => ({
+      messages: []
+    })
+  );
 
 // --- Server Connection ---
 /**
