@@ -13,6 +13,6 @@
     "sourceMap": true,              /* Generate corresponding '.map' file */
     "isolatedModules": true         /* Add isolatedModules as required by error message */
   },
-  "include": ["**/*"],  /* Include all files under src directory */
+  "include": ["src/**/*"],  /* Include all files under src directory */
   "exclude": ["node_modules", "dist", "build"] /* Exclude node_modules, dist and build directories */
 }

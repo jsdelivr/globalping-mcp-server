@@ -34,6 +34,80 @@ The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://
 - 🔄 **Comparative Analysis**: Allows to compare network performance between different targets
 - 🔑 **Token Support**: Free to use without authentication. Use your own Globalping API token for higher rate limits
 
+## Installation
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or later)
+- npm (included with Node.js) or [yarn](https://yarnpkg.com/)
+
+### Global Installation (Recommended)
+
+You can install the Globalping MCP Server globally to run it from anywhere:
+
+```bash
+# Using npm
+npm install -g @globalping/globalping-mcp
+```
+
+After installation, you can start the server with:
+
+```bash
+globalping-mcp
+```
+
+### Using npx (No Installation)
+
+You can run the server without installation using npx:
+
+```bash
+npx @globalping/globalping-mcp
+```
+
+### Windows-Specific Instructions
+
+On Windows, ensure you have:
+
+1. **Node.js and npm**: Download and install from [Node.js official website](https://nodejs.org/)
+2. **PowerShell**: Use PowerShell instead of Command Prompt for better compatibility
+3. **PATH Environment**: Ensure Node.js is added to your PATH (the installer typically handles this)
+
+If you encounter permission issues when installing globally on Windows:
+
+1. Run PowerShell as Administrator
+2. Execute the installation command:
+   ```powershell
+   npm install -g @globalping/globalping-mcp
+   ```
+
+For environment variables on Windows:
+
+1. Create a `.env` file in your project directory, or
+2. Set system environment variables:
+   ```powershell
+   # Temporary (current session)
+   $env:GLOBALPING_API_TOKEN = "your-token"
+   $env:PORT = "3000"
+   
+   # Permanent (system-wide)
+   [Environment]::SetEnvironmentVariable("GLOBALPING_API_TOKEN", "your-token", "User")
+   [Environment]::SetEnvironmentVariable("PORT", "3000", "User")
+   ```
+
+### Verifying Installation
+
+After installation, verify the server is working correctly:
+
+```bash
+# Start the server
+globalping-mcp
+
+# Or with npx
+npx @globalping/globalping-mcp
+```
+
+You should see output indicating the server is running on the specified port (default: 3000).
+
 ## Configuration
 
 ### Environment Variables
@@ -43,7 +117,6 @@ The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://
 | `GLOBALPING_API_TOKEN` | Your Globalping API token | None (uses IP-based rate limits) |
 | `PORT` | HTTP port for SSE transport | `3000` |
 | `DEFAULT_PROBE_LIMIT` | Default number of probes to use | `3` |
-
 
 You can create a `.env` file in the directory where you run the server, or set these environment variables through your system.
 

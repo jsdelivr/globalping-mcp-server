@@ -7,6 +7,11 @@
     "bin": {
         "globalping-mcp": "build/index.js"
     },
+    "files": [
+        "build/**/*",
+        "README.md",
+        "LICENSE"
+    ],
     "scripts": {
         "build": "tsc",
         "start": "node build/index.js",

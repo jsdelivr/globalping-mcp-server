@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Globalping MCP Server - Main Entry Point
  * 

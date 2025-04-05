@@ -45,6 +45,20 @@ jobs:
     - name: Build package
       run: npm run build
     
+    - name: Set file permissions
+      run: |
+        chmod +x build/index.js
+        echo "Set executable permissions on build/index.js"
+    
+    - name: Verify package contents
+      run: |
+        echo "Checking build directory..."
+        ls -la build/
+        echo "Checking that index.js has shebang line..."
+        head -n 1 build/index.js
+        echo "Creating a dry-run package..."
+        npm pack --dry-run
+    
     - name: Publish to npm
       run: npm publish --access public
       env:
