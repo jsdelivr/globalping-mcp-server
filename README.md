@@ -1,11 +1,11 @@
 # Globalping MCP Server
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-media/refs/heads/master/logo/full_colored_light.svg" alt="Globalping Logo" width="180"/>
+  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-media/refs/heads/master/logo/full_colored_dark.svg" alt="Globalping Logo" width="180"/>
 </p>
 
 <p align="center">
-  <b>Enable AI models to interact with a global network measurement platform through natural language</b>
+  <b>Enable AI models to interact with a global network measurement platform through natural language. Give network access to any LLM.</b>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@
 
 ## What is Globalping?
 
-[Globalping](https://globalping.io) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network measurements (ping, traceroute, DNS, MTR, HTTP) from hundreds of locations worldwide.
+[Globalping](https://globalping.io) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network tests (ping, traceroute, DNS, MTR, HTTP) from thousands of locations worldwide.
 
 ## What is the Globalping MCP Server?
 
