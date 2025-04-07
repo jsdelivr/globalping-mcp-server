@@ -46,6 +46,8 @@ export const resolverSchema = z.string()
  * Schema for ping measurement inputs
  */
 export const pingInputSchema = z.object({
+    type: z.literal('ping')
+        .describe("The measurement type, must be 'ping' for ping measurements."),
     target: z.string()
         .describe("The hostname or IP address to ping (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
@@ -60,6 +62,8 @@ export const pingInputSchema = z.object({
  * Schema for traceroute measurement inputs
  */
 export const tracerouteInputSchema = z.object({
+    type: z.literal('traceroute')
+        .describe("The measurement type, must be 'traceroute' for traceroute measurements."),
     target: z.string()
         .describe("The hostname or IP address to trace the route to (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
@@ -76,6 +80,8 @@ export const tracerouteInputSchema = z.object({
  * Schema for DNS measurement inputs
  */
 export const dnsInputSchema = z.object({
+    type: z.literal('dns')
+        .describe("The measurement type, must be 'dns' for DNS measurements."),
     target: z.string()
         .describe("The domain name to query (e.g., 'example.com'). For reverse DNS lookups, use the IP address when queryType is 'PTR'."),
     locations: z.array(locationSchema).optional()
@@ -104,6 +110,8 @@ export const dnsInputSchema = z.object({
  * Schema for MTR measurement inputs
  */
 export const mtrInputSchema = z.object({
+    type: z.literal('mtr')
+        .describe("The measurement type, must be 'mtr' for MTR measurements."),
     target: z.string()
         .describe("The hostname or IP address to perform MTR to (e.g., 'example.com' or '192.168.1.1')."),
     locations: z.array(locationSchema).optional()
@@ -122,6 +130,8 @@ export const mtrInputSchema = z.object({
  * Schema for HTTP measurement inputs
  */
 export const httpInputSchema = z.object({
+    type: z.literal('http')
+        .describe("The measurement type, must be 'http' for HTTP measurements."),
     target: z.string()
         .describe("The URL to request. Can be a domain (e.g., 'example.com') or a full URL (e.g., 'https://example.com/path'). If a full URL is provided, the protocol and path will be extracted automatically."),
     locations: z.array(locationSchema).optional()
