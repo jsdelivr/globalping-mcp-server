@@ -3,9 +3,9 @@
  * Defines all the MCP tools that clients can use
  */
 import { z } from 'zod';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import { GlobalpingClient } from '../api/globalping-client';
-import { processMeasurementResults } from './measurement';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { GlobalpingClient } from '../api/globalping-client.js';
+import { processMeasurementResults } from './measurement.js';
 import {
   MeasurementResponse,
   MeasurementType,
@@ -14,7 +14,7 @@ import {
   DnsOptions,
   MtrOptions,
   HttpOptions
-} from '../types/globalping';
+} from '../types/globalping.js';
 
 // Initialize the Globalping client
 const globalping = new GlobalpingClient();
@@ -43,7 +43,7 @@ function registerPingTool(server: McpServer): void {
     'Run a ping measurement from multiple global locations',
     {
       target: z.string().min(1).describe('The target hostname or IP address to ping'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs, or previous measurement IDs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (continents, countries, regions, cities, networks, ASNs, or previous measurement IDs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       packets: z.number().int().min(1).max(16).optional().describe('The number of packets to send (default: 3)'),
       ipVersion: z.enum(['4', '6']).optional().describe('The IP version to use - 4 or 6 (experimental)'),
@@ -93,7 +93,7 @@ function registerTracerouteTool(server: McpServer): void {
     'Run a traceroute measurement from multiple global locations',
     {
       target: z.string().min(1).describe('The target hostname or IP address to traceroute'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs, or previous measurement IDs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (continents, countries, regions, cities, networks, ASNs, or previous measurement IDs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       port: z.number().int().min(0).max(65535).optional().describe('The destination port for the data packets (default: 80)'),
       protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe('The transport protocol to use (default: ICMP)'),
@@ -145,7 +145,7 @@ function registerDnsTool(server: McpServer): void {
     'Run a DNS measurement from multiple global locations',
     {
       target: z.string().min(1).describe('The domain name to query'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs, or previous measurement IDs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (continents, countries, regions, cities, networks, ASNs, or previous measurement IDs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       queryType: z.enum(['A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'HTTPS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV', 'SVCB']).optional().describe('The type of DNS query (default: A)'),
       resolver: z.string().optional().describe('A DNS resolver to use for the query (IP or hostname)'),
@@ -203,7 +203,7 @@ function registerMtrTool(server: McpServer): void {
     'Run an MTR measurement from multiple global locations',
     {
       target: z.string().min(1).describe('The target hostname or IP address for MTR'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs, or previous measurement IDs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (  continents, countries, regions, cities, networks, ASNs, or previous measurement IDs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       port: z.number().int().min(0).max(65535).optional().describe('The port number to use (default: 80)'),
       protocol: z.enum(['ICMP', 'TCP', 'UDP']).optional().describe('The transport protocol to use (default: ICMP)'),
@@ -257,7 +257,7 @@ function registerHttpTool(server: McpServer): void {
     'Run an HTTP measurement from multiple global locations',
     {
       target: z.string().min(1).describe('The target URL or hostname for HTTP measurement'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs, or previous measurement IDs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (continents, countries, regions, cities, networks, ASNs, or previous measurement IDs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       host: z.string().optional().describe('An optional override for the Host header'),
       path: z.string().optional().describe('The path portion of the URL'),
@@ -329,7 +329,7 @@ function registerComparisonTool(server: McpServer): void {
       measurementType: z.enum(['ping', 'traceroute', 'dns', 'mtr', 'http']).describe('The type of measurement to perform'),
       target1: z.string().min(1).describe('The first target hostname, IP address, or URL'),
       target2: z.string().min(1).describe('The second target hostname, IP address, or URL to compare with'),
-      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (cities, countries, regions, networks, ASNs)'),
+      locations: z.array(z.string()).optional().describe('Array of locations to run the measurement from (continents, countries, regions, cities, networks, ASNs)'),
       limit: z.number().int().min(1).max(500).optional().describe('The number of probes to use (default: 3)'),
       options: z.record(z.any()).optional().describe('Measurement-specific options'),
       token: z.string().optional().describe('Optional Globalping API token')

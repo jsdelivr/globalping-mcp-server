@@ -5,8 +5,8 @@
  * It registers all tools for interacting with the Globalping API.
  */
 import { McpAgent } from 'agents';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
-import { registerTools } from './tools/tool-definitions';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerTools } from './tools/tool-definitions.js';
 
 /**
  * Authentication context provided by the MCP OAuth flow

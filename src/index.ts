@@ -4,7 +4,7 @@
  * Sets up the MCP server with OAuth authentication and routes requests
  * to the GlobalpingAgent.
  */
-import { GlobalpingAgent } from './globalping-agent';
+import { GlobalpingAgent } from './globalping-agent.js';
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 
 /**

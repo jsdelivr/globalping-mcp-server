@@ -2,7 +2,7 @@
  * Tests for the Globalping API client
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GlobalpingClient } from '../src/api/globalping-client';
+import { GlobalpingClient } from '../src/api/globalping-client.js';
 
 // Mock fetch globally
 vi.stubGlobal('fetch', vi.fn());

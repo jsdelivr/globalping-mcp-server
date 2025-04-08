@@ -21,5 +21,13 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
+  // Optional: Add a custom domain if you have one
+  // "routes": [
+  //   { "pattern": "your-domain.com/*", "zone_name": "your-domain.com" }
+  // ],
+  // Optional: Define environment variables that your worker needs
+  // "vars": {
+  //   "EXAMPLE_VARIABLE": "example-value"
+  // }
 }

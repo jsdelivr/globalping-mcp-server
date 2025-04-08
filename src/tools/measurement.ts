@@ -6,7 +6,7 @@ import {
   MeasurementResultItem,
   MeasurementType,
   TestResult
-} from '../types/globalping';
+} from '../types/globalping.js';
 
 /**
  * Process a measurement and format the results for MCP clients
