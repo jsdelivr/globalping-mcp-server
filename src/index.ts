@@ -11,6 +11,26 @@ import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 export { GlobalpingAgent } from './globalping-agent.js';
 
 /**
+ * Create an API handler for the MCP server
+ * This wraps our agent in a format that the OAuthProvider can understand
+ */
+const MCPApiHandler = {
+  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
+    // Extract the agent ID from the URL or use a default
+    const url = new URL(request.url);
+    const agentId = url.searchParams.get('agent') || 'default';
+    
+    // Get an instance of our agent
+    const namespace = env.GlobalpingAgent;
+    const id = namespace.idFromName(agentId);
+    const agent = namespace.get(id);
+    
+    // Forward the request to the agent
+    return await agent.fetch(request);
+  }
+};
+
+/**
  * OAuth Handler for the MCP server
  * This handler implements a simple auth flow for MCP clients
  */
@@ -212,7 +232,7 @@ const OAuthHandler = {
  */
 export default new OAuthProvider({
   apiRoute: '/sse', // The route for the MCP SSE endpoint
-  apiHandler: GlobalpingAgent.Router, // The MCP agent router
+  apiHandler: MCPApiHandler, // Our custom handler for MCP requests
   defaultHandler: OAuthHandler, // The default handler for other routes
   authorizeEndpoint: '/authorize', // The OAuth authorization endpoint
   tokenEndpoint: '/token', // The OAuth token endpoint
