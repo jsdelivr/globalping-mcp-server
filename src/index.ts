@@ -11,6 +11,62 @@ import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 export { GlobalpingAgent } from './globalping-agent.js';
 
 /**
+ * In-memory store for OAuth client registrations
+ */
+class MemoryStore {
+  private clients = new Map();
+  private codes = new Map();
+  private tokens = new Map();
+
+  // Client store methods
+  async put(id: string, data: any) {
+    this.clients.set(id, data);
+    return data;
+  }
+
+  async get(id: string) {
+    return this.clients.get(id);
+  }
+
+  async delete(id: string) {
+    this.clients.delete(id);
+  }
+
+  // Code store methods
+  async putCode(code: string, data: any) {
+    this.codes.set(code, data);
+    return data;
+  }
+
+  async getCode(code: string) {
+    return this.codes.get(code);
+  }
+
+  async deleteCode(code: string) {
+    this.codes.delete(code);
+  }
+
+  // Token store methods
+  async putToken(token: string, data: any) {
+    this.tokens.set(token, data);
+    return data;
+  }
+
+  async getToken(token: string) {
+    return this.tokens.get(token);
+  }
+
+  async deleteToken(token: string) {
+    this.tokens.delete(token);
+  }
+}
+
+// Create our stores
+const clientStore = new MemoryStore();
+const codeStore = new MemoryStore();
+const tokenStore = new MemoryStore();
+
+/**
  * Create an API handler for the MCP server
  * This wraps our agent in a format that the OAuthProvider can understand
  */
@@ -51,6 +107,13 @@ const OAuthHandler = {
       if (!code || !state || !redirectUri) {
         return new Response('Invalid callback parameters', { status: 400 });
       }
+      
+      // Store the code for later validation
+      await codeStore.putCode(code, {
+        redirectUri,
+        state,
+        createdAt: Date.now()
+      });
       
       // Redirect back to the client
       return Response.redirect(`${redirectUri}?code=${code}&state=${state}`, 302);
@@ -150,9 +213,6 @@ const OAuthHandler = {
     // Handle token endpoint - exchange code for token
     if (url.pathname === '/token' && request.method === 'POST') {
       try {
-        // In a real implementation, you would validate the code
-        // and exchange it for a real token
-        
         // Parse the form data
         const formData = await request.formData();
         const code = formData.get('code');
@@ -168,18 +228,30 @@ const OAuthHandler = {
           });
         }
         
+        // In a real implementation, you would validate the code
+        // and verify the code verifier using the code challenge
+        
         // Create a token response
-        const token = {
-          access_token: crypto.randomUUID(),
+        const accessToken = crypto.randomUUID();
+        const refreshToken = crypto.randomUUID();
+        
+        // Store token information
+        await tokenStore.putToken(accessToken, {
+          clientId: 'default-client',
+          scope: 'measurements',
+          expiresAt: Date.now() + 3600 * 1000 // 1 hour
+        });
+        
+        return new Response(JSON.stringify({
+          access_token: accessToken,
           token_type: 'bearer',
           expires_in: 3600,
-          refresh_token: crypto.randomUUID()
-        };
-        
-        return new Response(JSON.stringify(token), {
+          refresh_token: refreshToken
+        }), {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error) {
+        console.error('Token endpoint error:', error);
         return new Response(JSON.stringify({
           error: 'server_error',
           error_description: 'An error occurred processing the request'
@@ -195,21 +267,30 @@ const OAuthHandler = {
       try {
         const registration = await request.json();
         
-        // In a real implementation, you would validate the registration
-        // and store the client information
+        // Generate client ID and secret
+        const clientId = crypto.randomUUID();
+        const clientSecret = crypto.randomUUID();
         
-        // Create a client registration response
-        const client = {
-          client_id: crypto.randomUUID(),
-          client_secret: crypto.randomUUID(),
+        // Store client information
+        await clientStore.put(clientId, {
+          ...registration,
+          client_id: clientId,
+          client_secret: clientSecret,
           client_id_issued_at: Math.floor(Date.now() / 1000),
           client_secret_expires_at: 0
-        };
+        });
         
-        return new Response(JSON.stringify(client), {
+        // Return client registration response
+        return new Response(JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          client_id_issued_at: Math.floor(Date.now() / 1000),
+          client_secret_expires_at: 0
+        }), {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error) {
+        console.error('Client registration error:', error);
         return new Response(JSON.stringify({
           error: 'invalid_client_metadata',
           error_description: 'Invalid client metadata'
@@ -236,6 +317,9 @@ export default new OAuthProvider({
   defaultHandler: OAuthHandler, // The default handler for other routes
   authorizeEndpoint: '/authorize', // The OAuth authorization endpoint
   tokenEndpoint: '/token', // The OAuth token endpoint
-  clientRegistrationEndpoint: '/register', // The OAuth client registration endpoint,
+  clientRegistrationEndpoint: '/register', // The OAuth client registration endpoint
+  clientStore: clientStore, // Store for client registrations
+  codeStore: codeStore, // Store for authorization codes
+  tokenStore: tokenStore, // Store for tokens
   debug: true // Enable debug mode for easier troubleshooting
 });
