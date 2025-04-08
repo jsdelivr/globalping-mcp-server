@@ -4,7 +4,7 @@
  * This is the main Agent implementation using Cloudflare's Agents SDK.
  * It registers all tools for interacting with the Globalping API.
  */
-import { McpAgent } from 'agents';
+import { Agent } from 'agents';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerTools } from './tools/tool-definitions.js';
 
@@ -27,7 +27,7 @@ interface AuthContext {
  * An MCP server built on Cloudflare's Agents SDK.
  * Exposes Globalping API capabilities to MCP clients like LLMs.
  */
-export class GlobalpingAgent extends McpAgent<any, any, AuthContext> {
+export class GlobalpingAgent extends Agent<any, any, AuthContext> {
   /**
    * The MCP server instance
    */
