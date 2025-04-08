@@ -7,6 +7,9 @@
 import { GlobalpingAgent } from './globalping-agent.js';
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 
+// Export the GlobalpingAgent class for Durable Objects
+export { GlobalpingAgent } from './globalping-agent.js';
+
 /**
  * OAuth Handler for the MCP server
  * This handler implements a simple auth flow for MCP clients
