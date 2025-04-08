@@ -1,7 +1,0 @@
-*.lock
-*.*rules
-dist
-build
-node_modules
-.env
-*.txt
