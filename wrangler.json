@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "globalping-mcp-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GlobalpingAgent",
+        "class_name": "GlobalpingAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["GlobalpingAgent"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
