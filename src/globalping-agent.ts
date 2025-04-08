@@ -4,7 +4,7 @@
  * This is the main Agent implementation using Cloudflare's Agents SDK.
  * It registers all tools for interacting with the Globalping API.
  */
-import { McpAgent } from 'agents/mcp';
+import { McpAgent } from 'agents';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { registerTools } from './tools/tool-definitions';
 

@@ -213,5 +213,6 @@ export default new OAuthProvider({
   defaultHandler: OAuthHandler, // The default handler for other routes
   authorizeEndpoint: '/authorize', // The OAuth authorization endpoint
   tokenEndpoint: '/token', // The OAuth token endpoint
-  clientRegistrationEndpoint: '/register', // The OAuth client registration endpoint
+  clientRegistrationEndpoint: '/register', // The OAuth client registration endpoint,
+  debug: true // Enable debug mode for easier troubleshooting
 });

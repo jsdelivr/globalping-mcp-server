@@ -203,7 +203,7 @@ describe('GlobalpingClient', () => {
       // Mock setTimeout
       vi.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
         callback();
-        return 0 as any;
+        return setTimeout(() => {}, 0) as unknown as number;
       });
       
       // Call the method
