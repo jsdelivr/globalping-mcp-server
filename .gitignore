@@ -41,3 +41,5 @@ logs/
 
 # Cloudflare
 .cloudflare/
+
+**/CLAUDE.local.md
