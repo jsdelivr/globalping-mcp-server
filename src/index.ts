@@ -31,10 +31,15 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 	initialState: State = {
 		measurements: {},
 	};
+	
+	// Override to access props from user context in tools
+	async getToolContext() {
+		return { props: this.props };
+	}
 
 	async init() {
-		// Register all the Globalping tools
-		registerGlobalpingTools(this.server);
+		// Register all the Globalping tools and pass the getToken function
+		registerGlobalpingTools(this.server, () => this.props.bearerToken);
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
@@ -214,16 +219,47 @@ app.get("/", async (c) => {
 });
 
 app.mount("/", (req, env, ctx) => {
+	// Log all request headers for debugging (temporary)
+	console.log("Incoming request headers:");
+	const headerEntries = [];
+	req.headers.forEach((value, key) => {
+		headerEntries.push(`${key}: ${value}`);
+		console.log(`${key}: ${value}`);
+	});
+
 	// Get the authorization header - this could include a token from the client
 	const authHeader = req.headers.get("authorization");
+	console.log(`Authorization header: ${authHeader || "Not present"}`);
 
-	// Check for a GLOBALPING_TOKEN environment variable passed by the client
-	// This will be available in header 'x-mcp-env-GLOBALPING_TOKEN' if provided by the client
-	const envToken = req.headers.get("x-mcp-env-GLOBALPING_TOKEN");
+	// Find any header with globalping_token in it, case insensitive
+	let envToken = null;
+	req.headers.forEach((value, key) => {
+		if (key.toLowerCase().includes("globalping_token")) {
+			envToken = value;
+			console.log(`Found token in header: ${key}`);
+		}
+	});
+	console.log(`Environment token: ${envToken || "Not present"}`);
 
 	// Use the authorization header if present, otherwise create a bearer token from the env token
+	let token = "";
+	
+	// First try to use the authorization header if present
+	if (authHeader && authHeader.trim() !== "") {
+		token = authHeader;
+		console.log("Using authorization header as token");
+	} 
+	// If no valid auth header, check for environment token
+	else if (envToken && envToken.trim() !== "") {
+		token = `Bearer ${envToken}`;
+		console.log("Using environment token");
+	}
+	
+	console.log(`Final token value: ${token || "None"}`);
+
 	ctx.props = {
-		bearerToken: authHeader || (envToken ? `Bearer ${envToken}` : ""),
+		bearerToken: token,
+		debugHeaders: headerEntries
 	};
 
 	// Mount the MCP agent and pass the request to it

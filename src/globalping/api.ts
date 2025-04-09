@@ -27,9 +27,12 @@ export async function createMeasurement(
 		"User-Agent": "GlobalpingMcpServer/1.0.0",
 	};
 
-	// Only add the Authorization header if a non-empty token is provided
-	if (token && token.trim() !== "" && token !== "Bearer ") {
-		headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+	// Only add the Authorization header if a token is provided
+	if (token) {
+		headers.Authorization = token;
+		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
+	} else {
+		console.log(`API Call: No token provided, making unauthenticated request`);
 	}
 
 	const response = await fetch(`${GLOBALPING_API_URL}/measurements`, {
@@ -65,9 +68,12 @@ export async function pollMeasurementResult(
 		"User-Agent": "GlobalpingMcpServer/1.0.0",
 	};
 
-	// Only add the Authorization header if a non-empty token is provided
-	if (token && token.trim() !== "" && token !== "Bearer ") {
-		headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+	// Only add the Authorization header if a token is provided
+	if (token) {
+		headers.Authorization = token;
+		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
+	} else {
+		console.log(`API Call: No token provided, making unauthenticated request`);
 	}
 
 	let attempts = 0;
@@ -138,9 +144,12 @@ export async function getLocations(token?: string): Promise<any> {
 		"User-Agent": "GlobalpingMcpServer/1.0.0",
 	};
 
-	// Only add the Authorization header if a non-empty token is provided
-	if (token && token.trim() !== "" && token !== "Bearer ") {
-		headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+	// Only add the Authorization header if a token is provided
+	if (token) {
+		headers.Authorization = token;
+		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
+	} else {
+		console.log(`API Call: No token provided, making unauthenticated request`);
 	}
 
 	const response = await fetch(`${GLOBALPING_API_URL}/probes`, {
@@ -166,18 +175,56 @@ export async function getRateLimits(token?: string): Promise<any> {
 		"User-Agent": "GlobalpingMcpServer/1.0.0",
 	};
 
-	// Only add the Authorization header if a non-empty token is provided
-	if (token && token.trim() !== "" && token !== "Bearer ") {
-		headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+	// Only add the Authorization header if a token is provided
+	if (token) {
+		headers.Authorization = token;
+		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
+	} else {
+		console.log(`API Call: No token provided, making unauthenticated request`);
 	}
 
+	console.log(`API Call: Calling ${GLOBALPING_API_URL}/limits`);
 	const response = await fetch(`${GLOBALPING_API_URL}/limits`, {
 		headers,
 	});
 
+	console.log(`API Call: Response status: ${response.status} ${response.statusText}`);
+	
+	// Log response headers
+	console.log(`API Call: Response headers:`);
+	response.headers.forEach((value, key) => {
+		console.log(`  ${key}: ${value}`);
+	});
+
 	if (!response.ok) {
-		const errorData: ErrorResponse = await response.json();
-		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
+		try {
+			const errorData: ErrorResponse = await response.json();
+			console.log(`API Call: Error response: ${JSON.stringify(errorData)}`);
+			
+			// Check for auth-related errors
+			if (response.status === 401 || response.status === 403) {
+				console.log(`API Call: Authentication error - token may be invalid or expired`);
+				if (token) {
+					console.log(`API Call: Trying again without authentication...`);
+					return await getRateLimits(undefined); // Retry without token
+				}
+			}
+			
+			throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
+		} catch (e) {
+			console.log(`API Call: Failed to parse error response: ${e}`);
+			
+			// Still check for auth errors even if we can't parse the JSON
+			if (response.status === 401 || response.status === 403) {
+				console.log(`API Call: Authentication error - token may be invalid or expired`);
+				if (token) {
+					console.log(`API Call: Trying again without authentication...`);
+					return await getRateLimits(undefined); // Retry without token
+				}
+			}
+			
+			throw new Error(`Globalping API error (${response.status})`);
+		}
 	}
 
 	return await response.json();
