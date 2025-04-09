@@ -40,7 +40,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 		this.server.tool(
 			"getMeasurement",
 			{
-				id: z.string().describe("The ID of a previously run measurement"),
+				id: z.string().describe("The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
 			},
 			async ({ id }) => {
 				// Check if we have this measurement cached in state
@@ -60,7 +60,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 					content: [
 						{
 							type: "text",
-							text: "Measurement not found in cache. Use one of the globalping tools to generate a new measurement.",
+							text: "Measurement not found in cache. Use one of the measurement tools (ping, traceroute, dns, mtr, http) to generate a new measurement.",
 						},
 					],
 				};
@@ -79,12 +79,12 @@ When you need to compare network measurements across different locations or betw
 To use the same probes as a previous measurement:
 
 1. First, run a measurement to establish your baseline, for example:
-   \`ping google.com from "US+Cloudflare"\`
+   \`ping target="google.com" locations=["US+Cloudflare"]\`
 
 2. When the measurement completes, note the measurement ID (shown in the results)
 
 3. For your comparison measurement, use the measurement ID as the location:
-   \`ping cloudflare.com with locations ["MEASUREMENT_ID"]\`
+   \`ping target="cloudflare.com" locations=["MEASUREMENT_ID"]\`
 
 This ensures the exact same probes are used for both measurements, allowing for a direct comparison of results.
 
@@ -97,10 +97,10 @@ This ensures the exact same probes are used for both measurements, allowing for 
 
 ## Example Workflow
 
-1. \`ping google.com with locations ["New York", "London", "Tokyo"]\`
+1. \`ping target="google.com" locations=["New York", "London", "Tokyo"]\`
    Result: Measurement ID abc123 with 3 probes
 
-2. \`ping cloudflare.com with locations ["abc123"]\`
+2. \`ping target="cloudflare.com" locations=["abc123"]\`
    Result: Same 3 probes from New York, London, and Tokyo are used
 
 This approach allows for direct side-by-side comparisons of different targets using the exact same network vantage points.
@@ -121,38 +121,73 @@ This MCP server provides access to the Globalping API, which allows you to monit
 Available Tools:
 
 1. ping - Perform a ping test to a target
-   Example: ping to google.com from US locations
+   Parameters:
+     - target: Domain name or IP to test (e.g., 'google.com', '1.1.1.1')
+     - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
+     - limit: Number of probes to use (default: 3, max: 100)
+     - packets: Number of packets to send (default: 3)
    
 2. traceroute - Perform a traceroute test to a target
-   Example: traceroute to 1.1.1.1 using TCP protocol
+   Parameters:
+     - target: Domain name or IP to test (e.g., 'cloudflare.com', '1.1.1.1')
+     - locations: Array of locations using magic field syntax
+     - limit: Number of probes to use (default: 3, max: 100)
+     - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
+     - port: Port number for TCP/UDP (default: 80)
    
 3. dns - Perform a DNS lookup for a domain
-   Example: dns lookup for example.com querying MX records
+   Parameters:
+     - target: Domain name to resolve (e.g., 'example.com')
+     - locations: Array of locations using magic field syntax
+     - limit: Number of probes to use (default: 3, max: 100)
+     - queryType: DNS record type - "A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA" (default: A)
+     - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
+     - trace: Trace delegation path from root servers (default: false)
    
 4. mtr - Perform an MTR (My Traceroute) test to a target
-   Example: mtr to cloudflare.com using 5 packets per hop
+   Parameters:
+     - target: Domain name or IP to test (e.g., 'google.com', '8.8.8.8')
+     - locations: Array of locations using magic field syntax
+     - limit: Number of probes to use (default: 3, max: 100)
+     - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
+     - port: Port number for TCP/UDP (default: 80)
+     - packets: Number of packets to send to each hop (default: 3)
    
 5. http - Perform an HTTP request to a URL
-   Example: http request to https://example.com using GET method
+   Parameters:
+     - target: Domain name or IP to test (e.g., 'example.com')
+     - locations: Array of locations using magic field syntax
+     - limit: Number of probes to use (default: 3, max: 100)
+     - method: HTTP method - "GET" or "HEAD" (default: GET)
+     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: auto-detect)
+     - path: Path component of the URL (e.g., '/api/v1/status')
+     - query: Query string (e.g., 'param=value&another=123')
    
 6. locations - List all available Globalping probe locations
-   Example: locations
+   No parameters required
+   Returns a list of probe locations grouped by continent and country
 
 7. limits - Show your current rate limits for the Globalping API
-   Example: limits
+   No parameters required
+   Returns rate limit information for the Globalping API
    
-8. globalping - Smart tool that automatically selects the appropriate measurement type
-   Example: globalping ping google.com from Europe
+8. getMeasurement - Retrieve a previously run measurement by ID
+   Parameters:
+     - id: The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')
    
-9. getMeasurement - Retrieve a previously run measurement by ID
-   Example: getMeasurement with ID abc123
-   
-10. compareLocations - Guide on how to run comparison measurements using the same probes
-   Example: compareLocations
+9. compareLocations - Guide on how to run comparison measurements using the same probes
+   No parameters required
+   Returns instructions for comparing measurements across locations
 
-Each tool accepts various parameters to customize the test. Use the location parameter to specify where tests should run from.
-
-To compare results from multiple locations, use the locations parameter to specify an array of locations like ["US", "Europe", "AS13335"]. To use the same probes for two different measurements, use the measurement ID as a location in the second measurement: ["abc123"].
+Location Formats:
+When specifying locations, use the magic field format in an array. Examples:
+- Continents: ["EU", "NA", "AS"]
+- Countries: ["US", "DE", "JP"]
+- Cities: ["London", "Tokyo", "New York"]
+- Networks: ["Cloudflare", "Google"]
+- ASNs: ["AS13335", "AS15169"] 
+- Combinations: ["London+UK", "Cloudflare+US"]
+- Previous measurement IDs (for comparison): ["01HT4DGF5ZS7B2M93QP5ZTS3DN"]
 
 For more information, visit: https://www.globalping.io
 `;

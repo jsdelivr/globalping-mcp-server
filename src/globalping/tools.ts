@@ -171,7 +171,7 @@ function formatMeasurementSummary(measurement: any) {
 									summary += `      ${answer.name} ${answer.ttl} ${answer.class} ${answer.type} ${answer.value}\n`;
 								});
 							} else {
-								summary += `    No answers\n`;
+								summary += "    No answers\n";
 							}
 						});
 					} else {
@@ -186,7 +186,7 @@ function formatMeasurementSummary(measurement: any) {
 								summary += `    ${answer.name} ${answer.ttl} ${answer.class} ${answer.type} ${answer.value}\n`;
 							});
 						} else {
-							summary += `  No answers\n`;
+							summary += "  No answers\n";
 						}
 					}
 				}
@@ -196,7 +196,7 @@ function formatMeasurementSummary(measurement: any) {
 			break;
 
 		case "mtr":
-			summary += `MTR Results:\n\n`;
+			summary += "MTR Results:\n\n";
 
 			measurement.results.forEach((result: any, index: number) => {
 				const probe = result.probe;
@@ -218,7 +218,7 @@ function formatMeasurementSummary(measurement: any) {
 			break;
 
 		case "http":
-			summary += `HTTP Results:\n\n`;
+			summary += "HTTP Results:\n\n";
 
 			measurement.results.forEach((result: any, index: number) => {
 				const probe = result.probe;
@@ -231,7 +231,7 @@ function formatMeasurementSummary(measurement: any) {
 					summary += `  HTTP Status: ${testResult.statusCode} ${testResult.statusCodeName}\n`;
 
 					if (testResult.timings) {
-						summary += `  Timings:\n`;
+						summary += "  Timings:\n";
 						summary += `    Total: ${testResult.timings.total ?? "N/A"} ms\n`;
 						summary += `    DNS: ${testResult.timings.dns ?? "N/A"} ms\n`;
 						summary += `    TCP: ${testResult.timings.tcp ?? "N/A"} ms\n`;
@@ -241,7 +241,7 @@ function formatMeasurementSummary(measurement: any) {
 					}
 
 					if (testResult.tls) {
-						summary += `  TLS:\n`;
+						summary += "  TLS:\n";
 						summary += `    Protocol: ${testResult.tls.protocol}\n`;
 						summary += `    Cipher: ${testResult.tls.cipherName}\n`;
 						summary += `    Valid: ${testResult.tls.authorized ? "Yes" : "No"}\n`;
@@ -267,11 +267,11 @@ function formatMeasurementSummary(measurement: any) {
 export function registerGlobalpingTools(server: McpServer) {
 	// Common measurement parameters
 	const baseParams = {
-		target: z.string().describe("Domain name or IP to test"),
+		target: z.string().describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
 		locations: z
 			.array(z.string())
 			.optional()
-			.describe("Specific locations to run the test from using the magic field syntax"),
+			.describe("Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']. You can also use a previous measurement ID to compare results with the same probes."),
 		limit: z
 			.number()
 			.min(1)
@@ -356,7 +356,7 @@ export function registerGlobalpingTools(server: McpServer) {
 				.enum(["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA"])
 				.optional()
 				.describe("DNS record type (default: A)"),
-			resolver: z.string().optional().describe("Custom resolver to use"),
+			resolver: z.string().optional().describe("Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')"),
 			trace: z
 				.boolean()
 				.optional()
@@ -441,8 +441,8 @@ export function registerGlobalpingTools(server: McpServer) {
 				.enum(["HTTP", "HTTPS"])
 				.optional()
 				.describe("Protocol to use (default: auto-detect from URL)"),
-			path: z.string().optional().describe("Path component of the URL"),
-			query: z.string().optional().describe("Query string"),
+			path: z.string().optional().describe("Path component of the URL (e.g., '/api/v1/status')"),
+			query: z.string().optional().describe("Query string (e.g., 'param=value&another=123')"),
 		},
 		async ({ target, locations, limit, method, protocol, path, query }, ctx) => {
 			const token = extractApiToken(ctx);
@@ -540,143 +540,6 @@ export function registerGlobalpingTools(server: McpServer) {
 			content: [{ type: "text", text: summary }],
 		};
 	});
-
-	// Auto tool - selects the appropriate measurement type based on user request
-	server.tool(
-		"globalping",
-		{
-			query: z
-				.string()
-				.describe(
-					'The network query to run (e.g., "ping google.com", "traceroute 1.1.1.1")',
-				),
-			locations: z
-				.array(z.string())
-				.optional()
-				.describe("Specific locations to run the test from"),
-			limit: z
-				.number()
-				.min(1)
-				.max(100)
-				.optional()
-				.describe("Number of probes to use (default: 3, max: 100)"),
-		},
-		async ({ query, locations, limit }, ctx) => {
-			const token = extractApiToken(ctx);
-
-			// Parse the query
-			const parts = query.trim().split(/\s+/);
-			let type: MeasurementType = "ping"; // Default to ping
-			let target = "";
-			const options: Record<string, any> = {};
-
-			// Extract measurement type and target
-			if (parts.length >= 2) {
-				const possibleType = parts[0].toLowerCase();
-				if (["ping", "traceroute", "dns", "mtr", "http"].includes(possibleType)) {
-					type = possibleType as MeasurementType;
-					target = parts[1];
-					parts.splice(0, 2);
-				} else {
-					// Assume the first part is the target and the type is ping
-					target = parts[0];
-					parts.splice(0, 1);
-				}
-			} else if (parts.length === 1) {
-				// Just a target, use ping as the default
-				target = parts[0];
-				parts.splice(0, 1);
-			}
-
-			// Parse remaining parts as options
-			for (let i = 0; i < parts.length; i++) {
-				const part = parts[i];
-
-				if (part === "--packets" && i + 1 < parts.length) {
-					options.packets = Number.parseInt(parts[i + 1], 10);
-					i++;
-				} else if (part === "--protocol" && i + 1 < parts.length) {
-					options.protocol = parts[i + 1].toUpperCase();
-					i++;
-				} else if (part === "--port" && i + 1 < parts.length) {
-					options.port = Number.parseInt(parts[i + 1], 10);
-					i++;
-				} else if (part === "--query-type" && i + 1 < parts.length) {
-					options.queryType = parts[i + 1].toUpperCase();
-					i++;
-				} else if (part === "--resolver" && i + 1 < parts.length) {
-					options.resolver = parts[i + 1];
-					i++;
-				} else if (part === "--trace") {
-					options.trace = true;
-				} else if (part === "--method" && i + 1 < parts.length) {
-					options.method = parts[i + 1].toUpperCase();
-					i++;
-				} else if (part === "--limit" && i + 1 < parts.length) {
-					options.limit = Number.parseInt(parts[i + 1], 10);
-					i++;
-				}
-			}
-
-			// Set up measurement options based on type
-			const measurementOptions: any = {
-				type,
-				target,
-				locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
-				limit: limit || options.limit || 3, // Use provided limit param first, then parsed limit from query, then default to 3
-			};
-
-			// Type-specific options
-			switch (type) {
-				case "ping":
-					measurementOptions.measurementOptions = {
-						packets: options.packets || 3,
-					};
-					break;
-
-				case "traceroute":
-					measurementOptions.measurementOptions = {
-						protocol: options.protocol || "ICMP",
-						port: options.port || 80,
-					};
-					break;
-
-				case "dns":
-					measurementOptions.measurementOptions = {
-						query: {
-							type: options.queryType || "A",
-						},
-						resolver: options.resolver,
-						trace: options.trace || false,
-					};
-					break;
-
-				case "mtr":
-					measurementOptions.measurementOptions = {
-						protocol: options.protocol || "ICMP",
-						port: options.port || 80,
-						packets: options.packets || 3,
-					};
-					break;
-
-				case "http":
-					measurementOptions.measurementOptions = {
-						request: {
-							method: options.method || "GET",
-						},
-						protocol: options.protocol,
-					};
-					break;
-			}
-
-			const result = await runMeasurement(measurementOptions, token);
-			const summary = formatMeasurementSummary(result);
-
-			return {
-				content: [{ type: "text", text: summary }],
-			};
-		},
-	);
 
 	return server;
 }

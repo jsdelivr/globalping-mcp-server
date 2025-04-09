@@ -7,11 +7,10 @@ A Cloudflare Worker that implements the Model Context Protocol (MCP) server for 
 - Exposes Globalping API functionality through MCP tools
 - Supports all Globalping measurement types: ping, traceroute, DNS, MTR, and HTTP
 - Uses the "magic" field for location specification
-- Provides smart tool selection through the `globalping` tool
 - Handles probe selection and result formatting
 - Supports authentication via bearer tokens
 - Caches measurement results in the agent's state
-- Provides a help tool for documentation
+- Provides detailed parameter descriptions for AI clients
 
 ## Available Tools
 
@@ -22,8 +21,8 @@ A Cloudflare Worker that implements the Model Context Protocol (MCP) server for 
 - `http` - Perform an HTTP request to a URL
 - `locations` - List all available Globalping probe locations
 - `limits` - Show your current rate limits for the Globalping API
-- `globalping` - Smart tool that automatically selects the appropriate measurement type
 - `getMeasurement` - Retrieve a previously run measurement by ID
+- `compareLocations` - Guide on how to run comparison measurements
 - `help` - Show a help message with documentation on available tools
 
 ## Running locally
@@ -75,7 +74,7 @@ This MCP server supports both authenticated and unauthenticated access to the Gl
             "command": "npx",
             "args": [
                 "mcp-remote",
-                "https://globalping-mcp-server.dmitriy-akulov.workers.dev/sse"
+                "https://globalping-mcp-server.workers.dev/sse"
             ],
             "env": {
                 "GLOBALPING_TOKEN": "your-token-from-dash.globalping.io"
