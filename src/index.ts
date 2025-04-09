@@ -29,57 +29,91 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 
 	// Initialize the state
 	initialState: State = {
-		measurements: {}
+		measurements: {},
 	};
 
 	async init() {
-		// Register the sample tools from the original codebase
-		this.server.tool("add", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
-			content: [{ type: "text", text: String(a + b) }],
-		}));
-
-		// Tool that returns the user's bearer token
-		// This is just for demonstration purposes, don't actually create a tool that does this!
-		this.server.tool("getToken", {}, async () => ({
-			content: [{ type: "text", text: String(`User's token: ${this.props.bearerToken}`) }],
-		}));
-
 		// Register all the Globalping tools
 		registerGlobalpingTools(this.server);
-		
+
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
 			"getMeasurement",
 			{
-				id: z.string().describe("The ID of a previously run measurement")
+				id: z.string().describe("The ID of a previously run measurement"),
 			},
 			async ({ id }) => {
 				// Check if we have this measurement cached in state
 				if (this.state.measurements[id]) {
 					const measurement = this.state.measurements[id];
 					return {
-						content: [{ 
-							type: "text", 
-							text: `Cached measurement found:\n\n${JSON.stringify(measurement, null, 2)}` 
-						}]
+						content: [
+							{
+								type: "text",
+								text: `Cached measurement found:\n\n${JSON.stringify(measurement, null, 2)}`,
+							},
+						],
 					};
 				}
-				
+
 				return {
-					content: [{ 
-						type: "text", 
-						text: "Measurement not found in cache. Use one of the globalping tools to generate a new measurement." 
-					}]
+					content: [
+						{
+							type: "text",
+							text: "Measurement not found in cache. Use one of the globalping tools to generate a new measurement.",
+						},
+					],
 				};
-			}
+			},
 		);
-		
+
+		// Tool to explain comparison measurements
+		this.server.tool("compareLocations", {}, async () => {
+			const helpText = `
+Globalping Comparison Measurements Guide
+
+When you need to compare network measurements across different locations or between different targets, you can use measurement IDs to ensure the same probes are used.
+
+## Using a Previous Measurement ID
+
+To use the same probes as a previous measurement:
+
+1. First, run a measurement to establish your baseline, for example:
+   \`ping google.com from "US+Cloudflare"\`
+
+2. When the measurement completes, note the measurement ID (shown in the results)
+
+3. For your comparison measurement, use the measurement ID as the location:
+   \`ping cloudflare.com with locations ["MEASUREMENT_ID"]\`
+
+This ensures the exact same probes are used for both measurements, allowing for a direct comparison of results.
+
+## Tips for Accurate Comparisons
+
+- Make sure the second measurement is done shortly after the first one
+- Use the same measurement type for both tests (ping vs ping, traceroute vs traceroute)
+- The probes' online status may change between measurements
+- Any probe that went offline will show as "offline" in the results
+
+## Example Workflow
+
+1. \`ping google.com with locations ["New York", "London", "Tokyo"]\`
+   Result: Measurement ID abc123 with 3 probes
+
+2. \`ping cloudflare.com with locations ["abc123"]\`
+   Result: Same 3 probes from New York, London, and Tokyo are used
+
+This approach allows for direct side-by-side comparisons of different targets using the exact same network vantage points.
+`;
+
+			return {
+				content: [{ type: "text", text: helpText }],
+			};
+		});
+
 		// Tool to get help about the available tools
-		this.server.tool(
-			"help",
-			{},
-			async () => {
-				const helpText = `
+		this.server.tool("help", {}, async () => {
+			const helpText = `
 Globalping MCP Server Help
 
 This MCP server provides access to the Globalping API, which allows you to monitor, debug, and benchmark internet infrastructure using a globally distributed network of probes.
@@ -113,30 +147,28 @@ Available Tools:
 9. getMeasurement - Retrieve a previously run measurement by ID
    Example: getMeasurement with ID abc123
    
-10. add - Simple addition tool (from original demo)
-    Example: add 2+2
-    
-11. getToken - Returns your bearer token (from original demo)
-    Example: getToken
+10. compareLocations - Guide on how to run comparison measurements using the same probes
+   Example: compareLocations
 
 Each tool accepts various parameters to customize the test. Use the location parameter to specify where tests should run from.
 
-To compare results from multiple locations, use the locations parameter to specify an array of locations like ["US", "Europe", "AS13335"].
+To compare results from multiple locations, use the locations parameter to specify an array of locations like ["US", "Europe", "AS13335"]. To use the same probes for two different measurements, use the measurement ID as a location in the second measurement: ["abc123"].
 
 For more information, visit: https://www.globalping.io
 `;
 
-				return {
-					content: [{ type: "text", text: helpText }]
-				};
-			}
-		);
+			return {
+				content: [{ type: "text", text: helpText }],
+			};
+		});
 	}
-	
+
 	// Override onStateUpdate to handle state persistence
 	onStateUpdate(state: State) {
 		// Optional: add logging or validation for state updates
-		console.log(`State updated. Cached ${Object.keys(state.measurements).length} measurements.`);
+		console.log(
+			`State updated. Cached ${Object.keys(state.measurements).length} measurements.`,
+		);
 	}
 }
 
@@ -149,11 +181,11 @@ app.get("/", async (c) => {
 app.mount("/", (req, env, ctx) => {
 	// Get the authorization header - this could include a token from the client
 	const authHeader = req.headers.get("authorization");
-	
+
 	// Check for a GLOBALPING_TOKEN environment variable passed by the client
 	// This will be available in header 'x-mcp-env-GLOBALPING_TOKEN' if provided by the client
 	const envToken = req.headers.get("x-mcp-env-GLOBALPING_TOKEN");
-	
+
 	// Use the authorization header if present, otherwise create a bearer token from the env token
 	ctx.props = {
 		bearerToken: authHeader || (envToken ? `Bearer ${envToken}` : ""),
