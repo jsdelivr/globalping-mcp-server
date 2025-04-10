@@ -6,6 +6,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "globalping-mcp-server",
 	"main": "src/index.ts",
+	"compatibility_flags": [
+    "nodejs_compat"
+  ],
 	"compatibility_date": "2025-03-10",
 	"migrations": [
 		{
@@ -17,7 +20,7 @@
 		"bindings": [
 			{
 				"class_name": "MyMCP",
-				"name": "MCP_OBJECT"
+				"name": "globalping-mcp-object"
 			}
 		]
 	},
