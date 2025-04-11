@@ -263,7 +263,7 @@ app.mount("/", (req, env, ctx) => {
 	};
 
 	// Mount the MCP agent and pass the request to it
-	return MyMCP.mount("/sse").fetch(req, env, ctx);
+	return MyMCP.mount("/sse", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
 });
 
 export default app;

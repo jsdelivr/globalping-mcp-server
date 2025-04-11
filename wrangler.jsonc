@@ -20,7 +20,7 @@
 		"bindings": [
 			{
 				"class_name": "MyMCP",
-				"name": "globalping-mcp-object"
+				"name": "globalping_mcp_object"
 			}
 		]
 	},
