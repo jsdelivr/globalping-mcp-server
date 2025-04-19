@@ -120,3 +120,15 @@ This MCP server can be used with any MCP-compatible AI assistant, including:
 - Any custom implementation of the MCP protocol
 
 See the MCP documentation for details on connecting clients to this server.
+
+## Add Globalping credentials
+
+Add Globalping OAuth credentials:
+
+- `npx wrangler secret put GLOBALPING_CLIENT_ID`
+- `npx wrangler secret put GLOBALPING_CLIENT_SECRET`
+
+# KV storage
+
+- create a KV namespace and copy ID
+- configure `kv_namespaces` in the `wrangler.jsonc` file

@@ -12,6 +12,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^22.14.1",
 		"marked": "^15.0",
 		"typescript": "^5.5",
 		"workers-mcp": "^0",

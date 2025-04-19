@@ -4,7 +4,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runMeasurement, getLocations, getRateLimits } from "./api";
-import type { MeasurementType } from "./types";
 
 // Helper to calculate average values from a ping measurement
 function calculateAverages(results: any) {
@@ -549,9 +548,9 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		// Add context and token debugging information
 		summary += `Context Data:\n`;
 		summary += `- Has props: ${ctx.props ? "Yes" : "No"}\n`;
-		summary += `- Has bearerToken: ${ctx.props?.bearerToken ? "Yes" : "No"}\n`;
-		if (ctx.props?.bearerToken) {
-			summary += `- Raw bearerToken: ${ctx.props.bearerToken.substring(0, 15)}...\n`;
+		summary += `- Has bearerToken: ${ctx.props?.accessToken ? "Yes" : "No"}\n`;
+		if (ctx.props?.accessToken) {
+			summary += `- Raw bearerToken: ${ctx.props.accessToken.substring(0, 15)}...\n`;
 		}
 		
 		// Debug the raw context
@@ -645,8 +644,8 @@ function extractApiToken(ctx: any): string | undefined {
 	}
 	
 	// Then try from context props
-	if (ctx?.props?.bearerToken && ctx.props.bearerToken.trim() !== "") {
-		return formatToken(ctx.props.bearerToken);
+	if (ctx?.props?.accessToken && ctx.props.accessToken.trim() !== "") {
+		return formatToken(ctx.props.accessToken);
 	}
 
 	// If no token is available, return undefined - the API will use unauthenticated access
@@ -658,7 +657,7 @@ function extractApiToken(ctx: any): string | undefined {
  * @param token The token to format
  * @returns The formatted token
  */
-function formatToken(token: string): string {
+function formatToken(token: string): string | undefined {
 	const trimmedToken = token.trim();
 	
 	// If token has a Bearer prefix, remove any extra spaces that might be present

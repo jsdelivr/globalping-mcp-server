@@ -1,18 +1,23 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { Hono } from "hono";
-import { layout, homeContent } from "./utils";
 import { registerGlobalpingTools } from "./globalping/tools";
+import  OAuthProvider from "@cloudflare/workers-oauth-provider";
+import app from "./app";
+import { StateData } from "./types/oauth";
+
+interface Env {
+	GLOBALPING_CLIENT_ID: string;
+	GLOBALPING_CLIENT_SECRET: string;
+	OAUTH_KV: KVNamespace;
+	ASSETS: { fetch: typeof fetch };
+}
 
 type Bindings = Env;
 
-const app = new Hono<{
-	Bindings: Bindings;
-}>();
-
 type Props = {
-	bearerToken: string;
+	accessToken: string;
+	refreshToken: string;
 };
 
 // Define custom state for storing previous measurements
@@ -21,7 +26,7 @@ type State = {
 	measurements: Record<string, any>;
 };
 
-export class MyMCP extends McpAgent<Bindings, State, Props> {
+export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 	server = new McpServer({
 		name: "Globalping MCP",
 		version: "1.0.0",
@@ -31,7 +36,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 	initialState: State = {
 		measurements: {},
 	};
-	
+
 	// Override to access props from user context in tools
 	async getToolContext() {
 		return { props: this.props };
@@ -39,7 +44,7 @@ export class MyMCP extends McpAgent<Bindings, State, Props> {
 
 	async init() {
 		// Register all the Globalping tools and pass the getToken function
-		registerGlobalpingTools(this.server, () => this.props.bearerToken);
+		registerGlobalpingTools(this.server, () => this.props.accessToken);
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
@@ -201,6 +206,29 @@ For more information, visit: https://www.globalping.io
 				content: [{ type: "text", text: helpText }],
 			};
 		});
+
+		this.server.tool("authStatus", {}, async () => {
+			const token = this.props.accessToken;
+			let status = "Not authenticated";
+			let message = "Your are not authenticated with Globalping. Use the /login route to authenticate.";
+
+			if (token) {
+				status = "Authenticated";
+				message = "You are authenticated with Globalping.";
+				if (token.startsWith("Bearer ")) {
+					message += " Your token is of type: Bearer";
+				}
+			}
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Authentication Status: ${status}\n\n${message}`,
+					},
+				],
+			};
+		});
 	}
 
 	// Override onStateUpdate to handle state persistence
@@ -212,58 +240,14 @@ For more information, visit: https://www.globalping.io
 	}
 }
 
-// Render a basic homepage placeholder to make sure the app is up
-app.get("/", async (c) => {
-	const content = await homeContent(c.req.raw);
-	return c.html(layout(content, "Globalping MCP Server"));
+export default new OAuthProvider({
+	apiRoute: "/sse",
+	// @ts-ignore
+	apiHandler: GlobalpingMCP.mount("/sse", { binding: "globalping_mcp_object"}),
+	// @ts-ignore
+	defaultHandler: app,
+	authorizeEndpoint: "/authorize",
+	tokenEndpoint: "/token",
+	clientRegistrationEndpoint: "/register",
+	scopesSupported: ["measurements"],
 });
-
-app.mount("/", (req, env, ctx) => {
-	// Log all request headers for debugging (temporary)
-	console.log("Incoming request headers:");
-	const headerEntries = [];
-	req.headers.forEach((value, key) => {
-		headerEntries.push(`${key}: ${value}`);
-		console.log(`${key}: ${value}`);
-	});
-
-	// Get the authorization header - this could include a token from the client
-	const authHeader = req.headers.get("authorization");
-	console.log(`Authorization header: ${authHeader || "Not present"}`);
-
-	// Find any header with globalping_token in it, case insensitive
-	let envToken = null;
-	req.headers.forEach((value, key) => {
-		if (key.toLowerCase().includes("globalping_token")) {
-			envToken = value;
-			console.log(`Found token in header: ${key}`);
-		}
-	});
-	console.log(`Environment token: ${envToken || "Not present"}`);
-
-	// Use the authorization header if present, otherwise create a bearer token from the env token
-	let token = "";
-	
-	// First try to use the authorization header if present
-	if (authHeader && authHeader.trim() !== "") {
-		token = authHeader;
-		console.log("Using authorization header as token");
-	} 
-	// If no valid auth header, check for environment token
-	else if (envToken && envToken.trim() !== "") {
-		token = `Bearer ${envToken}`;
-		console.log("Using environment token");
-	}
-	
-	console.log(`Final token value: ${token || "None"}`);
-
-	ctx.props = {
-		bearerToken: token,
-		debugHeaders: headerEntries
-	};
-
-	// Mount the MCP agent and pass the request to it
-	return MyMCP.mount("/sse", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
-});
-
-export default app;

@@ -7,25 +7,43 @@
 	"name": "globalping-mcp-server",
 	"main": "src/index.ts",
 	"compatibility_flags": [
-    "nodejs_compat"
-  ],
+		"nodejs_compat"
+	],
 	"compatibility_date": "2025-03-10",
 	"migrations": [
 		{
-			"new_sqlite_classes": ["MyMCP"],
-			"tag": "v1"
+			"new_sqlite_classes": [
+				"GlobalpingMCP"
+			],
+			"tag": "v1",
+		},
+		{
+			"tag": "v2",
+			"renamed_classes": [{
+				"from": "MyMCP",
+				"to": "GlobalpingMCP"
+			}]
 		}
 	],
 	"durable_objects": {
 		"bindings": [
 			{
-				"class_name": "MyMCP",
+				"class_name": "GlobalpingMCP",
 				"name": "globalping_mcp_object"
 			}
 		]
 	},
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "284f9315742a4df79ee2203e896ba24a"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
-	"assets": { "directory": "./static/", "binding": "ASSETS" }
+	"assets": {
+		"directory": "./static/",
+		"binding": "ASSETS"
+	}
 }
