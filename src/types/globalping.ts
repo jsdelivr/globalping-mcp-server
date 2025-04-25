@@ -1,6 +1,7 @@
 /**
  * Types for the Globalping API based on https://api.globalping.io/v1/spec.yaml
  */
+import {DurableObjectNamespace} from "@cloudflare/workers-types";
 
 // Common types
 export interface Location {
@@ -241,8 +242,8 @@ export interface RateLimitResponse {
 
 // Environment interface
 export interface GlobalpingEnv {
-	GLOBALPING_CLIENT_ID?: string;
-	GLOBALPING_CLIENT_SECRET?: string;
-	OAUTH_KV: KVNamespace;
+	GLOBALPING_CLIENT_ID: string;
+	GLOBALPING_CLIENT_SECRET: string;
 	ASSETS: { fetch: typeof fetch };
+	globalping_mcp_object: DurableObjectNamespace;
 }

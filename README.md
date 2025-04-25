@@ -129,6 +129,7 @@ Add Globalping OAuth credentials:
 - `npx wrangler secret put GLOBALPING_CLIENT_SECRET`
 
 # KV storage
-
+Used for `OAuthProvider` docs https://github.com/cloudflare/workers-oauth-provider
 - create a KV namespace and copy ID
+- binding for it must be `OAUTH_KV`
 - configure `kv_namespaces` in the `wrangler.jsonc` file

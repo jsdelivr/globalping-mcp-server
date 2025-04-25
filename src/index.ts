@@ -2,28 +2,25 @@ import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./globalping/tools";
-import  OAuthProvider from "@cloudflare/workers-oauth-provider";
-import app from "./app";
-import { StateData } from "./types/oauth";
+import OAuthProvider from "@cloudflare/workers-oauth-provider";
+import app, { refreshToken } from "./app";
+import { GlobalpingEnv } from "./types/globalping";
+import { env } from "cloudflare:workers";
 
-interface Env {
-	GLOBALPING_CLIENT_ID: string;
-	GLOBALPING_CLIENT_SECRET: string;
-	OAUTH_KV: KVNamespace;
-	ASSETS: { fetch: typeof fetch };
-}
-
-type Bindings = Env;
+type Bindings = GlobalpingEnv;
 
 type Props = {
 	accessToken: string;
 	refreshToken: string;
+	state: string;
+	userName: string;
 };
 
 // Define custom state for storing previous measurements
 type State = {
 	lastMeasurementId?: string;
 	measurements: Record<string, any>;
+	storage?: DurableObjectStorage;
 };
 
 export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
@@ -231,6 +228,15 @@ For more information, visit: https://www.globalping.io
 		});
 	}
 
+	async setOAuthState(state: any): Promise<any> {
+		// Store the state in the Durable Object's storage
+		return await this.ctx.storage?.put("oauth_state", state);
+	}
+
+	async getOAuthState(): Promise<any> {
+		return await this.ctx.storage?.get("oauth_state");
+	}
+
 	// Override onStateUpdate to handle state persistence
 	onStateUpdate(state: State) {
 		// Optional: add logging or validation for state updates
@@ -243,11 +249,32 @@ For more information, visit: https://www.globalping.io
 export default new OAuthProvider({
 	apiRoute: "/sse",
 	// @ts-ignore
-	apiHandler: GlobalpingMCP.mount("/sse", { binding: "globalping_mcp_object"}),
+	apiHandler: GlobalpingMCP.mount("/sse", { binding: "globalping_mcp_object" }),
 	// @ts-ignore
 	defaultHandler: app,
 	authorizeEndpoint: "/authorize",
 	tokenEndpoint: "/token",
 	clientRegistrationEndpoint: "/register",
 	scopesSupported: ["measurements"],
+	tokenExchangeCallback: async (options) => {
+
+		if (options.grantType === 'refresh_token') {
+			// For refresh token exchanges, might want to refresh upstream tokens too
+			const upstreamTokens = await refreshToken(env, options.props.refreshToken);
+
+			return {
+				accessTokenProps: {
+					...options.props,
+					upstreamAccessToken: upstreamTokens.access_token
+				},
+				newProps: {
+					...options.props,
+					upstreamRefreshToken: upstreamTokens.refresh_token || options.props.upstreamRefreshToken
+				},
+				// Optionally override the default access token TTL to match the upstream token
+				accessTokenTTL: upstreamTokens.expires_in
+			};
+		}
+
+	}
 });
