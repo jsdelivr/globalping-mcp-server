@@ -288,7 +288,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 			packets: z.number().optional().describe("Number of packets to send (default: 3)"),
 		},
 		async ({ target, locations, limit, packets }, ctx) => {
-			const token = extractApiToken(ctx);
+			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
 				{
@@ -630,7 +630,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
  * @param ctx The MCP server context
  * @returns The API token if available
  */
-function extractApiToken(ctx: any): string | undefined {
+function extractApiToken(ctx: any, getToken: any): string | undefined {
 	// First try to get the token from the getter function
 	try {
 		if (getToken) {

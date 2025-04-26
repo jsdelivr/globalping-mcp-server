@@ -257,24 +257,15 @@ export default new OAuthProvider({
 	clientRegistrationEndpoint: "/register",
 	scopesSupported: ["measurements"],
 	tokenExchangeCallback: async (options) => {
-
 		if (options.grantType === 'refresh_token') {
-			// For refresh token exchanges, might want to refresh upstream tokens too
 			const upstreamTokens = await refreshToken(env, options.props.refreshToken);
-
 			return {
-				accessTokenProps: {
-					...options.props,
-					upstreamAccessToken: upstreamTokens.access_token
-				},
 				newProps: {
 					...options.props,
-					upstreamRefreshToken: upstreamTokens.refresh_token || options.props.upstreamRefreshToken
-				},
-				// Optionally override the default access token TTL to match the upstream token
-				accessTokenTTL: upstreamTokens.expires_in
+					accessToken: upstreamTokens.access_token,
+					refreshToken: upstreamTokens.refresh_token,	
+				}
 			};
 		}
-
 	}
 });

@@ -127,13 +127,15 @@ app.get("/auth/callback", async (c) => {
     return c.html(layout(`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
 
+  const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
+
   // Form token request
   const tokenRequest = new URLSearchParams();
   tokenRequest.append("grant_type", "authorization_code");
   tokenRequest.append("client_id", c.env.GLOBALPING_CLIENT_ID);
   tokenRequest.append("client_secret", c.env.GLOBALPING_CLIENT_SECRET);
   tokenRequest.append("code", code);
-  tokenRequest.append("redirect_uri", stateData.redirectUri);
+  tokenRequest.append("redirect_uri", redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
   console.log("Token request body:", JSON.stringify(stateData));
   try {
