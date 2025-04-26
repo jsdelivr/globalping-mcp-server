@@ -15,7 +15,7 @@
 			"new_sqlite_classes": [
 				"GlobalpingMCP"
 			],
-			"tag": "v1",
+			"tag": "v1"
 		},
 		{
 			"tag": "v2",
@@ -36,7 +36,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_KV",
-			"id": "YOUR KV ID"
+			"id": "548283d6cfa344339e00d74b353069be"
 		}
 	],
 	"observability": {
