@@ -1,244 +1,135 @@
 # Globalping MCP Server
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/jsdelivr/globalping-media/refs/heads/master/logo/full_colored_dark.svg" alt="Globalping Logo" width="180"/>
-</p>
+A Cloudflare Worker that implements the Model Context Protocol (MCP) server for interacting with the [Globalping](https://www.globalping.io/) API. This allows AI assistants to perform global network measurements from a distributed network of probes.
 
-<p align="center">
-  <b>Enable AI models to interact with a global network measurement platform through natural language. Give network access to any LLM.</b>
-</p>
+## Features
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/@globalping/globalping-mcp">
-    <img src="https://img.shields.io/npm/v/@globalping/globalping-mcp.svg" alt="npm version">
-  </a>
-  <a href="https://github.com/modelcontextprotocol/modelcontextprotocol">
-    <img src="https://img.shields.io/badge/MCP-compatible-brightgreen.svg" alt="MCP Compatible">
-  </a>
-</p>
+- Exposes Globalping API functionality through MCP tools
+- Supports all Globalping measurement types: ping, traceroute, DNS, MTR, and HTTP
+- Uses the "magic" field for location specification
+- Handles probe selection and result formatting
+- Supports authentication via bearer tokens
+- Caches measurement results in the agent's state
+- Provides detailed parameter descriptions for AI clients
 
-## What is Globalping?
+## Available Tools
 
-[Globalping](https://globalping.io) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network tests (ping, traceroute, DNS, MTR, HTTP) from thousands of locations worldwide.
+- `ping` - Perform a ping test to a target
+- `traceroute` - Perform a traceroute test to a target
+- `dns` - Perform a DNS lookup for a domain
+- `mtr` - Perform an MTR (My Traceroute) test to a target
+- `http` - Perform an HTTP request to a URL
+- `locations` - List all available Globalping probe locations
+- `limits` - Show your current rate limits for the Globalping API
+- `getMeasurement` - Retrieve a previously run measurement by ID
+- `compareLocations` - Guide on how to run comparison measurements
+- `help` - Show a help message with documentation on available tools
 
-## What is the Globalping MCP Server?
-
-The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models like OpenAI's GPT and Anthropic's Claude to interact with Globalping's network measurement capabilities through natural language.
-
-### Key Features
-
-- 🌐 **Global Network Access**: Run measurements from thousands of probes worldwide
-- 🤖 **AI-Friendly Interface**: Any LLM will easily parse the data and run new measurements as needed
-- 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
-- 🔍 **Smart Context Handling**: Allows for intelligent measurement type selection based on query context
-- 🔄 **Comparative Analysis**: Allows to compare network performance between different targets
-- 🔑 **Token Support**: Free to use without authentication. Use your own Globalping API token for higher rate limits
-
-## Installation
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or later)
-- npm (included with Node.js) or [yarn](https://yarnpkg.com/)
-
-### Global Installation (Recommended)
-
-You can install the Globalping MCP Server globally to run it from anywhere:
+## Running locally
 
 ```bash
-# Using npm
-npm install -g @globalping/globalping-mcp
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
 ```
 
-After installation, you can start the server with:
+## Testing with the MCP Inspector
+
+The MCP Inspector is a visual tool for testing MCP servers:
 
 ```bash
-globalping-mcp
+npx @modelcontextprotocol/inspector
 ```
 
-### Using npx (No Installation)
+Then, in your browser:
+1. Navigate to http://localhost:5173
+2. Set the Transport Type to "SSE"
+3. Enter http://localhost:8787/sse as the URL
+4. Enter a bearer token (optional, for using a Globalping API token)
+5. Click "Connect"
+6. Use "List Tools" to see the available tools
+7. Test the tools through the inspector interface
 
-You can run the server without installation using npx:
+## Deployment
 
 ```bash
-npx @globalping/globalping-mcp
+# Deploy to Cloudflare Workers
+npm run deploy
 ```
 
-### Windows-Specific Instructions
+## Authentication
 
-On Windows, ensure you have:
+This MCP server supports both authenticated and unauthenticated access to the Globalping API:
 
-1. **Node.js and npm**: Download and install from [Node.js official website](https://nodejs.org/)
-2. **PowerShell**: Use PowerShell instead of Command Prompt for better compatibility
-3. **PATH Environment**: Ensure Node.js is added to your PATH (the installer typically handles this)
+1. **No Authentication**: The MCP server works without any authentication, using the Globalping API's default IP-based rate limits.
 
-If you encounter permission issues when installing globally on Windows:
-
-1. Run PowerShell as Administrator
-2. Execute the installation command:
-   ```powershell
-   npm install -g @globalping/globalping-mcp
-   ```
-
-For environment variables on Windows:
-
-1. Create a `.env` file in your project directory, or
-2. Set system environment variables:
-   ```powershell
-   # Temporary (current session)
-   $env:GLOBALPING_API_TOKEN = "your-token"
-   $env:PORT = "3000"
-   
-   # Permanent (system-wide)
-   [Environment]::SetEnvironmentVariable("GLOBALPING_API_TOKEN", "your-token", "User")
-   [Environment]::SetEnvironmentVariable("PORT", "3000", "User")
-   ```
-
-### Verifying Installation
-
-After installation, verify the server is working correctly:
-
-```bash
-# Start the server
-globalping-mcp
-
-# Or with npx
-npx @globalping/globalping-mcp
-```
-
-You should see output indicating the server is running on the specified port (default: 3000).
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GLOBALPING_API_TOKEN` | Your Globalping API token | None (uses IP-based rate limits) |
-| `PORT` | HTTP port for SSE transport | `3000` |
-| `DEFAULT_PROBE_LIMIT` | Default number of probes to use | `3` |
-
-You can create a `.env` file in the directory where you run the server, or set these environment variables through your system.
-
-### Using with MCP Clients
-
-The Globalping MCP Server can be configured in different MCP-compatible clients:
-
-#### Claude Desktop App
-
-Add to your Claude Desktop configuration file:
+2. **Client Token**: You can provide a Globalping API token in your MCP client configuration:
 
 ```json
 {
-  "mcpServers": {
-    "globalping": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@globalping/globalping-mcp"
-      ],
-      "env": {
-        "GLOBALPING_API_TOKEN": "your-token-from-dash.globalping.io"
-      }
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://globalping-mcp-server.workers.dev/sse"
+            ],
+            "env": {
+                "GLOBALPING_TOKEN": "your-token-from-dash.globalping.io"
+            }
+        }
     }
-  }
 }
 ```
 
-#### Continue Extension
+The MCP server will use this token when making requests to the Globalping API, allowing you to benefit from higher rate limits associated with your account.
 
-Add to your Continue configuration:
+## Location Specification
 
-```json
-{
-  "tools": {
-    "globalping": {
-      "command": "npx -y @globalping/globalping-mcp"
-    }
-  }
-}
-```
+Locations can be specified using the "magic" field, which supports various formats:
 
-#### Custom HTTP/SSE Endpoint
+- Continent codes: "EU", "NA", "AS", etc.
+- Country codes: "US", "DE", "JP", etc.
+- City names: "London", "Tokyo", "New York", etc.
+- Network names: "Cloudflare", "Google", etc.
+- ASN numbers: "AS13335", "AS15169", etc.
+- Cloud provider regions: "aws-us-east-1", "gcp-us-central1", etc.
 
-When running as a standalone server, connect to:
-
-```
-http://localhost:3000/mcp
-```
-
-## Usage Examples
-
-Once connected to an AI model through a compatible MCP client, you can interact with Globalping using natural language:
-
-```
-Ping google.com from 3 locations in Europe
-```
-
-```
-Run a traceroute to github.com from Japan and compare with traceroute from the US
-```
-
-```
-Check the DNS resolution of example.com using Google DNS (8.8.8.8)
-```
-
-```
-Is jsdelivr.com reachable from China? Test with both ping and HTTP
-```
-
-```
-What's the average response time for cloudflare.com across different continents?
-```
-
-## Supported Measurement Types
-
-The Globalping MCP Server supports all measurement types available in the Globalping API:
-
-- **ping**: ICMP/TCP ping tests
-- **traceroute**: Network route tracing
-- **dns**: DNS resolution tests
-- **mtr**: My Traceroute (combined ping and traceroute)
-- **http**: HTTP/HTTPS requests
-
-## Compatible MCP Clients
-
-This MCP server is compatible with any client that supports the Model Context Protocol tools interface, including:
-
-- [Claude Desktop App](https://claude.ai/download)
-- [Continue](https://github.com/continuedev/continue)
-- [Cursor](https://cursor.com)
-- [Cline](https://github.com/cline/cline)
-- [Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
-- [5ire](https://github.com/nanbingxyz/5ire)
-- And [many more](https://modelcontextprotocol.io/clients)
-
-## Rate Limits
-
-Without authentication, the Globalping API allows:
-- 250 measurements per hour
-- 2 requests per second per measurement
-
-With authentication (using your Globalping API token):
-- 500 measurements per hour
-- 2 requests per second per measurement
-- [Host a probe](https://github.com/jsdelivr/globalping-probe) to passively generate free credits
-
-Get your free API token at [dash.globalping.io](https://dash.globalping.io).
-
+You can also combine these with a plus sign for more specific targeting: "London+UK", "Cloudflare+US", etc.
 
 ## Development
 
-This repository uses GitHub Actions for continuous integration and deployment:
+The codebase is organized into modules:
 
-- **Build Verification**: Runs on every push and pull request to the main branch to verify the package can build successfully
-- **Publish to npm**: Runs on tag creation (format: `v*.*.*`) to automatically:
-  - Extract the version from the tag
-  - Update the version in package.json
-  - Build the package
-  - Publish to npm registry
-  - Create a GitHub release
+- `src/index.ts` - Main entry point and MCP agent definition
+- `src/globalping/types.ts` - TypeScript interfaces for the Globalping API
+- `src/globalping/api.ts` - API wrapper functions for Globalping
+- `src/globalping/tools.ts` - MCP tool implementations
+- `src/utils.ts` - Helper utilities for rendering the web UI
 
-To publish a new version:
-1. Create and push a new tag with the version: `git tag v1.2.3 && git push origin v1.2.3`
-2. The workflow will automatically update the package.json version to match the tag
+## Connecting AI Assistants
+
+This MCP server can be used with any MCP-compatible AI assistant, including:
+
+- Claude Desktop
+- Anthropic Assistants
+- Cursor
+- Windsurf
+- Any custom implementation of the MCP protocol
+
+See the MCP documentation for details on connecting clients to this server.
+
+## Add Globalping credentials
+
+Add Globalping OAuth credentials:
+
+- `npx wrangler secret put GLOBALPING_CLIENT_ID`
+- `npx wrangler secret put GLOBALPING_CLIENT_SECRET`
+
+# KV storage
+Used for `OAuthProvider` docs https://github.com/cloudflare/workers-oauth-provider
+- create a KV namespace and copy ID
+- binding for it must be `OAUTH_KV`
+- configure `kv_namespaces` in the `wrangler.jsonc` file

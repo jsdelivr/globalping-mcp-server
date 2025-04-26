@@ -1,7 +1,45 @@
-*.lock
-*.*rules
-dist
-build
-node_modules
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build output
+dist/
+.wrangler/
+worker/
+build/
+
+# Environment variables
 .env
-*.txt
+.env.local
+.env.development
+.env.test
+.env.production
+.dev.vars
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage reports
+coverage/
+
+# Log files
+logs/
+*.log
+
+# Cache
+.turbo
+.cache
+
+# Cloudflare
+.cloudflare/
+
+**/CLAUDE.local.md

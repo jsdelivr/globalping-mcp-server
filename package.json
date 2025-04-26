@@ -1,54 +1,28 @@
 {
-    "name": "@globalping/globalping-mcp",
-    "version": "1.0.0",
-    "description": "Give global network access to your AI LLM with Globalping MCP",
-    "main": "build/index.js",
-    "type": "module",
-    "bin": {
-        "globalping-mcp": "build/index.js"
-    },
-    "files": [
-        "build/**/*",
-        "README.md",
-        "LICENSE"
-    ],
-    "scripts": {
-        "build": "tsc",
-        "start": "node build/index.js",
-        "dev": "nodemon --watch src --ext ts --exec \"tsc && node build/index.js\""
-    },
-    "keywords": [
-        "mcp",
-        "model-context-protocol",
-        "globalping",
-        "ping",
-        "traceroute",
-        "network",
-        "agent"
-    ],
-    "author": "Globalping",
-    "homepage": "https://globalping.io/",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/jsdelivr/globalping-mcp.git"
-    },
-    "license": "MIT",
-    "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.8.0",
-        "axios": "^1.7",
-        "dotenv": "^16",
-        "zod": "^3"
-    },
-    "devDependencies": {
-        "@types/node": "^20",
-        "nodemon": "^3.1.9",
-        "ts-node": "^10",
-        "typescript": "^5.8"
-    },
-    "engines": {
-        "node": ">=20"
-    },
-    "bugs": {
-        "url": "https://github.com/jsdelivr/globalping-mcp/issues"
-    }
+	"name": "globalping-mcp",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"format": "biome format --write",
+		"lint:fix": "biome lint --fix",
+		"start": "wrangler dev",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/node": "^22.14.1",
+		"marked": "^15.0",
+		"typescript": "^5.5",
+		"workers-mcp": "^0",
+		"wrangler": "^4"
+	},
+	"dependencies": {
+		"@cloudflare/workers-oauth-provider": "^0",
+		"@modelcontextprotocol/sdk": "^1",
+		"agents": "^0",
+		"hono": "^4.7",
+		"zod": "^3.24"
+	}
 }
