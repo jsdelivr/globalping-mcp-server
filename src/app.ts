@@ -110,6 +110,7 @@ app.get("/auth/callback", async (c) => {
   const error = c.req.query("error");
 
 
+
   if (error) {
     return c.html(layout(await html`<h1>Authentication error</h1><p>Error: ${error}</p>`, "Authentication error"));
   }
@@ -156,36 +157,50 @@ app.get("/auth/callback", async (c) => {
     const tokenData = await tokenResponse.json() as GlobalpingOAuthTokenResponse;
     tokenData.created_at = Math.floor(Date.now() / 1000);
 
-      // Complete OAuth authorization process
-      let userData = await getUserData(tokenData.access_token);
+    // Complete OAuth authorization process
+    let userData = await getUserData(tokenData.access_token);
 
-      if (!userData) {
-        return c.html(layout(await html`<h1>Authentication error</h1><p>Failed to get user data.</p>`, "Authentication error"));
-      }
-      const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
-        request: oauthReqInfo,
-        userId: userData.client_id,
-        metadata: {
-          label: userData.username,
-        },
-        scope: oauthReqInfo.scope,
-        props: {
-          accessToken: `${tokenData.access_token}`,
-          refreshToken: `${tokenData.access_token}`,
-          state,
-          userName: userData.username,
-        },
-      });
+    if (!userData) {
+      return c.html(layout(await html`<h1>Authentication error</h1><p>Failed to get user data.</p>`, "Authentication error"));
+    }
+    const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
+      request: oauthReqInfo,
+      userId: userData.client_id,
+      metadata: {
+        label: userData.username,
+      },
+      scope: oauthReqInfo.scope,
+      props: {
+        accessToken: `${tokenData.access_token}`,
+        refreshToken: `${tokenData.access_token}`,
+        state,
+        userName: userData.username,
+      },
+    });
 
-      return c.html(
-        layout(
-          await renderAuthorizationApprovedContent(redirectTo),
-          "Globalping MCP - Authorization approved",
-        ),
-      );
+    return c.html(
+      layout(
+        await renderAuthorizationApprovedContent(redirectTo),
+        "Globalping MCP - Authorization approved",
+      ),
+    );
   } catch (error: any) {
     console.error("Token exchange error:", error);
     return c.html(layout(await html`<h1>Authentication error</h1><p>An error occurred during token exchange. ${error.message}</p>`, "Authentication error"));
+  }
+});
+
+app.post("/token", async (c) => {
+  const { grantType, props } = await c.env.OAUTH_PROVIDER.parseTokenRequest(c.req.raw);
+  const tokens = await refreshToken(c.env, props.refreshToken);
+  if (tokens) {
+    return c.json({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_in: tokens.expires_in,
+      token_type: "Bearer",
+      scope: props.scope,
+    });
   }
 });
 

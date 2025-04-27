@@ -256,16 +256,4 @@ export default new OAuthProvider({
 	tokenEndpoint: "/token",
 	clientRegistrationEndpoint: "/register",
 	scopesSupported: ["measurements"],
-	tokenExchangeCallback: async (options) => {
-		if (options.grantType === 'refresh_token') {
-			const upstreamTokens = await refreshToken(env, options.props.refreshToken);
-			return {
-				newProps: {
-					...options.props,
-					accessToken: upstreamTokens.access_token,
-					refreshToken: upstreamTokens.refresh_token,	
-				}
-			};
-		}
-	}
 });
