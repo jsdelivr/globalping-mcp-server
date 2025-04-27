@@ -158,7 +158,7 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 					<a
 						href="/"
 						class="text-xl font-heading font-bold text-primary hover:text-primary/80 transition-colors"
-						>MCP Remote Auth Demo</a
+						>Globalping MCP Server</a
 					>
 				</div>
 			</header>
@@ -168,7 +168,7 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 			<footer class="bg-gray-100 py-6 mt-12">
 				<div class="container mx-auto px-4 text-center text-gray-600">
 					<p>
-						&copy; ${new Date().getFullYear()} MCP Remote Auth Demo.
+						&copy; ${new Date().getFullYear()} Globalping MCP Server.
 						All rights reserved.
 					</p>
 				</div>
@@ -178,10 +178,10 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 `;
 
 export const homeContent = async (req: Request): Promise<HtmlEscapedString> => {
-	// We have the README symlinked into the static directory, so we can fetch it
+	// We have homepage.md in the static directory, so we can fetch it
 	// and render it into HTML
 	const origin = new URL(req.url).origin;
-	const res = await env.ASSETS.fetch(`${origin}/README.md`);
+	const res = await env.ASSETS.fetch(`${origin}/homepage.md`);
 	const markdown = await res.text();
 	const content = await marked(markdown);
 	return html`
@@ -201,7 +201,7 @@ export const renderLoggedInAuthorizeScreen = async (
 
 			<div class="mb-8">
 				<h2 class="text-lg font-semibold mb-3 text-gray-800">
-					MCP Remote Auth Demo would like permission to:
+					Globalping MCP Server would like permission to:
 				</h2>
 				<ul class="space-y-2">
 					${oauthScopes.map(
@@ -262,7 +262,7 @@ export const renderLoggedOutAuthorizeScreen = async (
 
 			<div class="mb-8">
 				<h2 class="text-lg font-semibold mb-3 text-gray-800">
-					MCP Remote Auth Demo would like permission to:
+					Globalping MCP Server would like permission to:
 				</h2>
 				<ul class="space-y-2">
 					${oauthScopes.map(

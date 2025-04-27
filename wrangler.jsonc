@@ -9,6 +9,11 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	{
+	"placement": {
+	    "mode": "smart"
+	  }
+	},
 	"compatibility_date": "2025-03-10",
 	"migrations": [
 		{

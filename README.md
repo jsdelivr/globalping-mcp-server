@@ -1,6 +1,6 @@
 # Globalping MCP Server
 
-A Cloudflare Worker that implements the Model Context Protocol (MCP) server for interacting with the [Globalping](https://www.globalping.io/) API. This allows AI assistants to perform global network measurements from a distributed network of probes.
+A server that implements the Model Context Protocol (MCP) for interacting with the [Globalping](https://www.globalping.io/) API. This allows AI assistants to perform global network measurements from a distributed network of probes.
 
 ## Features
 

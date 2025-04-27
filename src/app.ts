@@ -172,18 +172,14 @@ app.get("/auth/callback", async (c) => {
       scope: oauthReqInfo.scope,
       props: {
         accessToken: `${tokenData.access_token}`,
-        refreshToken: `${tokenData.access_token}`,
+        refreshToken: `${tokenData.refresh_token || tokenData.access_token}`,
         state,
         userName: userData.username,
       },
     });
 
-    return c.html(
-      layout(
-        await renderAuthorizationApprovedContent(redirectTo),
-        "Globalping MCP - Authorization approved",
-      ),
-    );
+    // Directly redirect to the client app instead of showing a page
+    return Response.redirect(redirectTo, 302);
   } catch (error: any) {
     console.error("Token exchange error:", error);
     return c.html(layout(await html`<h1>Authentication error</h1><p>An error occurred during token exchange. ${error.message}</p>`, "Authentication error"));
