@@ -323,7 +323,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 			port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
 		},
 		async ({ target, locations, limit, protocol, port }, ctx) => {
-			const token = extractApiToken(ctx);
+			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
 				{
@@ -363,7 +363,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				.describe("Trace delegation path from root servers (default: false)"),
 		},
 		async ({ target, locations, limit, queryType, resolver, trace }, ctx) => {
-			const token = extractApiToken(ctx);
+			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
 				{
@@ -406,7 +406,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				.describe("Number of packets to send to each hop (default: 3)"),
 		},
 		async ({ target, locations, limit, protocol, port, packets }, ctx) => {
-			const token = extractApiToken(ctx);
+			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
 				{
@@ -445,7 +445,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 			query: z.string().optional().describe("Query string (e.g., 'param=value&another=123')"),
 		},
 		async ({ target, locations, limit, method, protocol, path, query }, ctx) => {
-			const token = extractApiToken(ctx);
+			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
 				{
@@ -475,7 +475,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 
 	// Locations tool
 	server.tool("locations", {}, async (_, ctx) => {
-		const token = extractApiToken(ctx);
+		const token = extractApiToken(ctx, getToken);
 		const locations = await getLocations(token);
 
 		let summary = "Available Globalping Probe Locations:\n\n";
@@ -534,7 +534,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		
 		// If no token from getToken, try the context as fallback
 		if (!token) {
-			token = extractApiToken(ctx);
+			token = extractApiToken(ctx, getToken);
 			console.log("Extracted token from ctx:", token ? `${token.substring(0, 15)}...` : "None");
 		}
 		
