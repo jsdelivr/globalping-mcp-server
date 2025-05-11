@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import {
   layout,
-  homeContent,
-  renderAuthorizationApprovedContent,
   createPKCECodes,
   generateRandomString,
   getDurableObject
@@ -16,6 +14,7 @@ import { html } from "hono/html";
 const GLOBALPING_AUTH_URL = "https://auth.globalping.io/oauth/authorize";
 const GLOBALPING_TOKEN_URL = "https://auth.globalping.io/oauth/token";
 const GLOBALPING_USERDATA_URL = "https://auth.globalping.io/oauth/token/introspect";
+const GLOBALPING_REPOSITORY_URL = "https://github.com/jsdelivr/globalping-mcp-server";
 
 interface Env extends GlobalpingEnv {
   OAUTH_PROVIDER: OAuthHelpers;
@@ -49,7 +48,7 @@ export async function refreshToken(env: any, refreshToken: string): Promise<any>
   params.append("client_id", env.GLOBALPING_CLIENT_ID);
   params.append("client_secret", env.GLOBALPING_CLIENT_SECRET);
   params.append("refresh_token", refreshToken);
-  
+
   // Send request to refresh token
   const response = await fetch(GLOBALPING_TOKEN_URL, {
     method: "POST",
@@ -68,8 +67,7 @@ export async function refreshToken(env: any, refreshToken: string): Promise<any>
 }
 
 app.get("/", async (c) => {
-  const content = await homeContent(c.req.raw);
-  return c.html(layout(content, "Globalping MCP Server"));
+  return Response.redirect(GLOBALPING_REPOSITORY_URL);
 });
 
 app.get("/authorize", async (c) => {
@@ -125,7 +123,7 @@ app.get("/auth/callback", async (c) => {
   const oauthReqInfo = durableObjectResponse.oauthReqInfo;
 
   if (!stateData) {
-    return c.html(layout(`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
+    return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
@@ -177,7 +175,6 @@ app.get("/auth/callback", async (c) => {
         userName: userData.username,
       },
     });
-
     // Directly redirect to the client app instead of showing a page
     return Response.redirect(redirectTo, 302);
   } catch (error: any) {
