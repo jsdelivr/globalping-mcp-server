@@ -1,54 +1,50 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "globalping-mcp-server",
-	"main": "src/index.ts",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	{
-	"placement": {
-	    "mode": "smart"
-	  }
-	},
-	"compatibility_date": "2025-03-10",
-	"migrations": [
-		{
-			"new_sqlite_classes": [
-				"GlobalpingMCP"
-			],
-			"tag": "v1"
-		},
-		{
-			"tag": "v2",
-			"renamed_classes": [{
-				"from": "MyMCP",
-				"to": "GlobalpingMCP"
-			}]
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "GlobalpingMCP",
-				"name": "globalping_mcp_object"
-			}
-		]
-	},
-	"kv_namespaces": [
-		{
-			"binding": "OAUTH_KV",
-			"id": "548283d6cfa344339e00d74b353069be"
-		}
-	],
-	"observability": {
-		"enabled": true
-	},
-	"assets": {
-		"directory": "./static/",
-		"binding": "ASSETS"
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "globalping-mcp-server",
+  "main": "src/index.ts",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "placement": {
+    "mode": "smart"
+  },
+  "compatibility_date": "2025-03-10",
+  "migrations": [
+    {
+      "new_sqlite_classes": [
+        "GlobalpingMCP"
+      ],
+      "tag": "v1"
+    },
+    {
+      "tag": "v2",
+      "renamed_classes": [
+        {
+          "from": "MyMCP",
+          "to": "GlobalpingMCP"
+        }
+      ]
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "GlobalpingMCP",
+        "name": "globalping_mcp_object"
+      }
+    ]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "548283d6cfa344339e00d74b353069be"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./static/",
+    "binding": "ASSETS"
+  }
 }
