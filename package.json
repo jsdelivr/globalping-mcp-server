@@ -1,6 +1,6 @@
 {
-	"name": "globalping-mcp",
-	"version": "0.0.1",
+	"name": "globalping-mcp-server",
+	"version": "0.0.2",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
