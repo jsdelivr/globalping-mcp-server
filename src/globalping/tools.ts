@@ -353,7 +353,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		{
 			...baseParams,
 			queryType: z
-				.enum(["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA"])
+				.enum([
+					"A", "AAAA", "ANY",
+					"CNAME", "DNSKEY", "DS",
+					"HTTPS", "MX", "NS", "NSEC",
+					"PTR", "RRSIG", "SOA",
+					"TXT", "SRV", "SVCB"
+				])
 				.optional()
 				.describe("DNS record type (default: A)"),
 			resolver: z.string().optional().describe("Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')"),
@@ -436,15 +442,16 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		"http",
 		{
 			...baseParams,
-			method: z.enum(["GET", "HEAD"]).optional().describe("HTTP method (default: GET)"),
+			method: z.enum(["GET", "HEAD", "OPTIONS"]).optional().describe("HTTP method (default: GET)"),
 			protocol: z
 				.enum(["HTTP", "HTTPS"])
 				.optional()
 				.describe("Protocol to use (default: auto-detect from URL)"),
 			path: z.string().optional().describe("Path component of the URL (e.g., '/api/v1/status')"),
+			port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
 			query: z.string().optional().describe("Query string (e.g., 'param=value&another=123')"),
 		},
-		async ({ target, locations, limit, method, protocol, path, query }, ctx) => {
+		async ({ target, locations, limit, method, protocol, path, query, port }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
 
 			const result = await runMeasurement(
@@ -460,6 +467,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 							query,
 						},
 						protocol: protocol as any,
+						port: port || 80,
 					},
 				},
 				token,
@@ -522,7 +530,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	server.tool("limits", {}, async (_, ctx) => {
 		// Log the raw context data for debugging
 		console.log("Context props:", ctx.props);
-		
+
 		// Try to get token using the provided function
 		let token = undefined;
 		try {
@@ -531,13 +539,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		} catch (e) {
 			console.log("Error getting token:", e);
 		}
-		
+
 		// If no token from getToken, try the context as fallback
 		if (!token) {
 			token = extractApiToken(ctx, getToken);
 			console.log("Extracted token from ctx:", token ? `${token.substring(0, 15)}...` : "None");
 		}
-		
+
 		// Make the API call
 		console.log("Calling Globalping API with token:", token ? "Yes" : "No");
 		const limits = await getRateLimits(token);
@@ -552,7 +560,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		if (ctx.props?.accessToken) {
 			summary += `- Raw bearerToken: ${ctx.props.accessToken.substring(0, 15)}...\n`;
 		}
-		
+
 		// Debug the raw context
 		summary += `- Raw context keys: ${Object.keys(ctx || {}).join(", ")}\n`;
 		if (ctx) {
@@ -560,22 +568,22 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				summary += `  - ${key}: ${typeof ctx[key]} ${ctx[key] ? "(has value)" : "(empty)"}\n`;
 			}
 		}
-		
+
 		summary += `\n`;
-		
+
 		// Add authentication status to the output
 		summary += `Authentication Status: ${token ? "Authenticated" : "Unauthenticated"}\n`;
-		
+
 		// Only show first few characters of token for security if present
 		if (token) {
-			const tokenPreview = token.startsWith("Bearer ") 
-				? `Bearer ${token.substring(7, 15)}...` 
+			const tokenPreview = token.startsWith("Bearer ")
+				? `Bearer ${token.substring(7, 15)}...`
 				: `${token.substring(0, 8)}...`;
 			summary += `Token: ${tokenPreview}\n`;
 		} else {
 			summary += `Token: None\n`;
 		}
-		
+
 		// Debug header information if available
 		if (ctx?.props?.debugHeaders && Array.isArray(ctx.props.debugHeaders)) {
 			summary += `\nRequest Headers Debug:\n`;
@@ -596,15 +604,15 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 			});
 			summary += `\n`;
 		}
-		
+
 		summary += `\n`;
 
 		// Log the raw limits data
 		console.log("API Response (limits):", JSON.stringify(limits));
-		
+
 		// Add the raw API response to the output
 		summary += `\nAPI Response:\n${JSON.stringify(limits, null, 2)}\n\n`;
-		
+
 		// Format parsed data
 		const rateLimit = limits.rateLimit.measurements.create;
 
@@ -642,7 +650,7 @@ function extractApiToken(ctx: any, getToken: any): string | undefined {
 	} catch (e) {
 		console.log("Error getting token from getter:", e);
 	}
-	
+
 	// Then try from context props
 	if (ctx?.props?.accessToken && ctx.props.accessToken.trim() !== "") {
 		return formatToken(ctx.props.accessToken);
@@ -659,7 +667,7 @@ function extractApiToken(ctx: any, getToken: any): string | undefined {
  */
 function formatToken(token: string): string | undefined {
 	const trimmedToken = token.trim();
-	
+
 	// If token has a Bearer prefix, remove any extra spaces that might be present
 	if (trimmedToken.toLowerCase().startsWith("bearer")) {
 		// Extract the token part, trim whitespace, and reconstitute with proper spacing
@@ -671,7 +679,7 @@ function formatToken(token: string): string | undefined {
 		// If no Bearer prefix, add one
 		return `Bearer ${trimmedToken}`;
 	}
-	
+
 	// If token is just "Bearer" with no actual token, return undefined
 	return undefined;
 }
