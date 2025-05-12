@@ -38,7 +38,11 @@ It also supports oAuth authentication, which offers a secure way to interact wit
 
 ## Installation
 
-You can integrate our Globalping MCP server with various AI tools that support the Model Context Protocol. Here are instructions for the top 3 most popular tools:
+The remote MCP server is available under this endpoint `https://mcp.globalping.dev/sse`
+
+You can integrate our Globalping MCP server with various AI tools that support the Model Context Protocol. 
+
+Here are instructions for the top 3 most popular tools:
 
 #### Claude Desktop App
 
@@ -51,7 +55,7 @@ Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\conf
             "command": "npx",
             "args": [
                 "mcp-remote",
-                "https://globalping-mcp-server.globalping.workers.dev/sse"
+                "https://mcp.globalping.dev/sse"
             ]
         }
     }
@@ -69,7 +73,7 @@ When creating a Claude Assistant in the Anthropic Console:
 5. Enter the following details:
    - Tool Name: `Globalping`
    - Description: `Run network tests from locations worldwide`
-   - Tool URL: `https://globalping-mcp-server.globalping.workers.dev/sse`
+   - Tool URL: `https://mcp.globalping.dev/sse`
 
 #### Cursor
 
@@ -81,7 +85,7 @@ To add the Globalping MCP server to Cursor:
 4. Click "Add MCP Server"
 5. Enter:
    - Name: `Globalping`
-   - URL: `https://globalping-mcp-server.globalping.workers.dev/sse`
+   - URL: `https://mcp.globalping.dev/sse`
    - Check "Enabled"
 6. Click "Save"
 
