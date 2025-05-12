@@ -8,6 +8,12 @@
   "placement": {
     "mode": "smart"
   },
+  "routes": [
+    {
+      "pattern": "mcp.globalping.dev",
+      "custom_domain": true
+    }
+  ],
   "compatibility_date": "2025-03-10",
   "migrations": [
     {
