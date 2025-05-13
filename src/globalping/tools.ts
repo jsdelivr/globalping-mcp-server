@@ -483,6 +483,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 		async ({ target, locations, limit, method, protocol, path, query, port }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
 			const parsedLocations = parseLocations(locations);
+			
+			if(!protocol) {
+				protocol = "HTTPS";
+			}
 
 			const result = await runMeasurement(
 				{
@@ -496,12 +500,13 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 							path,
 							query,
 						},
-						protocol: protocol as any,
+						protocol: protocol,
 						port: port || (protocol === "HTTPS" ? 443 : 80),
 					},
 				},
 				token,
 			);
+
 			agent.setState({
 				measurements: {
 					...agent.state.measurements,
