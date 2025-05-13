@@ -269,7 +269,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	const baseParams = {
 		target: z.string().describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
 		locations: z
-			.array(z.string())
+			.union([z.array(z.string()), z.string()])
 			.optional()
 			.describe("Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']. You can also use a previous measurement ID to compare results with the same probes."),
 		limit: z
@@ -651,15 +651,17 @@ function parseLocations(locations: string | string[] | undefined): string[] | un
 	
 	// If it's a string, try to parse it as JSON array
 	try {
-		// If it's a string that represents a JSON array, parse it
-		const parsed = JSON.parse(locations);
-		// Ensure the parsed result is an array
-		if (Array.isArray(parsed)) {
-			return parsed;
-		} else {
-			// If the parsed result isn't an array, treat as a single location
-			return [locations];
+		// Check if it starts with [ and ends with ]
+		if (locations.trim().startsWith('[') && locations.trim().endsWith(']')) {
+			// If it's a string that represents a JSON array, parse it
+			const parsed = JSON.parse(locations);
+			// Ensure the parsed result is an array
+			if (Array.isArray(parsed)) {
+				return parsed;
+			}
 		}
+		// If not array-like or parsing doesn't result in array, treat as a single location
+		return [locations];
 	} catch (e) {
 		// If not valid JSON, treat as a single location string
 		return [locations];
