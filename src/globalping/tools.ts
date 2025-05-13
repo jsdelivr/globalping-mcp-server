@@ -696,6 +696,14 @@ function parseLocations(locations: string | string[] | undefined): string[] | un
 				return parsed;
 			}
 		}
+		
+		// if it's a string and locations is comma-separated, split it into an array
+		let parsed = locations.split(',').map((loc) => loc.trim());
+		
+		if (parsed.length > 0) {
+			return parsed;
+		}
+		
 		// If not array-like or parsing doesn't result in array, treat as a single location
 		return [locations];
 	} catch (e) {
