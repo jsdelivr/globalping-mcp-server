@@ -289,12 +289,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		},
 		async ({ target, locations, limit, packets }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
+			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
 				{
 					type: "ping",
 					target,
-					locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
+					locations: parsedLocations ? parsedLocations.map((loc) => ({ magic: loc })) : undefined,
 					limit: limit || 3, // Default to 3 probes if not specified
 					measurementOptions: {
 						packets: packets || 3,
@@ -324,12 +325,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		},
 		async ({ target, locations, limit, protocol, port }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
+			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
 				{
 					type: "traceroute",
 					target,
-					locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
+					locations: parsedLocations ? parsedLocations.map((loc) => ({ magic: loc })) : undefined,
 					limit: limit || 3, // Default to 3 probes if not specified
 					measurementOptions: {
 						protocol: protocol as any,
@@ -370,12 +372,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		},
 		async ({ target, locations, limit, queryType, resolver, trace }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
+			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
 				{
 					type: "dns",
 					target,
-					locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
+					locations: parsedLocations ? parsedLocations.map((loc) => ({ magic: loc })) : undefined,
 					limit: limit || 3, // Default to 3 probes if not specified
 					measurementOptions: {
 						query: {
@@ -413,12 +416,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		},
 		async ({ target, locations, limit, protocol, port, packets }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
+			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
 				{
 					type: "mtr",
 					target,
-					locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
+					locations: parsedLocations ? parsedLocations.map((loc) => ({ magic: loc })) : undefined,
 					limit: limit || 3, // Default to 3 probes if not specified
 					measurementOptions: {
 						protocol: protocol as any,
@@ -453,12 +457,13 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		},
 		async ({ target, locations, limit, method, protocol, path, query, port }, ctx) => {
 			const token = extractApiToken(ctx, getToken);
+			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
 				{
 					type: "http",
 					target,
-					locations: locations ? locations.map((loc) => ({ magic: loc })) : undefined,
+					locations: parsedLocations ? parsedLocations.map((loc) => ({ magic: loc })) : undefined,
 					limit: limit || 3, // Default to 3 probes if not specified
 					measurementOptions: {
 						request: {
@@ -631,6 +636,34 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	});
 
 	return server;
+}
+
+/**
+ * Parse locations parameter which may be a string or array
+ * @param locations The locations parameter that might be a string or array
+ * @returns Properly parsed locations array or undefined
+ */
+function parseLocations(locations: string | string[] | undefined): string[] | undefined {
+	if (!locations) return undefined;
+	
+	// If already an array, return as is
+	if (Array.isArray(locations)) return locations;
+	
+	// If it's a string, try to parse it as JSON array
+	try {
+		// If it's a string that represents a JSON array, parse it
+		const parsed = JSON.parse(locations);
+		// Ensure the parsed result is an array
+		if (Array.isArray(parsed)) {
+			return parsed;
+		} else {
+			// If the parsed result isn't an array, treat as a single location
+			return [locations];
+		}
+	} catch (e) {
+		// If not valid JSON, treat as a single location string
+		return [locations];
+	}
 }
 
 /**
