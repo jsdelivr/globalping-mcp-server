@@ -4,6 +4,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runMeasurement, getLocations, getRateLimits } from "./api";
+import { GlobalpingMCP } from "..";
 
 // Helper to calculate average values from a ping measurement
 function calculateAverages(results: any) {
@@ -264,7 +265,7 @@ function formatMeasurementSummary(measurement: any) {
  * @param getToken Function to retrieve the current auth token
  * @returns The updated server with Globalping tools
  */
-export function registerGlobalpingTools(server: McpServer, getToken?: () => string) {
+export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => string) {
 	// Common measurement parameters
 	const baseParams = {
 		target: z.string().describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
@@ -281,7 +282,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	};
 
 	// Ping tool
-	server.tool(
+	agent.server.tool(
 		"ping",
 		{
 			...baseParams,
@@ -303,6 +304,12 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				},
 				token,
 			);
+			agent.setState({
+				measurements: {
+					...agent.state.measurements,
+					[result.id]: result,
+				}
+			});
 
 			const summary = formatMeasurementSummary(result);
 
@@ -313,7 +320,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	);
 
 	// Traceroute tool
-	server.tool(
+	agent.server.tool(
 		"traceroute",
 		{
 			...baseParams,
@@ -340,6 +347,12 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				},
 				token,
 			);
+			agent.setState({
+				measurements: {
+					...agent.state.measurements,
+					[result.id]: result,
+				}
+			});
 
 			const summary = formatMeasurementSummary(result);
 
@@ -350,7 +363,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	);
 
 	// DNS tool
-	server.tool(
+	agent.server.tool(
 		"dns",
 		{
 			...baseParams,
@@ -390,6 +403,12 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				},
 				token,
 			);
+			agent.setState({
+				measurements: {
+					...agent.state.measurements,
+					[result.id]: result,
+				}
+			});
 
 			const summary = formatMeasurementSummary(result);
 
@@ -400,7 +419,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	);
 
 	// MTR tool
-	server.tool(
+	agent.server.tool(
 		"mtr",
 		{
 			...baseParams,
@@ -432,6 +451,12 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				},
 				token,
 			);
+			agent.setState({
+				measurements: {
+					...agent.state.measurements,
+					[result.id]: result,
+				}
+			});
 
 			const summary = formatMeasurementSummary(result);
 
@@ -442,7 +467,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	);
 
 	// HTTP tool
-	server.tool(
+	agent.server.tool(
 		"http",
 		{
 			...baseParams,
@@ -477,6 +502,12 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 				},
 				token,
 			);
+			agent.setState({
+				measurements: {
+					...agent.state.measurements,
+					[result.id]: result,
+				}
+			});
 
 			const summary = formatMeasurementSummary(result);
 
@@ -487,7 +518,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	);
 
 	// Locations tool
-	server.tool("locations", {}, async (_, ctx) => {
+	agent.server.tool("locations", {}, async (_, ctx) => {
 		const token = extractApiToken(ctx, getToken);
 		const locations = await getLocations(token);
 
@@ -532,7 +563,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 	});
 
 	// Limits tool
-	server.tool("limits", {}, async (_, ctx) => {
+	agent.server.tool("limits", {}, async (_, ctx) => {
 		// Log the raw context data for debugging
 		console.log("Context props:", ctx.props);
 
@@ -635,7 +666,7 @@ export function registerGlobalpingTools(server: McpServer, getToken?: () => stri
 		};
 	});
 
-	return server;
+	return agent.server;
 }
 
 /**

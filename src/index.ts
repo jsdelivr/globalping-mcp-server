@@ -41,7 +41,7 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 
 	async init() {
 		// Register all the Globalping tools and pass the getToken function
-		registerGlobalpingTools(this.server, () => `Bearer ${this.props.accessToken}`);
+		registerGlobalpingTools(this, () => `Bearer ${this.props.accessToken}`);
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
