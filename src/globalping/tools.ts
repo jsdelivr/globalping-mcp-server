@@ -497,7 +497,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 							query,
 						},
 						protocol: protocol as any,
-						port: port || 80,
+						port: port || (protocol === "HTTPS" ? 443 : 80),
 					},
 				},
 				token,
