@@ -80,15 +80,16 @@ app.get("/authorize", async (c) => {
 
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
+  const clientId = c.env.GLOBALPING_CLIENT_ID;
 
   const stateData: StateData = {
     redirectUri,
     codeVerifier,
+    codeChallenge,
+    clientId,
     state,
     createdAt: Date.now()
   };
-
-  await durableObject.setOAuthState({ stateData: stateData, oauthReqInfo: oauthReqInfo });
 
   const authUrl = new URL(GLOBALPING_AUTH_URL);
   authUrl.searchParams.append("client_id", c.env.GLOBALPING_CLIENT_ID);
@@ -106,8 +107,7 @@ app.get("/auth/callback", async (c) => {
   const code = c.req.query("code");
   const state = c.req.query("state");
   const error = c.req.query("error");
-
-
+  const clientId = c.req.query("client_id");
 
   if (error) {
     return c.html(layout(await html`<h1>Authentication error</h1><p>Error: ${error}</p>`, "Authentication error"));
@@ -116,14 +116,22 @@ app.get("/auth/callback", async (c) => {
   if (!code || !state) {
     return c.html(layout(await html`<h1>Invalid request</h1><p>Code and state are missing</p>`, "Invalid request"));
   }
+  
   const durableObject = getDurableObject(state, c.env);
-
   const durableObjectResponse = await durableObject.getOAuthState();
   const stateData = durableObjectResponse.stateData;
   const oauthReqInfo = durableObjectResponse.oauthReqInfo;
-
+  
+  // Validate that the current request matches the original OAuth parameters
+  // This prevents CSRF and authorization code interception attacks
   if (!stateData) {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
+  }
+  
+  // Validate client ID matches what was originally stored
+  if (clientId && clientId !== stateData.clientId) {
+    console.error("Client ID mismatch:", { expected: stateData.clientId, received: clientId });
+    return c.html(layout(await html`<h1>Security validation failed</h1><p>OAuth parameters don't match the original request.</p>`, "Security validation failed"));
   }
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
@@ -131,12 +139,14 @@ app.get("/auth/callback", async (c) => {
   // Form token request
   const tokenRequest = new URLSearchParams();
   tokenRequest.append("grant_type", "authorization_code");
-  tokenRequest.append("client_id", c.env.GLOBALPING_CLIENT_ID);
+  tokenRequest.append("client_id", stateData.clientId);
   tokenRequest.append("client_secret", c.env.GLOBALPING_CLIENT_SECRET);
   tokenRequest.append("code", code);
-  tokenRequest.append("redirect_uri", redirectUri);
+  tokenRequest.append("redirect_uri", stateData.redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
-  console.log("Token request body:", JSON.stringify(stateData));
+  
+  // Only log non-sensitive information
+  console.log("Token request initiated for state:", state);
   try {
     const tokenResponse = await fetch(GLOBALPING_TOKEN_URL, {
       method: "POST",
