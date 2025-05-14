@@ -21,6 +21,7 @@ type State = {
 	lastMeasurementId?: string;
 	measurements: Record<string, any>;
 	storage?: DurableObjectStorage;
+	oAuth: any;
 };
 
 export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
@@ -32,6 +33,7 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 	// Initialize the state
 	initialState: State = {
 		measurements: {},
+		oAuth: {},
 	};
 
 	// Override to access props from user context in tools
@@ -230,11 +232,16 @@ For more information, visit: https://www.globalping.io
 
 	async setOAuthState(state: any): Promise<any> {
 		// Store the state in the Durable Object's storage
-		return await this.ctx.storage?.put("oauth_state", state);
+		//return await this.ctx.storage?.put("oauth_state", state);
+		return this.setState({
+			...this.state,
+			oAuth: state,
+		});
 	}
 
 	async getOAuthState(): Promise<any> {
-		return await this.ctx.storage?.get("oauth_state");
+		//return await this.ctx.storage?.get("oauth_state");
+		return this.state.oAuth;
 	}
 
 	// Override onStateUpdate to handle state persistence

@@ -91,6 +91,8 @@ app.get("/authorize", async (c) => {
     createdAt: Date.now()
   };
 
+  await durableObject.setOAuthState({stateData, oauthReqInfo});
+
   const authUrl = new URL(GLOBALPING_AUTH_URL);
   authUrl.searchParams.append("client_id", c.env.GLOBALPING_CLIENT_ID);
   authUrl.searchParams.append("response_type", "code");

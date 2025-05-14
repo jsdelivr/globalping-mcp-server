@@ -305,6 +305,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				token,
 			);
 			agent.setState({
+				...agent.state,
 				measurements: {
 					...agent.state.measurements,
 					[result.id]: result,
@@ -348,6 +349,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				token,
 			);
 			agent.setState({
+				...agent.state,
 				measurements: {
 					...agent.state.measurements,
 					[result.id]: result,
@@ -404,6 +406,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				token,
 			);
 			agent.setState({
+				...agent.state,
 				measurements: {
 					...agent.state.measurements,
 					[result.id]: result,
@@ -452,6 +455,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				token,
 			);
 			agent.setState({
+				...agent.state,
 				measurements: {
 					...agent.state.measurements,
 					[result.id]: result,
@@ -508,6 +512,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 			);
 
 			agent.setState({
+				...agent.state,
 				measurements: {
 					...agent.state.measurements,
 					[result.id]: result,
