@@ -109,7 +109,6 @@ app.get("/auth/callback", async (c) => {
   const code = c.req.query("code");
   const state = c.req.query("state");
   const error = c.req.query("error");
-  const clientId = c.req.query("client_id");
 
   if (error) {
     return c.html(layout(await html`<h1>Authentication error</h1><p>Error: ${error}</p>`, "Authentication error"));
@@ -130,20 +129,20 @@ app.get("/auth/callback", async (c) => {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
   
-  // Validate client ID matches what was originally stored
-  if (clientId && clientId !== stateData.clientId) {
-    console.error("Client ID mismatch:", { expected: stateData.clientId, received: clientId });
-    return c.html(layout(await html`<h1>Security validation failed</h1><p>OAuth parameters don't match the original request.</p>`, "Security validation failed"));
-  }
+  // Note: We're not attempting to validate client_id in the callback since it's not typically included
+  // The security comes from using the originally stored client_id for the token request below
+  // and validating the state parameter which is cryptographically bound to the original request
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
 
-  // Form token request
+  // Form token request - using ONLY values from our stored state data
+  // This ensures the token request uses the original, validated parameters
+  // even if the callback parameters were manipulated
   const tokenRequest = new URLSearchParams();
   tokenRequest.append("grant_type", "authorization_code");
   tokenRequest.append("client_id", stateData.clientId);
   tokenRequest.append("client_secret", c.env.GLOBALPING_CLIENT_SECRET);
-  tokenRequest.append("code", code);
+  tokenRequest.append("code", code); // The only value taken from the callback
   tokenRequest.append("redirect_uri", stateData.redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
   
