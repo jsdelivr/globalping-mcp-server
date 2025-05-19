@@ -170,7 +170,6 @@ The codebase is organized into modules:
 Add Globalping OAuth credentials:
 
 - `npx wrangler secret put GLOBALPING_CLIENT_ID`
-- `npx wrangler secret put GLOBALPING_CLIENT_SECRET`
 
 ### KV storage
 Used for `OAuthProvider` docs https://github.com/cloudflare/workers-oauth-provider

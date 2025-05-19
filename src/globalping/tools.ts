@@ -2,7 +2,6 @@
  * Globalping MCP Tools
  */
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runMeasurement, getLocations, getRateLimits } from "./api";
 import { GlobalpingMCP } from "..";
 
@@ -265,7 +264,7 @@ function formatMeasurementSummary(measurement: any) {
  * @param getToken Function to retrieve the current auth token
  * @returns The updated server with Globalping tools
  */
-export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => string) {
+export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => string) {
 	// Common measurement parameters
 	const baseParams = {
 		target: z.string().describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
@@ -289,9 +288,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 			packets: z.number().optional().describe("Number of packets to send (default: 3)"),
 		},
 		async ({ target, locations, limit, packets }, ctx) => {
-			const token = extractApiToken(ctx, getToken);
+			const token = getToken();
 			const parsedLocations = parseLocations(locations);
-
+			
 			const result = await runMeasurement(
 				{
 					type: "ping",
@@ -304,6 +303,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				},
 				token,
 			);
+
 			agent.setState({
 				...agent.state,
 				measurements: {
@@ -332,7 +332,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 			port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
 		},
 		async ({ target, locations, limit, protocol, port }, ctx) => {
-			const token = extractApiToken(ctx, getToken);
+			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
@@ -386,7 +386,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				.describe("Trace delegation path from root servers (default: false)"),
 		},
 		async ({ target, locations, limit, queryType, resolver, trace }, ctx) => {
-			const token = extractApiToken(ctx, getToken);
+			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
@@ -437,7 +437,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 				.describe("Number of packets to send to each hop (default: 3)"),
 		},
 		async ({ target, locations, limit, protocol, port, packets }, ctx) => {
-			const token = extractApiToken(ctx, getToken);
+			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
 			const result = await runMeasurement(
@@ -485,7 +485,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 			query: z.string().optional().describe("Query string (e.g., 'param=value&another=123')"),
 		},
 		async ({ target, locations, limit, method, protocol, path, query, port }, ctx) => {
-			const token = extractApiToken(ctx, getToken);
+			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 			
 			if(!protocol) {
@@ -529,7 +529,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 
 	// Locations tool
 	agent.server.tool("locations", {}, async (_, ctx) => {
-		const token = extractApiToken(ctx, getToken);
+		const token = getToken();
 		const locations = await getLocations(token);
 
 		let summary = "Available Globalping Probe Locations:\n\n";
@@ -575,22 +575,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken?: () => s
 	// Limits tool
 	agent.server.tool("limits", {}, async (_, ctx) => {
 		// Log the raw context data for debugging
-		console.log("Context props:", ctx.props);
-
-		// Try to get token using the provided function
-		let token = undefined;
-		try {
-			token = getToken ? getToken() : undefined;
-			console.log("Token from getToken():", token ? `${token.substring(0, 15)}...` : "None");
-		} catch (e) {
-			console.log("Error getting token:", e);
-		}
-
-		// If no token from getToken, try the context as fallback
-		if (!token) {
-			token = extractApiToken(ctx, getToken);
-			console.log("Extracted token from ctx:", token ? `${token.substring(0, 15)}...` : "None");
-		}
+		let token = getToken();
 
 		// Make the API call
 		console.log("Calling Globalping API with token:", token ? "Yes" : "No");
@@ -717,53 +702,7 @@ function parseLocations(locations: string | string[] | undefined): string[] | un
 	}
 }
 
-/**
- * Extract the Globalping API token from various sources
- * @param ctx The MCP server context
- * @returns The API token if available
- */
-function extractApiToken(ctx: any, getToken: any): string | undefined {
-	// First try to get the token from the getter function
-	try {
-		if (getToken) {
-			const token = getToken();
-			if (token && token.trim() !== "") {
-				return formatToken(token);
-			}
-		}
-	} catch (e) {
-		console.log("Error getting token from getter:", e);
-	}
-
-	// Then try from context props
-	if (ctx?.props?.accessToken && ctx.props.accessToken.trim() !== "") {
-		return formatToken(ctx.props.accessToken);
-	}
-
-	// If no token is available, return undefined - the API will use unauthenticated access
-	return undefined;
-}
-
-/**
- * Format a token to ensure it has the correct Bearer prefix
- * @param token The token to format
- * @returns The formatted token
- */
-function formatToken(token: string): string | undefined {
-	const trimmedToken = token.trim();
-
-	// If token has a Bearer prefix, remove any extra spaces that might be present
-	if (trimmedToken.toLowerCase().startsWith("bearer")) {
-		// Extract the token part, trim whitespace, and reconstitute with proper spacing
-		const tokenPart = trimmedToken.substring(6).trim();
-		if (tokenPart) {
-			return `Bearer ${tokenPart}`;
-		}
-	} else {
-		// If no Bearer prefix, add one
-		return `Bearer ${trimmedToken}`;
-	}
-
-	// If token is just "Bearer" with no actual token, return undefined
-	return undefined;
+async function onAuthFailure(agent: GlobalpingMCP) {
+	console.log("Authentication failed, deleting client with ID:", agent.props.clientId);
+	return await agent.removeOAuthData();
 }

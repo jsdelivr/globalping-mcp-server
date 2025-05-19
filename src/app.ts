@@ -46,7 +46,6 @@ export async function refreshToken(env: any, refreshToken: string): Promise<any>
   const params = new URLSearchParams();
   params.append("grant_type", "refresh_token");
   params.append("client_id", env.GLOBALPING_CLIENT_ID);
-  params.append("client_secret", env.GLOBALPING_CLIENT_SECRET);
   params.append("refresh_token", refreshToken);
 
   // Send request to refresh token
@@ -109,7 +108,6 @@ app.get("/auth/callback", async (c) => {
   const code = c.req.query("code");
   const state = c.req.query("state");
   const error = c.req.query("error");
-  const clientId = c.req.query("client_id");
 
   if (error) {
     return c.html(layout(await html`<h1>Authentication error</h1><p>Error: ${error}</p>`, "Authentication error"));
@@ -130,25 +128,23 @@ app.get("/auth/callback", async (c) => {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
   
-  // Validate client ID matches what was originally stored
-  if (clientId && clientId !== stateData.clientId) {
-    console.error("Client ID mismatch:", { expected: stateData.clientId, received: clientId });
-    return c.html(layout(await html`<h1>Security validation failed</h1><p>OAuth parameters don't match the original request.</p>`, "Security validation failed"));
-  }
+  // Note: We're not attempting to validate client_id in the callback since it's not typically included
+  // The security comes from using the originally stored client_id for the token request below
+  // and validating the state parameter which is cryptographically bound to the original request
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
 
-  // Form token request
+  // Form token request - using ONLY values from our stored state data
+  // This ensures the token request uses the original, validated parameters
+  // even if the callback parameters were manipulated
   const tokenRequest = new URLSearchParams();
   tokenRequest.append("grant_type", "authorization_code");
   tokenRequest.append("client_id", stateData.clientId);
-  tokenRequest.append("client_secret", c.env.GLOBALPING_CLIENT_SECRET);
-  tokenRequest.append("code", code);
+  tokenRequest.append("code", code); // The only value taken from the callback
   tokenRequest.append("redirect_uri", stateData.redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
   
   // Only log non-sensitive information
-  console.log("Token request initiated for state:", state);
   try {
     const tokenResponse = await fetch(GLOBALPING_TOKEN_URL, {
       method: "POST",
@@ -175,7 +171,7 @@ app.get("/auth/callback", async (c) => {
     }
     const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
       request: oauthReqInfo,
-      userId: userData.client_id,
+      userId: userData.username,
       metadata: {
         label: userData.username,
       },
@@ -183,6 +179,7 @@ app.get("/auth/callback", async (c) => {
       props: {
         accessToken: `${tokenData.access_token}`,
         refreshToken: `${tokenData.refresh_token || tokenData.access_token}`,
+        clientId: oauthReqInfo.clientId,
         state,
         userName: userData.username,
       },

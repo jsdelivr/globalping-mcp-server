@@ -243,7 +243,6 @@ export interface RateLimitResponse {
 // Environment interface
 export interface GlobalpingEnv {
 	GLOBALPING_CLIENT_ID: string;
-	GLOBALPING_CLIENT_SECRET: string;
-	ASSETS: { fetch: typeof fetch };
 	globalping_mcp_object: DurableObjectNamespace;
+	OAUTH_KV: KVNamespace;
 }
