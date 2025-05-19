@@ -46,7 +46,6 @@ export async function refreshToken(env: any, refreshToken: string): Promise<any>
   const params = new URLSearchParams();
   params.append("grant_type", "refresh_token");
   params.append("client_id", env.GLOBALPING_CLIENT_ID);
-  params.append("client_secret", env.GLOBALPING_CLIENT_SECRET);
   params.append("refresh_token", refreshToken);
 
   // Send request to refresh token
@@ -141,7 +140,6 @@ app.get("/auth/callback", async (c) => {
   const tokenRequest = new URLSearchParams();
   tokenRequest.append("grant_type", "authorization_code");
   tokenRequest.append("client_id", stateData.clientId);
-  tokenRequest.append("client_secret", c.env.GLOBALPING_CLIENT_SECRET);
   tokenRequest.append("code", code); // The only value taken from the callback
   tokenRequest.append("redirect_uri", stateData.redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
@@ -174,7 +172,7 @@ app.get("/auth/callback", async (c) => {
     }
     const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
       request: oauthReqInfo,
-      userId: userData.client_id,
+      userId: userData.username,
       metadata: {
         label: userData.username,
       },
@@ -182,6 +180,7 @@ app.get("/auth/callback", async (c) => {
       props: {
         accessToken: `${tokenData.access_token}`,
         refreshToken: `${tokenData.refresh_token || tokenData.access_token}`,
+        clientId: oauthReqInfo.clientId,
         state,
         userName: userData.username,
       },

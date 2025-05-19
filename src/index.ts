@@ -5,7 +5,6 @@ import { registerGlobalpingTools } from "./globalping/tools";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import app, { refreshToken } from "./app";
 import { GlobalpingEnv } from "./types/globalping";
-import { env } from "cloudflare:workers";
 
 type Bindings = GlobalpingEnv;
 
@@ -14,6 +13,7 @@ type Props = {
 	refreshToken: string;
 	state: string;
 	userName: string;
+	clientId: string;
 };
 
 // Define custom state for storing previous measurements
@@ -42,8 +42,10 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 	}
 
 	async init() {
+		console.log("Initializing Globalping MCP...");
+		console.log("Globalping MCP initialized with env:", this.env);
 		// Register all the Globalping tools and pass the getToken function
-		registerGlobalpingTools(this, () => `Bearer ${this.props.accessToken}`);
+		registerGlobalpingTools(this, () => `Bearer ${this.getToken()}`);
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
@@ -233,15 +235,51 @@ For more information, visit: https://www.globalping.io
 	async setOAuthState(state: any): Promise<any> {
 		// Store the state in the Durable Object's storage
 		//return await this.ctx.storage?.put("oauth_state", state);
-		return this.setState({
-			...this.state,
-			oAuth: state,
-		});
+		console.log("Setting OAuth state:", this.state);
+		console.log("Setting OAuth state:", state);
+		if (this.state) {
+			return this.setState({
+				...this.state,
+				oAuth: state,
+			});
+		}
+		else {
+			return this.setState({
+				...this.initialState,
+				oAuth: state,
+			});
+		}
 	}
 
 	async getOAuthState(): Promise<any> {
 		//return await this.ctx.storage?.get("oauth_state");
 		return this.state.oAuth;
+	}
+
+	async removeOAuthData(): Promise<void> {
+		try {
+			// remove client
+    		//await this.env.OAUTH_KV.delete(`client:${this.props.clientId}`);
+			
+			// find any grants by userId e.g. username
+			const responseGrant = await this.env.OAUTH_KV.list({ prefix: `grant:${this.props.userName}` });
+			responseGrant.keys.map(async (key: { name: string }) => {
+				  await this.env.OAUTH_KV.delete(key.name);
+			});
+
+			const responseToken = await this.env.OAUTH_KV.list({ prefix: `token:${this.props.userName}` });
+			responseToken.keys.map(async (key: { name: string }) => {
+				  await this.env.OAUTH_KV.delete(key.name);
+			});
+			
+		} catch (error) {
+			console.error("Error removing OAuth data:", error);
+		}
+	}
+
+	getToken(): string {
+		// Return the access token from the props
+		return this.props.accessToken;
 	}
 
 	// Override onStateUpdate to handle state persistence
