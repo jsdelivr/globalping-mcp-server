@@ -145,7 +145,6 @@ app.get("/auth/callback", async (c) => {
   tokenRequest.append("code_verifier", stateData.codeVerifier);
   
   // Only log non-sensitive information
-  console.log("Token request initiated for state:", state);
   try {
     const tokenResponse = await fetch(GLOBALPING_TOKEN_URL, {
       method: "POST",

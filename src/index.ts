@@ -43,9 +43,11 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 
 	async init() {
 		console.log("Initializing Globalping MCP...");
-		console.log("Globalping MCP initialized with env:", this.env);
 		// Register all the Globalping tools and pass the getToken function
-		registerGlobalpingTools(this, () => `Bearer ${this.getToken()}`);
+		registerGlobalpingTools(this, () => {
+			const raw = this.getToken() ?? "";
+			return raw.startsWith("Bearer ") ? raw : `Bearer ${raw}`;
+		});
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
@@ -233,22 +235,16 @@ For more information, visit: https://www.globalping.io
 	}
 
 	async setOAuthState(state: any): Promise<any> {
-		// Store the state in the Durable Object's storage
-		//return await this.ctx.storage?.put("oauth_state", state);
-		console.log("Setting OAuth state:", this.state);
-		console.log("Setting OAuth state:", state);
 		if (this.state) {
 			return this.setState({
 				...this.state,
 				oAuth: state,
 			});
 		}
-		else {
-			return this.setState({
-				...this.initialState,
-				oAuth: state,
-			});
-		}
+		return this.setState({
+			...this.initialState,
+			oAuth: state,
+		});
 	}
 
 	async getOAuthState(): Promise<any> {
@@ -259,19 +255,19 @@ For more information, visit: https://www.globalping.io
 	async removeOAuthData(): Promise<void> {
 		try {
 			// remove client
-    		//await this.env.OAUTH_KV.delete(`client:${this.props.clientId}`);
-			
+			//await this.env.OAUTH_KV.delete(`client:${this.props.clientId}`);
+
 			// find any grants by userId e.g. username
 			const responseGrant = await this.env.OAUTH_KV.list({ prefix: `grant:${this.props.userName}` });
-			responseGrant.keys.map(async (key: { name: string }) => {
-				  await this.env.OAUTH_KV.delete(key.name);
-			});
+			for (const { name } of responseGrant.keys) {
+				await this.env.OAUTH_KV.delete(name);
+			}
 
 			const responseToken = await this.env.OAUTH_KV.list({ prefix: `token:${this.props.userName}` });
-			responseToken.keys.map(async (key: { name: string }) => {
-				  await this.env.OAUTH_KV.delete(key.name);
-			});
-			
+			for (const { name } of responseToken.keys) {
+				await this.env.OAUTH_KV.delete(name);
+			}
+
 		} catch (error) {
 			console.error("Error removing OAuth data:", error);
 		}
