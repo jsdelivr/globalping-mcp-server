@@ -1,3 +1,5 @@
+import { AuthRequest } from "@cloudflare/workers-oauth-provider";
+
 // Types for OAuth
 export interface PKCECodePair {
     codeVerifier: string;
@@ -10,5 +12,6 @@ export interface StateData {
   codeChallenge: string;
   clientId: string;
   state: string;
+  oauthReqInfo: AuthRequest;
   createdAt: number;
 }

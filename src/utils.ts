@@ -1,12 +1,8 @@
 // Helper to generate the layout
-import { html, raw } from "hono/html";
+import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
-import { marked } from "marked";
 import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
-import { env } from "cloudflare:workers";
 import { PKCECodePair } from "./types/oauth";
-import { GlobalpingEnv } from "./types/globalping";
-import { GlobalpingMCP } from ".";
 
 // This file mainly exists as a dumping ground for uninteresting html and CSS
 // to remove clutter and noise from the auth logic. You likely do not need
@@ -231,9 +227,4 @@ export async function createPKCECodes(): Promise<PKCECodePair> {
 	codeVerifier,
 	codeChallenge: base64Digest
   };
-}
-
-export function getDurableObject(id: string, env: GlobalpingEnv): DurableObjectStub<GlobalpingMCP> {
-	const objectId = env.globalping_mcp_object.idFromName(id);
-	return env.globalping_mcp_object.get(objectId) as DurableObjectStub<GlobalpingMCP>;
 }

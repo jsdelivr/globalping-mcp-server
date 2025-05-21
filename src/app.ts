@@ -3,7 +3,6 @@ import {
   layout,
   createPKCECodes,
   generateRandomString,
-  getDurableObject
 } from "./utils";
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { StateData } from "./types/oauth";
@@ -41,30 +40,6 @@ async function getUserData(accessToken: string): Promise<any> {
   return null;
 }
 
-export async function refreshToken(env: any, refreshToken: string): Promise<any> {
-  // Form token request
-  const params = new URLSearchParams();
-  params.append("grant_type", "refresh_token");
-  params.append("client_id", env.GLOBALPING_CLIENT_ID);
-  params.append("refresh_token", refreshToken);
-
-  // Send request to refresh token
-  const response = await fetch(GLOBALPING_TOKEN_URL, {
-    method: "POST",
-    body: params,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "application/json"
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to refresh token");
-  }
-
-  return await response.json();
-}
-
 app.get("/", async (c) => {
   return Response.redirect(GLOBALPING_REPOSITORY_URL);
 });
@@ -75,8 +50,6 @@ app.get("/authorize", async (c) => {
 
   const { codeVerifier, codeChallenge } = await createPKCECodes();
   const state = generateRandomString(32);
-  const durableObject = getDurableObject(state, c.env);
-
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
   const clientId = c.env.GLOBALPING_CLIENT_ID;
@@ -87,10 +60,13 @@ app.get("/authorize", async (c) => {
     codeChallenge,
     clientId,
     state,
+    oauthReqInfo,
     createdAt: Date.now()
   };
 
-  await durableObject.setOAuthState({stateData, oauthReqInfo});
+  await c.env.OAUTH_KV.put(`oauth_state_${state}`, JSON.stringify(stateData), {
+    expirationTtl: 60 * 10, // 10 minutes
+  });
 
   const authUrl = new URL(GLOBALPING_AUTH_URL);
   authUrl.searchParams.append("client_id", c.env.GLOBALPING_CLIENT_ID);
@@ -116,23 +92,30 @@ app.get("/auth/callback", async (c) => {
   if (!code || !state) {
     return c.html(layout(await html`<h1>Invalid request</h1><p>Code and state are missing</p>`, "Invalid request"));
   }
+
+  const stateKV = await c.env.OAUTH_KV.get(`oauth_state_${state}`);
+
+  if (!stateKV) {
+    return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
+  }
+
   
-  const durableObject = getDurableObject(state, c.env);
-  const durableObjectResponse = await durableObject.getOAuthState();
-  const stateData = durableObjectResponse.stateData;
-  const oauthReqInfo = durableObjectResponse.oauthReqInfo;
+  const stateData = JSON.parse(stateKV) as StateData;
   
-  // Validate that the current request matches the original OAuth parameters
-  // This prevents CSRF and authorization code interception attacks
   if (!stateData) {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
-  
-  // Note: We're not attempting to validate client_id in the callback since it's not typically included
-  // The security comes from using the originally stored client_id for the token request below
-  // and validating the state parameter which is cryptographically bound to the original request
 
-  const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
+  const oauthReqInfo = stateData.oauthReqInfo;
+
+  if (stateData.state !== state) {
+    return c.html(layout(await html`<h1>Invalid state</h1><p>State does not match the original request.</p>`, "Invalid state"));
+  }
+
+  // validate redirect_uri, it could be any redirect_uri with dynamic client registration
+  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.redirectUri && !stateData.redirectUri.startsWith("http://localhost")) {
+    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request. ${new URL(c.req.url).origin}/auth/callback && ${stateData.redirectUri}</p>`, "Invalid redirect URI"));
+  }
 
   // Form token request - using ONLY values from our stored state data
   // This ensures the token request uses the original, validated parameters
@@ -143,7 +126,7 @@ app.get("/auth/callback", async (c) => {
   tokenRequest.append("code", code); // The only value taken from the callback
   tokenRequest.append("redirect_uri", stateData.redirectUri);
   tokenRequest.append("code_verifier", stateData.codeVerifier);
-  
+
   // Only log non-sensitive information
   try {
     const tokenResponse = await fetch(GLOBALPING_TOKEN_URL, {
@@ -162,13 +145,12 @@ app.get("/auth/callback", async (c) => {
 
     const tokenData = await tokenResponse.json() as GlobalpingOAuthTokenResponse;
     tokenData.created_at = Math.floor(Date.now() / 1000);
-
     // Complete OAuth authorization process
     let userData = await getUserData(tokenData.access_token);
-
     if (!userData) {
       return c.html(layout(await html`<h1>Authentication error</h1><p>Failed to get user data.</p>`, "Authentication error"));
     }
+
     const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
       request: oauthReqInfo,
       userId: userData.username,
@@ -177,32 +159,20 @@ app.get("/auth/callback", async (c) => {
       },
       scope: oauthReqInfo.scope,
       props: {
-        accessToken: `${tokenData.access_token}`,
-        refreshToken: `${tokenData.refresh_token || tokenData.access_token}`,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
         clientId: oauthReqInfo.clientId,
         state,
         userName: userData.username,
+        isAuthenticated: true,
       },
     });
+
     // Directly redirect to the client app instead of showing a page
     return Response.redirect(redirectTo, 302);
   } catch (error: any) {
     console.error("Token exchange error:", error);
     return c.html(layout(await html`<h1>Authentication error</h1><p>An error occurred during token exchange. ${error.message}</p>`, "Authentication error"));
-  }
-});
-
-app.post("/token", async (c) => {
-  const { grantType, props } = await c.env.OAUTH_PROVIDER.parseTokenRequest(c.req.raw);
-  const tokens = await refreshToken(c.env, props.refreshToken);
-  if (tokens) {
-    return c.json({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expires_in: tokens.expires_in,
-      token_type: "Bearer",
-      scope: props.scope,
-    });
   }
 });
 

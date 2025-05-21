@@ -1,15 +1,19 @@
 /**
  * Globalping API wrapper functions
  */
+import { GlobalpingMCP } from "..";
 import {
 	type MeasurementOptions,
 	type CreateMeasurementResponse,
 	type MeasurementResponse,
 	type ErrorResponse,
-	MeasurementType,
 } from "./types";
 
 const GLOBALPING_API_URL = "https://api.globalping.io/v1";
+let headers: HeadersInit = {
+	"Accept": "application/json",
+	"User-Agent": "GlobalpingMcpServer/1.0.0",
+};
 
 /**
  * Creates a measurement on the Globalping API
@@ -18,22 +22,21 @@ const GLOBALPING_API_URL = "https://api.globalping.io/v1";
  * @returns The created measurement ID and probe count
  */
 export async function createMeasurement(
+	agent: GlobalpingMCP,
 	options: MeasurementOptions,
-	token?: string,
+	token: string,
 ): Promise<CreateMeasurementResponse> {
-	const headers: HeadersInit = {
-		"Content-Type": "application/json",
-		Accept: "application/json",
-		"User-Agent": "GlobalpingMcpServer/1.0.0",
-	};
 
-	// Only add the Authorization header if a token is provided
-	if (token) {
-		headers.Authorization = token;
-		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
-	} else {
-		console.log(`API Call: No token provided, making unauthenticated request`);
+	if (!token) {
+		console.log(`API Call: No token provided`);
+		throw new Error(`Globalping API error: No token provided`);
 	}
+
+	headers = {
+		...headers,
+		"Content-Type": "application/json",
+		"Authorization": token,
+	};
 
 	const response = await fetch(`${GLOBALPING_API_URL}/measurements`, {
 		method: "POST",
@@ -43,6 +46,12 @@ export async function createMeasurement(
 
 	if (!response.ok) {
 		const errorData: ErrorResponse = await response.json();
+
+		if (response.status === 401 || response.status === 403) {
+			console.log(`API Call: Authentication error - token may be invalid or expired`);
+			agent.setIsAuthenticated(false);
+		}
+
 		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
 	}
 
@@ -54,27 +63,26 @@ export async function createMeasurement(
  * @param measurementId The measurement ID to poll for
  * @param maxAttempts Maximum number of polling attempts (default 20)
  * @param delayMs Delay between polling attempts in milliseconds (default 500)
- * @param token Optional API token for authenticated requests
+ * @param token API token for authenticated requests
  * @returns The complete measurement response
  */
 export async function pollMeasurementResult(
+	agent: GlobalpingMCP,
 	measurementId: string,
 	maxAttempts = 20,
 	delayMs = 500,
-	token?: string,
+	token: string,
 ): Promise<MeasurementResponse> {
-	const headers: HeadersInit = {
-		Accept: "application/json",
-		"User-Agent": "GlobalpingMcpServer/1.0.0",
-	};
 
-	// Only add the Authorization header if a token is provided
-	if (token) {
-		headers.Authorization = token;
-		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
-	} else {
-		console.log(`API Call: No token provided, making unauthenticated request`);
+	if (!token) {
+		console.log(`API Call: No token provided`);
+		throw new Error(`Globalping API error: No token provided`);
 	}
+
+	headers = {
+		...headers,
+		"Authorization": token,
+	};
 
 	let attempts = 0;
 
@@ -84,6 +92,11 @@ export async function pollMeasurementResult(
 		});
 
 		if (!response.ok) {
+			if (response.status === 401 || response.status === 403) {
+				console.log(`API Call: Authentication error - token may be invalid or expired`);
+				agent.setIsAuthenticated(false);
+				throw new Error(`Globalping API error: Authentication error - token may be invalid or expired`);
+			}
 			attempts++;
 			await new Promise((resolve) => setTimeout(resolve, delayMs));
 			continue;
@@ -114,9 +127,16 @@ export async function pollMeasurementResult(
  * @returns The complete measurement results
  */
 export async function runMeasurement(
+	agent: GlobalpingMCP,
 	options: MeasurementOptions,
-	token?: string,
+	token: string,
 ): Promise<MeasurementResponse> {
+
+	if (!token) {
+		console.log(`API Call: No token provided`);
+		throw new Error(`Globalping API error: No token provided`);
+	}
+
 	// Always enforce a default limit of 3 probes if not specified
 	if (!options.limit) {
 		options.limit = 3;
@@ -129,8 +149,8 @@ export async function runMeasurement(
 		options.limit = 100;
 	}
 
-	const result = await createMeasurement(options, token);
-	return await pollMeasurementResult(result.id, 30, 500, token);
+	const result = await createMeasurement(agent, options, token);
+	return await pollMeasurementResult(agent, result.id, 30, 500, token);
 }
 
 /**
@@ -138,26 +158,29 @@ export async function runMeasurement(
  * @param token Optional API token for authenticated requests
  * @returns The list of available probes
  */
-export async function getLocations(token?: string): Promise<any> {
-	const headers: HeadersInit = {
-		Accept: "application/json",
-		"User-Agent": "GlobalpingMcpServer/1.0.0",
-	};
-
-	// Only add the Authorization header if a token is provided
-	if (token) {
-		headers.Authorization = token;
-		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
-	} else {
-		console.log(`API Call: No token provided, making unauthenticated request`);
+export async function getLocations(agent: GlobalpingMCP, token: string): Promise<any> {
+	if (!token) {
+		console.log(`API Call: No token provided`);
+		throw new Error(`Globalping API error: No token provided`);
 	}
 
+	headers = {
+		...headers,
+		"Authorization": token,
+	};
+
+	console.log(`API Call: Calling ${GLOBALPING_API_URL}/probes`);
 	const response = await fetch(`${GLOBALPING_API_URL}/probes`, {
 		headers,
 	});
 
 	if (!response.ok) {
 		const errorData: ErrorResponse = await response.json();
+		if (response.status === 401 || response.status === 403) {
+			console.log(`API Call: Authentication error - token may be invalid or expired`);
+			agent.setIsAuthenticated(false);
+		}
+
 		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
 	}
 
@@ -169,60 +192,44 @@ export async function getLocations(token?: string): Promise<any> {
  * @param token Optional API token for authenticated requests
  * @returns The current rate limits
  */
-export async function getRateLimits(token?: string): Promise<any> {
-	const headers: HeadersInit = {
-		Accept: "application/json",
-		"User-Agent": "GlobalpingMcpServer/1.0.0",
-	};
+export async function getRateLimits(agent: GlobalpingMCP, token: string): Promise<any> {
 
-	// Only add the Authorization header if a token is provided
-	if (token) {
-		headers.Authorization = token;
-		console.log(`API Call: Setting Authorization header to: ${token.substring(0, 15)}...`);
-	} else {
-		console.log(`API Call: No token provided, making unauthenticated request`);
+	if (!token) {
+		console.log(`API Call: No token provided`);
+		throw new Error(`Globalping API error: No token provided`);
 	}
+
+	headers = {
+		...headers,
+		"Authorization": token,
+	};
 
 	console.log(`API Call: Calling ${GLOBALPING_API_URL}/limits`);
 	const response = await fetch(`${GLOBALPING_API_URL}/limits`, {
 		headers,
 	});
 
-	console.log(`API Call: Response status: ${response.status} ${response.statusText}`);
-	
-	// Log response headers
-	console.log(`API Call: Response headers:`);
-	response.headers.forEach((value, key) => {
-		console.log(`  ${key}: ${value}`);
-	});
-
 	if (!response.ok) {
 		try {
 			const errorData: ErrorResponse = await response.json();
 			console.log(`API Call: Error response: ${JSON.stringify(errorData)}`);
-			
+
 			// Check for auth-related errors
 			if (response.status === 401 || response.status === 403) {
 				console.log(`API Call: Authentication error - token may be invalid or expired`);
-				if (token) {
-					console.log(`API Call: Trying again without authentication...`);
-					return await getRateLimits(undefined); // Retry without token
-				}
+				agent.setIsAuthenticated(false);
 			}
-			
+
 			throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
 		} catch (e) {
 			console.log(`API Call: Failed to parse error response: ${e}`);
-			
+
 			// Still check for auth errors even if we can't parse the JSON
 			if (response.status === 401 || response.status === 403) {
 				console.log(`API Call: Authentication error - token may be invalid or expired`);
-				if (token) {
-					console.log(`API Call: Trying again without authentication...`);
-					return await getRateLimits(undefined); // Retry without token
-				}
+				agent.setIsAuthenticated(false);
 			}
-			
+
 			throw new Error(`Globalping API error (${response.status})`);
 		}
 	}
