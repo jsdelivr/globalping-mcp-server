@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./globalping/tools";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import app, { refreshToken } from "./app";
+import app from "./app";
 import { GlobalpingEnv } from "./types/globalping";
 
 type Bindings = GlobalpingEnv;
@@ -14,6 +14,7 @@ type Props = {
 	state: string;
 	userName: string;
 	clientId: string;
+	isAuthenticated: boolean;
 };
 
 // Define custom state for storing previous measurements
@@ -211,16 +212,12 @@ For more information, visit: https://www.globalping.io
 		});
 
 		this.server.tool("authStatus", {}, async () => {
-			const token = this.props.accessToken;
 			let status = "Not authenticated";
 			let message = "Your are not authenticated with Globalping. Use the /login route to authenticate.";
 
-			if (token) {
+			if (this.props.isAuthenticated) {
 				status = "Authenticated";
 				message = "You are authenticated with Globalping.";
-				if (token.startsWith("Bearer ")) {
-					message += " Your token is of type: Bearer";
-				}
 			}
 
 			return {
@@ -276,6 +273,14 @@ For more information, visit: https://www.globalping.io
 	getToken(): string {
 		// Return the access token from the props
 		return this.props.accessToken;
+	}
+
+	setIsAuthenticated(isAuthenticated: boolean): void {
+		this.props.isAuthenticated = isAuthenticated;
+	}
+
+	getIsAuthenticated(): boolean {
+		return this.props.isAuthenticated;
 	}
 
 	// Override onStateUpdate to handle state persistence

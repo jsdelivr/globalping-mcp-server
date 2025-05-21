@@ -290,8 +290,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async ({ target, locations, limit, packets }, ctx) => {
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
-			
-			const result = await runMeasurement(
+
+			const result = await runMeasurement(agent,
 				{
 					type: "ping",
 					target,
@@ -335,7 +335,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
+			const result = await runMeasurement(agent,
 				{
 					type: "traceroute",
 					target,
@@ -389,7 +389,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
+			const result = await runMeasurement(agent,
 				{
 					type: "dns",
 					target,
@@ -440,7 +440,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
+			const result = await runMeasurement(agent,
 				{
 					type: "mtr",
 					target,
@@ -487,12 +487,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async ({ target, locations, limit, method, protocol, path, query, port }, ctx) => {
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
-			
-			if(!protocol) {
+
+			if (!protocol) {
 				protocol = "HTTPS";
 			}
 
-			const result = await runMeasurement(
+			const result = await runMeasurement(agent,
 				{
 					type: "http",
 					target,
@@ -530,7 +530,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 	// Locations tool
 	agent.server.tool("locations", {}, async (_, ctx) => {
 		const token = getToken();
-		const locations = await getLocations(token);
+		const locations = await getLocations(agent, token);
 
 		let summary = "Available Globalping Probe Locations:\n\n";
 
@@ -579,31 +579,13 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 		// Make the API call
 		console.log("Calling Globalping API with token:", token ? "Yes" : "No");
-		const limits = await getRateLimits(token);
+		const limits = await getRateLimits(agent, token);
 		console.log("API response received");
 
 		let summary = "Globalping Rate Limits:\n\n";
 
-		// Add context and token debugging information
-		summary += `Context Data:\n`;
-		summary += `- Has props: ${ctx.props ? "Yes" : "No"}\n`;
-		summary += `- Has bearerToken: ${ctx.props?.accessToken ? "Yes" : "No"}\n`;
-		if (ctx.props?.accessToken) {
-			summary += `- Raw bearerToken: ${ctx.props.accessToken.substring(0, 15)}...\n`;
-		}
-
-		// Debug the raw context
-		summary += `- Raw context keys: ${Object.keys(ctx || {}).join(", ")}\n`;
-		if (ctx) {
-			for (const key of Object.keys(ctx)) {
-				summary += `  - ${key}: ${typeof ctx[key]} ${ctx[key] ? "(has value)" : "(empty)"}\n`;
-			}
-		}
-
-		summary += `\n`;
-
 		// Add authentication status to the output
-		summary += `Authentication Status: ${token ? "Authenticated" : "Unauthenticated"}\n`;
+		summary += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
 
 		// Only show first few characters of token for security if present
 		if (token) {
@@ -614,29 +596,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		} else {
 			summary += `Token: None\n`;
 		}
-
-		// Debug header information if available
-		if (ctx?.props?.debugHeaders && Array.isArray(ctx.props.debugHeaders)) {
-			summary += `\nRequest Headers Debug:\n`;
-			ctx.props.debugHeaders.forEach((header: string) => {
-				// Avoid showing the full token value in logs
-				if (header.toLowerCase().includes("token") || header.toLowerCase().includes("auth")) {
-					const parts = header.split(": ");
-					if (parts.length === 2) {
-						const value = parts[1];
-						const safeValue = value.length > 10 ? `${value.substring(0, 10)}...` : value;
-						summary += `${parts[0]}: ${safeValue}\n`;
-					} else {
-						summary += `${header}\n`;
-					}
-				} else {
-					summary += `${header}\n`;
-				}
-			});
-			summary += `\n`;
-		}
-
-		summary += `\n`;
 
 		// Log the raw limits data
 		console.log("API Response (limits):", JSON.stringify(limits));
@@ -671,10 +630,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
  */
 function parseLocations(locations: string | string[] | undefined): string[] | undefined {
 	if (!locations) return undefined;
-	
+
 	// If already an array, return as is
 	if (Array.isArray(locations)) return locations;
-	
+
 	// If it's a string, try to parse it as JSON array
 	try {
 		// Check if it starts with [ and ends with ]
@@ -686,23 +645,18 @@ function parseLocations(locations: string | string[] | undefined): string[] | un
 				return parsed;
 			}
 		}
-		
+
 		// if it's a string and locations is comma-separated, split it into an array
 		let parsed = locations.split(',').map((loc) => loc.trim());
-		
+
 		if (parsed.length > 0) {
 			return parsed;
 		}
-		
+
 		// If not array-like or parsing doesn't result in array, treat as a single location
 		return [locations];
 	} catch (e) {
 		// If not valid JSON, treat as a single location string
 		return [locations];
 	}
-}
-
-async function onAuthFailure(agent: GlobalpingMCP) {
-	console.log("Authentication failed, deleting client with ID:", agent.props.clientId);
-	return await agent.removeOAuthData();
 }
