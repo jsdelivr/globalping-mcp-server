@@ -99,9 +99,15 @@ app.get("/auth/callback", async (c) => {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
 
-  
-  const stateData = JSON.parse(stateKV) as StateData;
-  
+  let stateData: StateData | null = null;
+  try {
+    stateData = JSON.parse(stateKV as string) as StateData;
+  } catch {
+    return c.html(layout(await html`<h1>State error</h1><p>Stored state is malformed.</p>`, "State error"));
+  }
+
+  await c.env.OAUTH_KV.delete(`oauth_state_${state}`);
+
   if (!stateData) {
     return c.html(layout(await html`<h1>State is outdated</h1><p>State is outdated or missing.</p>`, "State is outdated"));
   }
