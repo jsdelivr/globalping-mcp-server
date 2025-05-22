@@ -45,17 +45,26 @@ app.get("/", async (c) => {
 });
 
 app.get("/authorize", async (c) => {
+  let oauthReqInfo;
+  try {
+    oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  } catch (error: any) {
+    return c.html(layout(await html`<h1>Invalid request</h1><p>${error.message}</p>`, "Invalid request"));
+  }
 
-  const oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  if(!oauthReqInfo) {
+    return c.html(layout(await html`<h1>Invalid request</h1><p>Missing OAuth request information.</p>`, "Invalid request"));
+  }
 
   const { codeVerifier, codeChallenge } = await createPKCECodes();
   const state = generateRandomString(32);
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
+
   const clientId = c.env.GLOBALPING_CLIENT_ID;
 
   const stateData: StateData = {
-    redirectUri,
+    redirectUri: oauthReqInfo.redirectUri,
     codeVerifier,
     codeChallenge,
     clientId,
@@ -119,8 +128,8 @@ app.get("/auth/callback", async (c) => {
   }
 
   // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.redirectUri && !stateData.redirectUri.startsWith("http://localhost")) {
-    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request. ${new URL(c.req.url).origin}/auth/callback && ${stateData.redirectUri}</p>`, "Invalid redirect URI"));
+  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.redirectUri || !stateData.redirectUri.startsWith("http://localhost")) {
+    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
   }
 
   // Form token request - using ONLY values from our stored state data
