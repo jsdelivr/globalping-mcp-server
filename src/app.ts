@@ -4,7 +4,7 @@ import {
   createPKCECodes,
   generateRandomString,
 } from "./utils";
-import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { StateData } from "./types/oauth";
 import { GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types/globalping";
 import { html } from "hono/html";
@@ -45,17 +45,32 @@ app.get("/", async (c) => {
 });
 
 app.get("/authorize", async (c) => {
+  let oauthReqInfo: AuthRequest | undefined;
+  try {
+    oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  } catch (error: any) {
+    return c.html(layout(await html`<h1>Invalid request</h1><p>${error.message}</p>`, "Invalid request"));
+  }
 
-  const oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
+  if(!oauthReqInfo) {
+    return c.html(layout(await html`<h1>Invalid request</h1><p>Missing OAuth request information.</p>`, "Invalid request"));
+  }
+
+  // validate redirect_uri, it could be any redirect_uri with dynamic client registration
+  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri)) {
+    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
+  }
 
   const { codeVerifier, codeChallenge } = await createPKCECodes();
   const state = generateRandomString(32);
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback`;
+
   const clientId = c.env.GLOBALPING_CLIENT_ID;
 
   const stateData: StateData = {
-    redirectUri,
+    redirectUri: redirectUri,
+    clientRedirectUri: oauthReqInfo.redirectUri,
     codeVerifier,
     codeChallenge,
     clientId,
@@ -116,11 +131,6 @@ app.get("/auth/callback", async (c) => {
 
   if (stateData.state !== state) {
     return c.html(layout(await html`<h1>Invalid state</h1><p>State does not match the original request.</p>`, "Invalid state"));
-  }
-
-  // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.redirectUri && !stateData.redirectUri.startsWith("http://localhost")) {
-    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request. ${new URL(c.req.url).origin}/auth/callback && ${stateData.redirectUri}</p>`, "Invalid redirect URI"));
   }
 
   // Form token request - using ONLY values from our stored state data
