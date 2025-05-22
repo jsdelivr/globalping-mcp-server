@@ -585,7 +585,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		let summary = "Globalping Rate Limits:\n\n";
 
 		// Add authentication status to the output
-		summary += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
+		summary += `Authentication Status: ${agent.getOAuthStatus() ? "Authenticated" : "Unauthenticated"}\n`;
 
 		// Only show first few characters of token for security if present
 		if (token) {

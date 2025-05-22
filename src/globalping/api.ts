@@ -49,7 +49,7 @@ export async function createMeasurement(
 
 		if (response.status === 401 || response.status === 403) {
 			console.log(`API Call: Authentication error - token may be invalid or expired`);
-			agent.setIsAuthenticated(false);
+			agent.setOAuthStatus(false);
 		}
 
 		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
@@ -94,7 +94,7 @@ export async function pollMeasurementResult(
 		if (!response.ok) {
 			if (response.status === 401 || response.status === 403) {
 				console.log(`API Call: Authentication error - token may be invalid or expired`);
-				agent.setIsAuthenticated(false);
+				agent.setOAuthStatus(false);
 				throw new Error(`Globalping API error: Authentication error - token may be invalid or expired`);
 			}
 			attempts++;
@@ -178,7 +178,7 @@ export async function getLocations(agent: GlobalpingMCP, token: string): Promise
 		const errorData: ErrorResponse = await response.json();
 		if (response.status === 401 || response.status === 403) {
 			console.log(`API Call: Authentication error - token may be invalid or expired`);
-			agent.setIsAuthenticated(false);
+			agent.setOAuthStatus(false);
 		}
 
 		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
@@ -217,7 +217,7 @@ export async function getRateLimits(agent: GlobalpingMCP, token: string): Promis
 			// Check for auth-related errors
 			if (response.status === 401 || response.status === 403) {
 				console.log(`API Call: Authentication error - token may be invalid or expired`);
-				agent.setIsAuthenticated(false);
+				agent.setOAuthStatus(false);
 			}
 
 			throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
@@ -227,7 +227,7 @@ export async function getRateLimits(agent: GlobalpingMCP, token: string): Promis
 			// Still check for auth errors even if we can't parse the JSON
 			if (response.status === 401 || response.status === 403) {
 				console.log(`API Call: Authentication error - token may be invalid or expired`);
-				agent.setIsAuthenticated(false);
+				agent.setOAuthStatus(false);
 			}
 
 			throw new Error(`Globalping API error (${response.status})`);

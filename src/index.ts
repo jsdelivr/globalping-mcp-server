@@ -14,7 +14,6 @@ type Props = {
 	state: string;
 	userName: string;
 	clientId: string;
-	isAuthenticated: boolean;
 };
 
 // Define custom state for storing previous measurements
@@ -23,6 +22,7 @@ type State = {
 	measurements: Record<string, any>;
 	storage?: DurableObjectStorage;
 	oAuth: any;
+	isAuthenticated: boolean;
 };
 
 export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
@@ -35,6 +35,7 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 	initialState: State = {
 		measurements: {},
 		oAuth: {},
+		isAuthenticated: true
 	};
 
 	// Override to access props from user context in tools
@@ -214,8 +215,8 @@ For more information, visit: https://www.globalping.io
 		this.server.tool("authStatus", {}, async () => {
 			let status = "Not authenticated";
 			let message = "Your are not authenticated with Globalping. Use the /login route to authenticate.";
-
-			if (this.props.isAuthenticated) {
+			
+			if (this.state.isAuthenticated) {
 				status = "Authenticated";
 				message = "You are authenticated with Globalping.";
 			}
@@ -231,22 +232,22 @@ For more information, visit: https://www.globalping.io
 		});
 	}
 
-	async setOAuthState(state: any): Promise<any> {
+	setOAuthStatus(isAuthenticated: boolean): any {
 		if (this.state) {
 			return this.setState({
 				...this.state,
-				oAuth: state,
+				isAuthenticated,
 			});
 		}
+		
 		return this.setState({
 			...this.initialState,
-			oAuth: state,
+			isAuthenticated,
 		});
 	}
 
-	async getOAuthState(): Promise<any> {
-		//return await this.ctx.storage?.get("oauth_state");
-		return this.state.oAuth;
+	getOAuthStatus(): boolean {
+		return this.state.isAuthenticated;
 	}
 
 	async removeOAuthData(): Promise<void> {
@@ -273,14 +274,6 @@ For more information, visit: https://www.globalping.io
 	getToken(): string {
 		// Return the access token from the props
 		return this.props.accessToken;
-	}
-
-	setIsAuthenticated(isAuthenticated: boolean): void {
-		this.props.isAuthenticated = isAuthenticated;
-	}
-
-	getIsAuthenticated(): boolean {
-		return this.props.isAuthenticated;
 	}
 
 	// Override onStateUpdate to handle state persistence

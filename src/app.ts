@@ -180,7 +180,6 @@ app.get("/auth/callback", async (c) => {
         clientId: oauthReqInfo.clientId,
         state,
         userName: userData.username,
-        isAuthenticated: true,
       },
     });
 
