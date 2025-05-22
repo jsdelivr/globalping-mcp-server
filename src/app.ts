@@ -57,7 +57,7 @@ app.get("/authorize", async (c) => {
   }
 
   // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !oauthReqInfo.redirectUri.startsWith("http://localhost:")) {
+  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri)) {
     return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
   }
 
