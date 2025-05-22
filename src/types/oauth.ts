@@ -8,6 +8,7 @@ export interface PKCECodePair {
 
 export interface StateData {
   redirectUri: string;
+  clientRedirectUri: string;
   codeVerifier: string;
   codeChallenge: string;
   clientId: string;

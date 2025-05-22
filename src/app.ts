@@ -64,7 +64,8 @@ app.get("/authorize", async (c) => {
   const clientId = c.env.GLOBALPING_CLIENT_ID;
 
   const stateData: StateData = {
-    redirectUri: oauthReqInfo.redirectUri,
+    redirectUri: redirectUri,
+    clientRedirectUri: oauthReqInfo.redirectUri,
     codeVerifier,
     codeChallenge,
     clientId,
@@ -128,7 +129,7 @@ app.get("/auth/callback", async (c) => {
   }
 
   // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.redirectUri || !stateData.redirectUri.startsWith("http://localhost")) {
+  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.clientRedirectUri && !stateData.clientRedirectUri.startsWith("http://localhost")) {
     return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
   }
 
