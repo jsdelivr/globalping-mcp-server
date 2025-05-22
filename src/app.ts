@@ -56,6 +56,11 @@ app.get("/authorize", async (c) => {
     return c.html(layout(await html`<h1>Invalid request</h1><p>Missing OAuth request information.</p>`, "Invalid request"));
   }
 
+  // validate redirect_uri, it could be any redirect_uri with dynamic client registration
+  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !oauthReqInfo.redirectUri.startsWith("http://localhost")) {
+    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
+  }
+
   const { codeVerifier, codeChallenge } = await createPKCECodes();
   const state = generateRandomString(32);
 
@@ -126,11 +131,6 @@ app.get("/auth/callback", async (c) => {
 
   if (stateData.state !== state) {
     return c.html(layout(await html`<h1>Invalid state</h1><p>State does not match the original request.</p>`, "Invalid state"));
-  }
-
-  // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== stateData.clientRedirectUri && !stateData.clientRedirectUri.startsWith("http://localhost")) {
-    return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
   }
 
   // Form token request - using ONLY values from our stored state data
