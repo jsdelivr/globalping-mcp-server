@@ -4,7 +4,7 @@ import {
   createPKCECodes,
   generateRandomString,
 } from "./utils";
-import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { StateData } from "./types/oauth";
 import { GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types/globalping";
 import { html } from "hono/html";
@@ -45,7 +45,7 @@ app.get("/", async (c) => {
 });
 
 app.get("/authorize", async (c) => {
-  let oauthReqInfo;
+  let oauthReqInfo: AuthRequest | undefined;
   try {
     oauthReqInfo = await c.env.OAUTH_PROVIDER.parseAuthRequest(c.req.raw);
   } catch (error: any) {
