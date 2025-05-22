@@ -80,14 +80,23 @@ When creating a Claude Assistant in the Anthropic Console:
 To add the Globalping MCP server to Cursor:
 
 1. Open Cursor settings
-2. Navigate to the AI tab
-3. Scroll down to find "Model Context Protocol"
-4. Click "Add MCP Server"
-5. Enter:
-   - Name: `Globalping`
-   - URL: `https://mcp.globalping.dev/sse`
-   - Check "Enabled"
-6. Click "Save"
+2. Navigate to the MCP tab
+3. Click on "+ Add new global MCP server"
+4. This opens the `mcp.json` config file, where you will need to add:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/sse"
+            ]
+        }
+    }
+}
+```
+5. Click "Save" and restart Cursor
 
 ## Connecting AI Assistants
 
