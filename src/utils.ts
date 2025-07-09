@@ -257,7 +257,7 @@ const STANDARD_PROTOCOLS = new Set([
 export function isDeepLink(url: string): boolean {
   try {
 	const parsedUrl = new URL(url);
-	const protocol = parsedUrl.protocol.toLocaleLowerCase();
+	const protocol = parsedUrl.protocol.toLowerCase();
 	return !STANDARD_PROTOCOLS.has(protocol);
   } catch (e) {
 	return false;
