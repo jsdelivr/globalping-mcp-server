@@ -228,3 +228,38 @@ export async function createPKCECodes(): Promise<PKCECodePair> {
 	codeChallenge: base64Digest
   };
 }
+
+const STANDARD_PROTOCOLS = new Set([
+	'http:', 
+	'https:', 
+	'ftp:', 
+	'file:',
+	'mailto:',
+	'tel:',
+	'ws:',
+	'wss:',
+	'sms:',
+	'data:',
+	'blob:',
+	'about:',
+	'chrome:',
+	'opera:',
+	'edge:',
+	'safari:',
+	'javascript:',
+]);
+
+/**
+ * Check if a URL is a deep link
+ * @param url The URL to check
+ * @returns 
+ */
+export function isDeepLink(url: string): boolean {
+  try {
+	const parsedUrl = new URL(url);
+	const protocol = parsedUrl.protocol.toLocaleLowerCase();
+	return !STANDARD_PROTOCOLS.has(protocol);
+  } catch (e) {
+	return false;
+  }
+}
