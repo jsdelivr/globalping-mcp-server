@@ -3,6 +3,7 @@ import {
   layout,
   createPKCECodes,
   generateRandomString,
+  isDeepLink,
 } from "./utils";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { StateData } from "./types/oauth";
@@ -57,7 +58,7 @@ app.get("/authorize", async (c) => {
   }
 
   // validate redirect_uri, it could be any redirect_uri with dynamic client registration
-  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri)) {
+  if (`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri && !/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri) && !isDeepLink(oauthReqInfo.redirectUri)) {
     return c.html(layout(await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`, "Invalid redirect URI"));
   }
 
