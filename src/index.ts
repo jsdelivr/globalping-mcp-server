@@ -292,10 +292,24 @@ For more information, visit: https://www.globalping.io
 	}
 }
 
+async function handleMcpRequest(req: Request, env: Env, ctx: ExecutionContext) {
+	const { pathname } = new URL(req.url);
+	
+	if (pathname === "/sse" || pathname === "/sse/message") {
+		return GlobalpingMCP.serveSSE("/sse", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
+	}
+	
+	if (pathname === "/mcp" || pathname === "streamable-http") {
+		return GlobalpingMCP.serve("/mcp", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
+	}
+	
+	return new Response("Not found", { status: 404 });
+}
+
 export default new OAuthProvider({
-	apiRoute: "/sse",
+	apiRoute: ["/sse", '/mcp'],
 	// @ts-ignore
-	apiHandler: GlobalpingMCP.mount("/sse", { binding: "globalping_mcp_object" }),
+	apiHandler: { fetch: handleMcpRequest as any },
 	// @ts-ignore
 	defaultHandler: app,
 	authorizeEndpoint: "/authorize",

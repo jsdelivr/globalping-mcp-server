@@ -38,7 +38,9 @@ It also supports oAuth authentication, which offers a secure way to interact wit
 
 ## Installation
 
-The remote MCP server is available under this endpoint `https://mcp.globalping.dev/sse`
+The remote MCP server is available under those endpoints:
+- Streamable HTTP transport: `https://mcp.globalping.dev/mcp`
+- SSE transport: `https://mcp.globalping.dev/sse`
 
 You can integrate our Globalping MCP server with various AI tools that support the Model Context Protocol. 
 
@@ -48,6 +50,21 @@ Here are instructions for the top 3 most popular tools:
 
 Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):
 
+Streamable HTTP transport:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/mcp"
+            ]
+        }
+    }
+}
+```
+Legacy SSE transport:
 ```json
 {
     "mcpServers": {
@@ -61,7 +78,6 @@ Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\conf
     }
 }
 ```
-
 #### Anthropic Claude API (via Console)
 
 When creating a Claude Assistant in the Anthropic Console:
@@ -73,7 +89,7 @@ When creating a Claude Assistant in the Anthropic Console:
 5. Enter the following details:
    - Tool Name: `Globalping`
    - Description: `Run network tests from locations worldwide`
-   - Tool URL: `https://mcp.globalping.dev/sse`
+   - Tool URL: `https://mcp.globalping.dev/mcp`(Streamable HTTP transport) or `https://mcp.globalping.dev/sse`(SSE transport)
 
 #### Cursor
 
@@ -83,6 +99,22 @@ To add the Globalping MCP server to Cursor:
 2. Navigate to the MCP tab
 3. Click on "+ Add new global MCP server"
 4. This opens the `mcp.json` config file, where you will need to add:
+
+Streamable HTTP transport:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/mcp"
+            ]
+        }
+    }
+}
+```
+Legacy SSE transport:
 ```json
 {
     "mcpServers": {
