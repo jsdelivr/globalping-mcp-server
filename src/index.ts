@@ -299,7 +299,7 @@ async function handleMcpRequest(req: Request, env: Env, ctx: ExecutionContext) {
 		return GlobalpingMCP.serveSSE("/sse", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
 	}
 	
-	if (pathname === "/mcp" || pathname === "streamable-http") {
+	if (pathname === "/mcp" || pathname === "/streamable-http") {
 		return GlobalpingMCP.serve("/mcp", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
 	}
 	
