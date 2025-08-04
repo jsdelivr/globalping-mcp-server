@@ -89,7 +89,7 @@ When creating a Claude Assistant in the Anthropic Console:
 5. Enter the following details:
    - Tool Name: `Globalping`
    - Description: `Run network tests from locations worldwide`
-   - Tool URL: `https://mcp.globalping.dev/mcp`(Streamable HTTP transport) or `https://mcp.globalping.dev/sse`(SSE transport)
+   - Tool URL: `https://mcp.globalping.dev/mcp` (Streamable HTTP transport) or `https://mcp.globalping.dev/sse` (SSE transport)
 
 #### Cursor
 
