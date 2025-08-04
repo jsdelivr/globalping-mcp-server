@@ -307,7 +307,7 @@ async function handleMcpRequest(req: Request, env: Env, ctx: ExecutionContext) {
 }
 
 export default new OAuthProvider({
-	apiRoute: ["/sse", '/mcp'],
+	apiRoute: ["/sse", "/mcp"],
 	// @ts-ignore
 	apiHandler: { fetch: handleMcpRequest as any },
 	// @ts-ignore
