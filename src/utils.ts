@@ -263,3 +263,17 @@ export function isDeepLink(url: string): boolean {
 	return false;
   }
 }
+
+export function isExceptionHost(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    const exceptionHosts = new Set([
+      'playground.ai.cloudflare.com',
+      // add more exception hosts here if needed
+    ]);
+    return exceptionHosts.has(url.hostname);
+  } catch (err) {
+    // Invalid URL string
+    return false;
+  }
+}
