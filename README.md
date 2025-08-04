@@ -38,7 +38,7 @@ It also supports oAuth authentication, which offers a secure way to interact wit
 
 ## Installation
 
-The remote MCP server is available under those endpoints:
+The remote MCP server is available under these endpoints:
 - Streamable HTTP transport: `https://mcp.globalping.dev/mcp`
 - SSE transport: `https://mcp.globalping.dev/sse`
 
