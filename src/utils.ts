@@ -269,6 +269,7 @@ export function isExceptionHost(urlString: string): boolean {
     const url = new URL(urlString);
     const exceptionHosts = new Set([
       'playground.ai.cloudflare.com',
+      'mcp.docker.com',
       // add more exception hosts here if needed
     ]);
     return exceptionHosts.has(url.hostname);
