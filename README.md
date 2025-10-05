@@ -157,7 +157,7 @@ Streamable HTTP transport:
             "command": "npx",
             "args": [
                 "mcp-remote",
-                "https://mcp.globalping.dev/mcp"
+                "https://mcp.globalping.dev/mcp",
                 "--header",
                 "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
             ]
@@ -173,7 +173,7 @@ Legacy SSE transport:
             "command": "npx",
             "args": [
                 "mcp-remote",
-                "https://mcp.globalping.dev/sse"
+                "https://mcp.globalping.dev/sse",
                 "--header",
                 "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
             ]

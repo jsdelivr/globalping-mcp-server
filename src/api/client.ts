@@ -69,13 +69,7 @@ export async function createMeasurement(
 	);
 
 	if (!response.ok) {
-		const errorData: ErrorResponse = await response.json();
-
-		if (handleAuthError(agent, response, token)) {
-			// Auth error was handled
-		}
-
-		throw new Error(`Globalping API error (${response.status}): ${errorData.error.message}`);
+		await handleAPIError(agent, response, token);
 	}
 
 	return await response.json();

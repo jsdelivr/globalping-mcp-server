@@ -19,12 +19,6 @@ export const GLOBALPING_API = {
 	},
 };
 
-export const HTTP_HEADERS = {
-	ACCEPT: "application/json",
-	CONTENT_TYPE: "application/json",
-	USER_AGENT: "GlobalpingMcpServer/1.0.0",
-};
-
 export const HTTP_STATUS = {
 	UNAUTHORIZED: 401,
 	FORBIDDEN: 403,
@@ -52,6 +46,12 @@ export const MCP_CONFIG = {
 		STREAMABLE_HTTP: "/streamable-http",
 	},
 	BINDING_NAME: "globalping_mcp_object",
+};
+
+export const HTTP_HEADERS = {
+	ACCEPT: "application/json",
+	CONTENT_TYPE: "application/json",
+	USER_AGENT: `GlobalpingMcpServer/${MCP_CONFIG.VERSION}`,
 };
 
 export const TOKEN_CONFIG = {

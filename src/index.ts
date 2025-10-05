@@ -206,7 +206,7 @@ For more information, visit: https://www.globalping.io
 		this.server.tool("authStatus", {}, async () => {
 			let status = "Not authenticated";
 			let message =
-				"Your are not authenticated with Globalping. Use the /login route to authenticate.";
+				"You are not authenticated with Globalping. Use the /login route to authenticate.";
 
 			if (this.props?.isAuthenticated) {
 				status = "Authenticated";

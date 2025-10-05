@@ -96,7 +96,7 @@ describe("createMeasurement", () => {
 		});
 
 		await expect(createMeasurement(agent as any, options, token)).rejects.toThrow(
-			"Invalid target",
+			"Globalping API error (400)",
 		);
 	});
 
