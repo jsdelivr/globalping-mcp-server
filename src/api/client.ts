@@ -152,7 +152,7 @@ export async function runMeasurement(
 
 	// Ensure limit is within reasonable bounds
 	if (options.limit < GLOBALPING_API.MIN_LIMIT) {
-		options.limit = GLOBALPING_API.MIN_LIMIT;
+		options.limit = GLOBALPING_API.DEFAULT_LIMIT;
 	} else if (options.limit > GLOBALPING_API.MAX_LIMIT) {
 		options.limit = GLOBALPING_API.MAX_LIMIT;
 	}

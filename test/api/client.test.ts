@@ -507,7 +507,7 @@ describe("runMeasurement", () => {
 		expect(body.limit).toBe(100); // Capped at max
 	});
 
-	it("should set limit to minimum if below 1", async () => {
+	it("should set limit to default if below 1", async () => {
 		const agent = createMockAgent();
 		const options: MeasurementOptions = {
 			type: "ping",
