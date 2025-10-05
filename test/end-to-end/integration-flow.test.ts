@@ -12,14 +12,20 @@ global.fetch = mockFetch as any;
 
 describe("Integration Flow - API Key Measurement Flow", () => {
 	let env: ReturnType<typeof createMockEnv>;
+	let mockFetch: ReturnType<typeof vi.fn>;
+	let originalFetch: typeof global.fetch;
 
 	beforeEach(() => {
 		env = createMockEnv();
+		mockFetch = vi.fn();
+		originalFetch = global.fetch;
+		global.fetch = mockFetch as any;
 		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
 		cleanupMocks(env);
+		global.fetch = originalFetch;
 	});
 
 	it("should create and retrieve measurement with API key", async () => {
