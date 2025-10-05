@@ -1,12 +1,8 @@
-// Helper to generate the layout
+/**
+ * HTML layout template
+ */
 import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
-import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
-import { PKCECodePair } from "./types/oauth";
-
-// This file mainly exists as a dumping ground for uninteresting html and CSS
-// to remove clutter and noise from the auth logic. You likely do not need
-// anything from this file.
 
 export const layout = (content: HtmlEscapedString | string, title: string) => html`
 	<!DOCTYPE html>

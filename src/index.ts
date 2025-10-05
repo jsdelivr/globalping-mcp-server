@@ -1,34 +1,20 @@
 import { McpAgent } from "agents/mcp";
+import OAuthProvider from "@cloudflare/workers-oauth-provider";
+import { isAPITokenRequest } from "./auth";
+import app from "./app";
+import { MCP_CONFIG, OAUTH_CONFIG } from "./config";
+import type { GlobalpingEnv, Props, State } from "./types";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { registerGlobalpingTools } from "./globalping/tools";
-import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import app from "./app";
-import { GlobalpingEnv } from "./types/globalping";
+import { registerGlobalpingTools } from "./mcp";
+import { sanitizeToken } from "./auth";
 
-type Bindings = GlobalpingEnv;
-
-type Props = {
-	accessToken: string;
-	refreshToken: string;
-	state: string;
-	userName: string;
-	clientId: string;
-	isAuthenticated: boolean;
-};
-
-// Define custom state for storing previous measurements
-type State = {
-	lastMeasurementId?: string;
-	measurements: Record<string, any>;
-	storage?: DurableObjectStorage;
-	oAuth: any;
-};
-
-export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
+export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
-		name: "Globalping MCP",
-		version: "1.0.0",
+		name: MCP_CONFIG.NAME,
+		version: MCP_CONFIG.VERSION,
+		icons: MCP_CONFIG.ICONS,
+		websiteUrl: MCP_CONFIG.WEBSITE_URL,
 	});
 
 	// Initialize the state
@@ -44,17 +30,22 @@ export class GlobalpingMCP extends McpAgent<Bindings, State, Props> {
 
 	async init() {
 		console.log("Initializing Globalping MCP...");
-		// Register all the Globalping tools and pass the getToken function
+
+		// Register all the Globalping tools
 		registerGlobalpingTools(this, () => {
 			const raw = this.getToken() ?? "";
-			return raw.startsWith("Bearer ") ? raw : `Bearer ${raw}`;
+			return sanitizeToken(raw);
 		});
 
 		// Tool to retrieve previous measurement by ID
 		this.server.tool(
 			"getMeasurement",
 			{
-				id: z.string().describe("The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
+				id: z
+					.string()
+					.describe(
+						"The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')",
+					),
 			},
 			async ({ id }) => {
 				// Check if we have this measurement cached in state
@@ -140,7 +131,7 @@ Available Tools:
      - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
      - limit: Number of probes to use (default: 3, max: 100)
      - packets: Number of packets to send (default: 3)
-   
+
 2. traceroute - Perform a traceroute test to a target
    Parameters:
      - target: Domain name or IP to test (e.g., 'cloudflare.com', '1.1.1.1')
@@ -148,7 +139,7 @@ Available Tools:
      - limit: Number of probes to use (default: 3, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
-   
+
 3. dns - Perform a DNS lookup for a domain
    Parameters:
      - target: Domain name to resolve (e.g., 'example.com')
@@ -157,7 +148,7 @@ Available Tools:
      - queryType: DNS record type - "A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
-   
+
 4. mtr - Perform an MTR (My Traceroute) test to a target
    Parameters:
      - target: Domain name or IP to test (e.g., 'google.com', '8.8.8.8')
@@ -166,7 +157,7 @@ Available Tools:
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - packets: Number of packets to send to each hop (default: 3)
-   
+
 5. http - Perform an HTTP request to a URL
    Parameters:
      - target: Domain name or IP to test (e.g., 'example.com')
@@ -176,7 +167,7 @@ Available Tools:
      - protocol: Protocol to use - "HTTP" or "HTTPS" (default: auto-detect)
      - path: Path component of the URL (e.g., '/api/v1/status')
      - query: Query string (e.g., 'param=value&another=123')
-   
+
 6. locations - List all available Globalping probe locations
    No parameters required
    Returns a list of probe locations grouped by continent and country
@@ -184,11 +175,11 @@ Available Tools:
 7. limits - Show your current rate limits for the Globalping API
    No parameters required
    Returns rate limit information for the Globalping API
-   
+
 8. getMeasurement - Retrieve a previously run measurement by ID
    Parameters:
      - id: The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')
-   
+
 9. compareLocations - Guide on how to run comparison measurements using the same probes
    No parameters required
    Returns instructions for comparing measurements across locations
@@ -199,7 +190,7 @@ When specifying locations, use the magic field format in an array. Examples:
 - Countries: ["US", "DE", "JP"]
 - Cities: ["London", "Tokyo", "New York"]
 - Networks: ["Cloudflare", "Google"]
-- ASNs: ["AS13335", "AS15169"] 
+- ASNs: ["AS13335", "AS15169"]
 - Combinations: ["London+UK", "Cloudflare+US"]
 - Previous measurement IDs (for comparison): ["01HT4DGF5ZS7B2M93QP5ZTS3DN"]
 
@@ -211,11 +202,13 @@ For more information, visit: https://www.globalping.io
 			};
 		});
 
+		// Tool to check authentication status
 		this.server.tool("authStatus", {}, async () => {
 			let status = "Not authenticated";
-			let message = "Your are not authenticated with Globalping. Use the /login route to authenticate.";
+			let message =
+				"Your are not authenticated with Globalping. Use the /login route to authenticate.";
 
-			if (this.props.isAuthenticated) {
+			if (this.props?.isAuthenticated) {
 				status = "Authenticated";
 				message = "You are authenticated with Globalping.";
 			}
@@ -245,42 +238,45 @@ For more information, visit: https://www.globalping.io
 	}
 
 	async getOAuthState(): Promise<any> {
-		//return await this.ctx.storage?.get("oauth_state");
 		return this.state.oAuth;
 	}
 
 	async removeOAuthData(): Promise<void> {
 		try {
-			// remove client
-			//await this.env.OAUTH_KV.delete(`client:${this.props.clientId}`);
+			if (!this.props) return;
 
-			// find any grants by userId e.g. username
-			const responseGrant = await this.env.OAUTH_KV.list({ prefix: `grant:${this.props.userName}` });
+			// Find and remove grants by userId
+			const responseGrant = await this.env.OAUTH_KV.list({
+				prefix: `grant:${this.props.userName}`,
+			});
 			for (const { name } of responseGrant.keys) {
 				await this.env.OAUTH_KV.delete(name);
 			}
 
-			const responseToken = await this.env.OAUTH_KV.list({ prefix: `token:${this.props.userName}` });
+			// Find and remove tokens
+			const responseToken = await this.env.OAUTH_KV.list({
+				prefix: `token:${this.props.userName}`,
+			});
 			for (const { name } of responseToken.keys) {
 				await this.env.OAUTH_KV.delete(name);
 			}
-
 		} catch (error) {
 			console.error("Error removing OAuth data:", error);
 		}
 	}
 
-	getToken(): string {
+	getToken(): string | undefined {
 		// Return the access token from the props
-		return this.props.accessToken;
+		return this.props?.accessToken;
 	}
 
 	setIsAuthenticated(isAuthenticated: boolean): void {
+		if (!this.props) return;
 		this.props.isAuthenticated = isAuthenticated;
 	}
 
 	getIsAuthenticated(): boolean {
-		return this.props.isAuthenticated;
+		return !!this.props?.isAuthenticated;
 	}
 
 	// Override onStateUpdate to handle state persistence
@@ -292,28 +288,93 @@ For more information, visit: https://www.globalping.io
 	}
 }
 
-async function handleMcpRequest(req: Request, env: Env, ctx: ExecutionContext) {
+/**
+ * Handle MCP requests (SSE and HTTP transports)
+ */
+async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
 	const { pathname } = new URL(req.url);
-	
-	if (pathname === "/sse" || pathname === "/sse/message") {
-		return GlobalpingMCP.serveSSE("/sse", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
+
+	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
+		return GlobalpingMCP.serveSSE(MCP_CONFIG.ROUTES.SSE, {
+			binding: MCP_CONFIG.BINDING_NAME,
+		}).fetch(req, env, ctx);
 	}
-	
-	if (pathname === "/mcp" || pathname === "/streamable-http") {
-		return GlobalpingMCP.serve("/mcp", { binding: "globalping_mcp_object" }).fetch(req, env, ctx);
+
+	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
+		return GlobalpingMCP.serve(MCP_CONFIG.ROUTES.MCP, {
+			binding: MCP_CONFIG.BINDING_NAME,
+		}).fetch(req, env, ctx);
 	}
-	
+
 	return new Response("Not found", { status: 404 });
 }
 
-export default new OAuthProvider({
-	apiRoute: ["/sse", "/mcp"],
+/**
+ * Handle API token requests (direct API access without OAuth)
+ */
+async function handleAPITokenRequest<
+	T extends typeof McpAgent<unknown, unknown, Record<string, unknown>>,
+>(agent: T, req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
+	const { pathname } = new URL(req.url);
+
+	const authHeader = req.headers.get("Authorization");
+	if (!authHeader) {
+		throw new Error("Authorization header is required");
+	}
+
+	const [type, tokenStr] = authHeader.split(" ");
+	if (type !== "Bearer") {
+		throw new Error("Invalid authorization type, must be Bearer");
+	}
+
+	const token = tokenStr;
+
+	// Set props for API token user
 	// @ts-ignore
-	apiHandler: { fetch: handleMcpRequest as any },
-	// @ts-ignore
-	defaultHandler: app,
-	authorizeEndpoint: "/authorize",
-	tokenEndpoint: "/token",
-	clientRegistrationEndpoint: "/register",
-	scopesSupported: ["measurements"],
-});
+	ctx.props = {
+		accessToken: `Bearer ${token}`,
+		refreshToken: "",
+		state: "",
+		userName: "API Token User",
+		clientId: "",
+		isAuthenticated: true,
+	} satisfies Props;
+
+	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
+		return agent
+			.serveSSE(MCP_CONFIG.ROUTES.SSE, { binding: MCP_CONFIG.BINDING_NAME })
+			.fetch(req, env, ctx);
+	}
+
+	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
+		return agent
+			.serve(MCP_CONFIG.ROUTES.MCP, { binding: MCP_CONFIG.BINDING_NAME })
+			.fetch(req, env, ctx);
+	}
+
+	return new Response("Not found", { status: 404 });
+}
+
+/**
+ * Main fetch handler
+ */
+export default {
+	fetch: async (req: Request, env: GlobalpingEnv, ctx: ExecutionContext) => {
+		// Check if this is an API token request
+		if (await isAPITokenRequest(req)) {
+			return handleAPITokenRequest(GlobalpingMCP, req, env, ctx);
+		}
+
+		// Otherwise, use OAuth provider
+		return new OAuthProvider({
+			apiRoute: OAUTH_CONFIG.API_ROUTES,
+			apiHandler: { fetch: handleMcpRequest as any },
+			// @ts-ignore
+			defaultHandler: app,
+			authorizeEndpoint: OAUTH_CONFIG.ENDPOINTS.AUTHORIZE,
+			tokenEndpoint: OAUTH_CONFIG.ENDPOINTS.TOKEN,
+			clientRegistrationEndpoint: OAUTH_CONFIG.ENDPOINTS.REGISTER,
+			scopesSupported: OAUTH_CONFIG.SCOPES,
+		}).fetch(req, env, ctx);
+	},
+};
