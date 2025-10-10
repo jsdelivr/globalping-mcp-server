@@ -17,15 +17,6 @@
 		{
 			"new_sqlite_classes": ["GlobalpingMCP"],
 			"tag": "v1"
-		},
-		{
-			"tag": "v2",
-			"renamed_classes": [
-				{
-					"from": "MyMCP",
-					"to": "GlobalpingMCP"
-				}
-			]
 		}
 	],
 	"durable_objects": {
