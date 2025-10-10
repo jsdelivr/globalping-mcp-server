@@ -62,8 +62,6 @@ export async function pollMeasurementResult(
 	agent: GlobalpingMCP,
 	measurementId: string,
 	token: string,
-	maxAttempts = GLOBALPING_API.POLL_CONFIG.MAX_ATTEMPTS,
-	delayMs = GLOBALPING_API.POLL_CONFIG.DELAY_MS,
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
@@ -110,13 +108,7 @@ export async function runMeasurement(
 	}
 
 	const result = await createMeasurement(agent, options as TypedMeasurementRequest, token);
-	return await pollMeasurementResult(
-		agent,
-		result.id,
-		token,
-		GLOBALPING_API.POLL_CONFIG.MAX_ATTEMPTS,
-		GLOBALPING_API.POLL_CONFIG.DELAY_MS,
-	);
+	return await pollMeasurementResult(agent, result.id, token);
 }
 
 /**

@@ -29,9 +29,9 @@ export function sanitizeToken(token: string | undefined): string {
  */
 export function extractTokenValue(token: string): string {
 	if (token.startsWith(TOKEN_CONFIG.BEARER_PREFIX)) {
-		return token.substring(TOKEN_CONFIG.BEARER_PREFIX.length);
+		return token.substring(TOKEN_CONFIG.BEARER_PREFIX.length).trim();
 	}
-	return token;
+	return token.trim();
 }
 
 /**
@@ -72,7 +72,7 @@ export async function isAPITokenRequest(req: Request): Promise<boolean> {
 	if (!authHeader) return false;
 
 	const [type, token] = authHeader.split(" ");
-	if (type !== "Bearer") return false;
+	if (type.toLowerCase() !== "bearer") return false;
 
 	if (!token) return false;
 

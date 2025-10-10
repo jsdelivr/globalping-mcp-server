@@ -284,9 +284,10 @@ describe("Security Validation", () => {
 		const token = "abcdefghijklmnopqrstuvwxyz123456";
 		const testCases = [
 			{ prefix: "Bearer", expected: true },
-			{ prefix: "bearer", expected: false },
-			{ prefix: "BEARER", expected: false },
-			{ prefix: "BeArEr", expected: false },
+			{ prefix: "bearer", expected: true },
+			{ prefix: "BEARER", expected: true },
+			{ prefix: "BeArEr", expected: true },
+			{ prefix: "BaArEr", expected: false },
 		];
 
 		for (const { prefix, expected } of testCases) {

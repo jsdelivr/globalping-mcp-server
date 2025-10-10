@@ -215,7 +215,7 @@ describe("MCP Tools Integration", () => {
 		await getMCPResponse(initResponse);
 
 		// Extract session ID from response headers
-		sessionId = initResponse.headers.get("Mcp-Session-Id") || "test-session-123";
+		sessionId = initResponse.headers.get("Mcp-Session-Id");
 
 		// Send initialized notification to complete the handshake
 		const notifyRequest = {
