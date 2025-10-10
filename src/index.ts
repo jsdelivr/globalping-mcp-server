@@ -1,6 +1,6 @@
 import { McpAgent } from "agents/mcp";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import { isAPITokenRequest } from "./auth";
+import { isAPITokenRequest, isValidAPIToken } from "./auth";
 import app from "./app";
 import { MCP_CONFIG, OAUTH_CONFIG } from "./config";
 import type { GlobalpingEnv, Props, State } from "./types";
@@ -319,15 +319,18 @@ async function handleAPITokenRequest<
 
 	const authHeader = req.headers.get("Authorization");
 	if (!authHeader) {
-		throw new Error("Authorization header is required");
+		return new Response("Unauthorized", { status: 401 });
 	}
 
 	const [type, tokenStr] = authHeader.split(" ");
 	if (type !== "Bearer") {
-		throw new Error("Invalid authorization type, must be Bearer");
+		return new Response("Unauthorized", { status: 401 });
 	}
 
 	const token = tokenStr;
+	if (!token || !isValidAPIToken(token)) {
+		return new Response("Unauthorized", { status: 401 });
+	}
 
 	// Set props for API token user
 	// @ts-ignore
