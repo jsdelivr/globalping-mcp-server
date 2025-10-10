@@ -10,73 +10,119 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 // Mock Globalping API responses
 const createMockGlobalpingAPI = () => {
 	const originalFetch = globalThis.fetch;
+	let pendingRequests = 0;
+	let idleResolvers: Array<() => void> = [];
 
 	const mockFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-		const urlString =
-			typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-		const method = init?.method || (input instanceof Request ? input.method : "GET");
+		pendingRequests++;
+		try {
+			const urlString =
+				typeof input === "string"
+					? input
+					: input instanceof URL
+						? input.toString()
+						: input.url;
+			const method = init?.method || (input instanceof Request ? input.method : "GET");
 
-		// Mock Globalping API responses
-		if (urlString.includes("api.globalping.io/v1/measurements")) {
-			if (method === "POST") {
+			// Mock Globalping API responses
+			if (urlString.includes("api.globalping.io/v1/measurements")) {
+				if (method === "POST") {
+					return new Response(
+						JSON.stringify({
+							id: "mock-measurement-123",
+							probesCount: 3,
+						}),
+						{
+							status: 200,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+				if (urlString.match(/\/v1\/measurements\/[a-zA-Z0-9-]+$/)) {
+					return new Response(
+						JSON.stringify({
+							id: "mock-measurement-123",
+							type: "ping",
+							status: "finished",
+							createdAt: "2024-01-01T00:00:00Z",
+							updatedAt: "2024-01-01T00:00:10Z",
+							target: "google.com",
+							probesCount: 3,
+							results: [
+								{
+									probe: {
+										continent: "NA",
+										region: "Northern America",
+										country: "US",
+										state: null,
+										city: "New York",
+										asn: 12345,
+										network: "Test Network",
+										latitude: 40.7128,
+										longitude: -74.006,
+										tags: [],
+										resolvers: [],
+									},
+									result: {
+										status: "finished",
+										rawOutput:
+											"PING google.com (142.250.185.46): 56 data bytes",
+										resolvedAddress: "142.250.185.46",
+										resolvedHostname: "google.com",
+										stats: {
+											min: 10.12,
+											avg: 15.34,
+											max: 20.56,
+											total: 3,
+											rcv: 3,
+											drop: 0,
+											loss: 0,
+										},
+										timings: [
+											{ rtt: 10.12, ttl: 64 },
+											{ rtt: 15.34, ttl: 64 },
+											{ rtt: 20.56, ttl: 64 },
+										],
+									},
+								},
+							],
+						}),
+						{
+							status: 200,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+			}
+
+			if (urlString.includes("/v1/probes")) {
 				return new Response(
-					JSON.stringify({
-						id: "mock-measurement-123",
-						probesCount: 3,
-					}),
+					JSON.stringify([
+						{ location: { continent: "NA", country: "US", city: "New York" } },
+						{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
+						{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
+					]),
 					{
 						status: 200,
 						headers: { "Content-Type": "application/json" },
 					},
 				);
 			}
-			if (urlString.match(/\/v1\/measurements\/[a-zA-Z0-9-]+$/)) {
+
+			if (urlString.includes("/v1/limits")) {
 				return new Response(
 					JSON.stringify({
-						id: "mock-measurement-123",
-						type: "ping",
-						status: "finished",
-						createdAt: "2024-01-01T00:00:00Z",
-						updatedAt: "2024-01-01T00:00:10Z",
-						target: "google.com",
-						probesCount: 3,
-						results: [
-							{
-								probe: {
-									continent: "NA",
-									region: "Northern America",
-									country: "US",
-									state: null,
-									city: "New York",
-									asn: 12345,
-									network: "Test Network",
-									latitude: 40.7128,
-									longitude: -74.006,
-									tags: [],
-									resolvers: [],
-								},
-								result: {
-									status: "finished",
-									rawOutput: "PING google.com (142.250.185.46): 56 data bytes",
-									resolvedAddress: "142.250.185.46",
-									resolvedHostname: "google.com",
-									stats: {
-										min: 10.12,
-										avg: 15.34,
-										max: 20.56,
-										total: 3,
-										rcv: 3,
-										drop: 0,
-										loss: 0,
-									},
-									timings: [
-										{ rtt: 10.12, ttl: 64 },
-										{ rtt: 15.34, ttl: 64 },
-										{ rtt: 20.56, ttl: 64 },
-									],
+						rateLimit: {
+							measurements: {
+								create: {
+									type: "account",
+									limit: 1000,
+									remaining: 800,
+									reset: 3600,
 								},
 							},
-						],
+						},
+						credits: { remaining: 5000 },
 					}),
 					{
 						status: 200,
@@ -84,43 +130,29 @@ const createMockGlobalpingAPI = () => {
 					},
 				);
 			}
-		}
 
-		if (urlString.includes("/v1/probes")) {
-			return new Response(
-				JSON.stringify([
-					{ location: { continent: "NA", country: "US", city: "New York" } },
-					{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
-					{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
-				]),
-				{
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				},
-			);
+			return originalFetch(input, init);
+		} finally {
+			pendingRequests--;
+			if (pendingRequests === 0) {
+				for (const idleResolver of idleResolvers) {
+					idleResolver();
+				}
+				idleResolvers = [];
+			}
 		}
-
-		if (urlString.includes("/v1/limits")) {
-			return new Response(
-				JSON.stringify({
-					rateLimit: {
-						measurements: {
-							create: { type: "account", limit: 1000, remaining: 800, reset: 3600 },
-						},
-					},
-					credits: { remaining: 5000 },
-				}),
-				{
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				},
-			);
-		}
-
-		return originalFetch(input, init);
 	});
 
-	return { mockFetch, originalFetch };
+	const waitForIdle = () => {
+		if (pendingRequests === 0) {
+			return Promise.resolve();
+		}
+		return new Promise<void>((resolve) => {
+			idleResolvers.push(resolve);
+		});
+	};
+
+	return { mockFetch, originalFetch, waitForIdle };
 };
 
 // Helper to create MCP requests with proper headers
@@ -214,8 +246,13 @@ describe("MCP Tools Integration", () => {
 		// Consume the response body to ensure the request completes
 		await getMCPResponse(initResponse);
 
-		// Extract session ID from response headers
-		sessionId = initResponse.headers.get("Mcp-Session-Id");
+		// Extract session ID from response headers and assert it's present
+		const receivedSessionId = initResponse.headers.get("Mcp-Session-Id");
+		expect(receivedSessionId).toBeTruthy();
+		if (!receivedSessionId) {
+			throw new Error("Server did not return Mcp-Session-Id header during initialization");
+		}
+		sessionId = receivedSessionId;
 
 		// Send initialized notification to complete the handshake
 		const notifyRequest = {
@@ -236,11 +273,9 @@ describe("MCP Tools Integration", () => {
 	});
 
 	afterEach(async () => {
-		// Give the Worker a moment to complete any pending operations
-		await new Promise((resolve) => setTimeout(resolve, 10));
-
-		// Restore original fetch
+		// Wait for all pending fetch operations to complete
 		if (mockAPI) {
+			await mockAPI.waitForIdle();
 			globalThis.fetch = mockAPI.originalFetch;
 		}
 	});
