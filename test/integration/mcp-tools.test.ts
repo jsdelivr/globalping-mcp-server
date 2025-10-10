@@ -12,86 +12,109 @@ const createMockGlobalpingAPI = () => {
 	const originalFetch = globalThis.fetch;
 
 	const mockFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-		const urlString = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-		const method = init?.method || (input instanceof Request ? input.method : 'GET');
+		const urlString =
+			typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+		const method = init?.method || (input instanceof Request ? input.method : "GET");
 
 		// Mock Globalping API responses
 		if (urlString.includes("api.globalping.io/v1/measurements")) {
 			if (method === "POST") {
-				return new Response(JSON.stringify({
-					id: "mock-measurement-123",
-					probesCount: 3
-				}), {
-					status: 200,
-					headers: { "Content-Type": "application/json" }
-				});
+				return new Response(
+					JSON.stringify({
+						id: "mock-measurement-123",
+						probesCount: 3,
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				);
 			}
 			if (urlString.match(/\/v1\/measurements\/[a-zA-Z0-9-]+$/)) {
-				return new Response(JSON.stringify({
-					id: "mock-measurement-123",
-					type: "ping",
-					status: "finished",
-					createdAt: "2024-01-01T00:00:00Z",
-					updatedAt: "2024-01-01T00:00:10Z",
-					target: "google.com",
-					probesCount: 3,
-					results: [{
-						probe: {
-							continent: "NA",
-							region: "Northern America",
-							country: "US",
-							state: null,
-							city: "New York",
-							asn: 12345,
-							network: "Test Network",
-							latitude: 40.7128,
-							longitude: -74.006,
-							tags: [],
-							resolvers: [],
-						},
-						result: {
-							status: "finished",
-							rawOutput: "PING google.com (142.250.185.46): 56 data bytes",
-							resolvedAddress: "142.250.185.46",
-							resolvedHostname: "google.com",
-							stats: { min: 10.12, avg: 15.34, max: 20.56, total: 3, rcv: 3, drop: 0, loss: 0 },
-							timings: [
-								{ rtt: 10.12, ttl: 64 },
-								{ rtt: 15.34, ttl: 64 },
-								{ rtt: 20.56, ttl: 64 },
-							],
-						},
-					}],
-				}), {
-					status: 200,
-					headers: { "Content-Type": "application/json" }
-				});
+				return new Response(
+					JSON.stringify({
+						id: "mock-measurement-123",
+						type: "ping",
+						status: "finished",
+						createdAt: "2024-01-01T00:00:00Z",
+						updatedAt: "2024-01-01T00:00:10Z",
+						target: "google.com",
+						probesCount: 3,
+						results: [
+							{
+								probe: {
+									continent: "NA",
+									region: "Northern America",
+									country: "US",
+									state: null,
+									city: "New York",
+									asn: 12345,
+									network: "Test Network",
+									latitude: 40.7128,
+									longitude: -74.006,
+									tags: [],
+									resolvers: [],
+								},
+								result: {
+									status: "finished",
+									rawOutput: "PING google.com (142.250.185.46): 56 data bytes",
+									resolvedAddress: "142.250.185.46",
+									resolvedHostname: "google.com",
+									stats: {
+										min: 10.12,
+										avg: 15.34,
+										max: 20.56,
+										total: 3,
+										rcv: 3,
+										drop: 0,
+										loss: 0,
+									},
+									timings: [
+										{ rtt: 10.12, ttl: 64 },
+										{ rtt: 15.34, ttl: 64 },
+										{ rtt: 20.56, ttl: 64 },
+									],
+								},
+							},
+						],
+					}),
+					{
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					},
+				);
 			}
 		}
 
 		if (urlString.includes("/v1/probes")) {
-			return new Response(JSON.stringify([
-				{ location: { continent: "NA", country: "US", city: "New York" } },
-				{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
-				{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
-			]), {
-				status: 200,
-				headers: { "Content-Type": "application/json" }
-			});
+			return new Response(
+				JSON.stringify([
+					{ location: { continent: "NA", country: "US", city: "New York" } },
+					{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
+					{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
+				]),
+				{
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				},
+			);
 		}
 
 		if (urlString.includes("/v1/limits")) {
-			return new Response(JSON.stringify({
-				rateLimit: {
-					measurements: {
-						create: { type: "account", limit: 1000, remaining: 800, reset: 3600 },
+			return new Response(
+				JSON.stringify({
+					rateLimit: {
+						measurements: {
+							create: { type: "account", limit: 1000, remaining: 800, reset: 3600 },
+						},
 					},
+					credits: { remaining: 5000 },
+				}),
+				{
+					status: 200,
+					headers: { "Content-Type": "application/json" },
 				},
-				credits: { remaining: 5000 },
-			}), {
-				status: 200,
-				headers: { "Content-Type": "application/json" }
-			});
+			);
 		}
 
 		return originalFetch(input, init);
@@ -106,9 +129,9 @@ const makeMCPRequest = async (mcpRequest: any, token?: string, sessionId?: strin
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
-			"Accept": "application/json, text/event-stream",
+			Accept: "application/json, text/event-stream",
 			...(sessionId && { "Mcp-Session-Id": sessionId }),
-			...(token && { "Authorization": `Bearer ${token}` }),
+			...(token && { Authorization: `Bearer ${token}` }),
 		},
 		body: JSON.stringify(mcpRequest),
 	});
@@ -116,9 +139,9 @@ const makeMCPRequest = async (mcpRequest: any, token?: string, sessionId?: strin
 
 // Helper to parse SSE response
 const parseSSEResponse = (text: string) => {
-	const lines = text.split('\n');
+	const lines = text.split("\n");
 	for (const line of lines) {
-		if (line.startsWith('data: ')) {
+		if (line.startsWith("data: ")) {
 			const data = line.substring(6);
 			if (data.trim()) {
 				try {
@@ -134,13 +157,13 @@ const parseSSEResponse = (text: string) => {
 
 // Helper to get JSON or SSE response
 const getMCPResponse = async (response: Response) => {
-	const contentType = response.headers.get('Content-Type') || '';
+	const contentType = response.headers.get("Content-Type") || "";
 
 	// Clone response to ensure body can be read multiple times if needed
 	const clonedResponse = response.clone();
 	const text = await clonedResponse.text();
 
-	if (contentType.includes('text/event-stream')) {
+	if (contentType.includes("text/event-stream")) {
 		return parseSSEResponse(text);
 	}
 
@@ -180,8 +203,8 @@ describe("MCP Tools Integration", () => {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Accept": "application/json, text/event-stream",
-				"Authorization": `Bearer ${validToken}`,
+				Accept: "application/json, text/event-stream",
+				Authorization: `Bearer ${validToken}`,
 			},
 			body: JSON.stringify(initRequest),
 		});
@@ -204,8 +227,8 @@ describe("MCP Tools Integration", () => {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Accept": "application/json, text/event-stream",
-				"Authorization": `Bearer ${validToken}`,
+				Accept: "application/json, text/event-stream",
+				Authorization: `Bearer ${validToken}`,
 				"Mcp-Session-Id": sessionId,
 			},
 			body: JSON.stringify(notifyRequest),
@@ -214,7 +237,7 @@ describe("MCP Tools Integration", () => {
 
 	afterEach(async () => {
 		// Give the Worker a moment to complete any pending operations
-		await new Promise(resolve => setTimeout(resolve, 10));
+		await new Promise((resolve) => setTimeout(resolve, 10));
 
 		// Restore original fetch
 		if (mockAPI) {
@@ -240,7 +263,7 @@ describe("MCP Tools Integration", () => {
 
 			const response = await makeMCPRequest(mcpRequest, validToken, sessionId);
 			expect(response.status).toBe(200);
-			
+
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
@@ -262,7 +285,7 @@ describe("MCP Tools Integration", () => {
 			expect(response.status).toBe(200);
 
 			const data = await getMCPResponse(response);
-			
+
 			expect(data.result).toBeDefined();
 		});
 	});
@@ -285,9 +308,9 @@ describe("MCP Tools Integration", () => {
 
 			const response = await makeMCPRequest(mcpRequest, validToken, sessionId);
 			expect(response.status).toBe(200);
-			
+
 			const data = await getMCPResponse(response);
-			
+
 			expect(data.result).toBeDefined();
 		});
 	});
@@ -307,7 +330,7 @@ describe("MCP Tools Integration", () => {
 			const response = await makeMCPRequest(mcpRequest, validToken, sessionId);
 			expect(response.status).toBe(200);
 			const data = await getMCPResponse(response);
-			
+
 			expect(data.result).toBeDefined();
 		});
 	});
@@ -330,7 +353,7 @@ describe("MCP Tools Integration", () => {
 			const response = await makeMCPRequest(mcpRequest, validToken, sessionId);
 			expect(response.status).toBe(200);
 			const data = await getMCPResponse(response);
-			
+
 			expect(data.result).toBeDefined();
 		});
 	});
@@ -353,7 +376,7 @@ describe("MCP Tools Integration", () => {
 			const response = await makeMCPRequest(mcpRequest, validToken, sessionId);
 			expect(response.status).toBe(200);
 			const data = await getMCPResponse(response);
-			
+
 			expect(data.result).toBeDefined();
 		});
 	});
