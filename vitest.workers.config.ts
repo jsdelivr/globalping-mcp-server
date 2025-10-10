@@ -24,7 +24,7 @@ export default defineWorkersConfig({
 						GLOBALPING_CLIENT_ID: "test-client-id",
 					},
 				},
-				isolatedStorage: false,
+				isolatedStorage: true,
 			},
 		},
 	},

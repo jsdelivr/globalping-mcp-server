@@ -54,8 +54,6 @@ export async function createMeasurement(
  * @param agent The GlobalpingMCP instance
  * @param measurementId The measurement ID to poll for
  * @param token API token for authenticated requests
- * @param maxAttempts Maximum number of polling attempts (unused with official client)
- * @param delayMs Delay between polling attempts in milliseconds (unused with official client)
  * @returns The complete measurement response
  */
 export async function pollMeasurementResult(
