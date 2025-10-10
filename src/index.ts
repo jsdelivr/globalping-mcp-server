@@ -323,7 +323,7 @@ async function handleAPITokenRequest<
 	}
 
 	const [type, tokenStr] = authHeader.split(" ");
-	if (type !== "Bearer") {
+	if (!type || type.toLowerCase() !== "bearer") {
 		return new Response("Unauthorized", { status: 401 });
 	}
 
