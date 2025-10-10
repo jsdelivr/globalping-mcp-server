@@ -2,7 +2,7 @@
  * Tests for lib/url-validation.ts
  */
 import { describe, it, expect } from "vitest";
-import { isDeepLink, isExceptionHost } from "../../src/lib/url-validation";
+import { isDeepLink, isExceptionHost } from "../../../src/lib/url-validation";
 
 describe("isDeepLink", () => {
 	it("should return false for http URL", () => {

@@ -1,17 +1,11 @@
 /**
- * Globalping API client
- * Centralized API communication
+ * Globalping API client wrapper for the official globalping library
+ * Centralizes API communication and error handling
  */
-import { GLOBALPING_API, HTTP_HEADERS } from "../config";
-import { sanitizeToken } from "../auth";
-import { handleAPIError, handleAuthError } from "./error-handler";
-import type {
-	MeasurementOptions,
-	CreateMeasurementResponse,
-	MeasurementResponse,
-	ErrorResponse,
-} from "../types";
+import { GLOBALPING_API } from "../config";
+import type { MeasurementOptions, MeasurementResponse, CreateMeasurementResponse } from "../types";
 import type { GlobalpingMCP } from "../index";
+import { Globalping, type TypedMeasurementRequest } from "globalping";
 
 /**
  * Validate token is present
@@ -26,26 +20,6 @@ function validateToken(token: string): void {
 }
 
 /**
- * Build headers for API requests
- * @param token The authorization token
- * @param includeContentType Whether to include Content-Type header
- * @returns Headers object
- */
-function buildHeaders(token: string, includeContentType = false): HeadersInit {
-	const headers: HeadersInit = {
-		Accept: HTTP_HEADERS.ACCEPT,
-		"User-Agent": HTTP_HEADERS.USER_AGENT,
-		Authorization: sanitizeToken(token),
-	};
-
-	if (includeContentType) {
-		headers["Content-Type"] = HTTP_HEADERS.CONTENT_TYPE;
-	}
-
-	return headers;
-}
-
-/**
  * Creates a measurement on the Globalping API
  * @param agent The GlobalpingMCP instance
  * @param options The measurement options
@@ -54,25 +28,25 @@ function buildHeaders(token: string, includeContentType = false): HeadersInit {
  */
 export async function createMeasurement(
 	agent: GlobalpingMCP,
-	options: MeasurementOptions,
+	options: TypedMeasurementRequest,
 	token: string,
 ): Promise<CreateMeasurementResponse> {
 	validateToken(token);
 
-	const response = await fetch(
-		`${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}`,
-		{
-			method: "POST",
-			headers: buildHeaders(token, true),
-			body: JSON.stringify(options),
-		},
-	);
+	const globalping = new Globalping({ auth: token });
+	const result = await globalping.createMeasurement(options);
 
-	if (!response.ok) {
-		await handleAPIError(agent, response, token);
+	if (!result.ok) {
+		// Handle authentication errors using library's static method
+		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+			agent.setIsAuthenticated(false);
+		}
+		throw new Error(
+			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
+		);
 	}
 
-	return await response.json();
+	return result.data;
 }
 
 /**
@@ -80,8 +54,8 @@ export async function createMeasurement(
  * @param agent The GlobalpingMCP instance
  * @param measurementId The measurement ID to poll for
  * @param token API token for authenticated requests
- * @param maxAttempts Maximum number of polling attempts
- * @param delayMs Delay between polling attempts in milliseconds
+ * @param maxAttempts Maximum number of polling attempts (unused with official client)
+ * @param delayMs Delay between polling attempts in milliseconds (unused with official client)
  * @returns The complete measurement response
  */
 export async function pollMeasurementResult(
@@ -93,42 +67,20 @@ export async function pollMeasurementResult(
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
-	const headers = buildHeaders(token);
-	let attempts = 0;
+	const globalping = new Globalping({ auth: token });
+	const result = await globalping.awaitMeasurement(measurementId);
 
-	while (attempts < maxAttempts) {
-		const response = await fetch(
-			`${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}/${measurementId}`,
-			{ headers },
+	if (!result.ok) {
+		// Handle authentication errors using library's static method
+		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+			agent.setIsAuthenticated(false);
+		}
+		throw new Error(
+			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
 		);
-
-		if (!response.ok) {
-			if (handleAuthError(agent, response, token)) {
-				throw new Error(
-					"Globalping API error: Authentication error - token may be invalid or expired",
-				);
-			}
-			attempts++;
-			await new Promise((resolve) => setTimeout(resolve, delayMs));
-			continue;
-		}
-
-		const data: MeasurementResponse = await response.json();
-
-		// Check if all measurements are complete
-		const allComplete =
-			data.status === "finished" ||
-			data.results.every((m) => m.result.status !== "in-progress");
-
-		if (allComplete) {
-			return data;
-		}
-
-		attempts++;
-		await new Promise((resolve) => setTimeout(resolve, delayMs));
 	}
 
-	throw new Error(`Timeout waiting for measurement results after ${maxAttempts} attempts`);
+	return result.data as MeasurementResponse;
 }
 
 /**
@@ -157,7 +109,7 @@ export async function runMeasurement(
 		options.limit = GLOBALPING_API.MAX_LIMIT;
 	}
 
-	const result = await createMeasurement(agent, options, token);
+	const result = await createMeasurement(agent, options as TypedMeasurementRequest, token);
 	return await pollMeasurementResult(
 		agent,
 		result.id,
@@ -177,15 +129,21 @@ export async function getLocations(agent: GlobalpingMCP, token: string): Promise
 	validateToken(token);
 
 	console.log(`API Call: Calling ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.PROBES}`);
-	const response = await fetch(`${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.PROBES}`, {
-		headers: buildHeaders(token),
-	});
 
-	if (!response.ok) {
-		await handleAPIError(agent, response, token);
+	const globalping = new Globalping({ auth: token });
+	const result = await globalping.listProbes();
+
+	if (!result.ok) {
+		// Handle authentication errors using library's static method
+		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+			agent.setIsAuthenticated(false);
+		}
+		throw new Error(
+			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
+		);
 	}
 
-	return await response.json();
+	return result.data;
 }
 
 /**
@@ -198,13 +156,19 @@ export async function getRateLimits(agent: GlobalpingMCP, token: string): Promis
 	validateToken(token);
 
 	console.log(`API Call: Calling ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.LIMITS}`);
-	const response = await fetch(`${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.LIMITS}`, {
-		headers: buildHeaders(token),
-	});
 
-	if (!response.ok) {
-		await handleAPIError(agent, response, token);
+	const globalping = new Globalping({ auth: token });
+	const result = await globalping.getLimits();
+
+	if (!result.ok) {
+		// Handle authentication errors using library's static method
+		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+			agent.setIsAuthenticated(false);
+		}
+		throw new Error(
+			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
+		);
 	}
 
-	return await response.json();
+	return result.data;
 }

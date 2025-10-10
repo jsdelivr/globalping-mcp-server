@@ -2,7 +2,7 @@
  * Tests for lib/crypto.ts
  */
 import { describe, it, expect } from "vitest";
-import { generateRandomString, createPKCECodes } from "../../src/lib/crypto";
+import { generateRandomString, createPKCECodes } from "../../../src/lib/crypto";
 
 describe("generateRandomString", () => {
 	it("should generate string of requested length", () => {

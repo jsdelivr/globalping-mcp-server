@@ -2,7 +2,7 @@
  * Tests for mcp/helpers.ts
  */
 import { describe, it, expect } from "vitest";
-import { parseLocations, calculateAverages, formatMeasurementSummary } from "../../src/mcp/helpers";
+import { parseLocations, calculateAverages, formatMeasurementSummary } from "../../../src/mcp/helpers";
 
 describe("parseLocations", () => {
 	it("should return undefined for undefined input", () => {

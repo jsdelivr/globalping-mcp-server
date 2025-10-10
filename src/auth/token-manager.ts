@@ -5,9 +5,9 @@
 import { TOKEN_CONFIG } from "../config";
 
 /**
- * Sanitize a token to ensure it has the Bearer prefix
+ * Sanitize a token by removing the Bearer prefix if present
  * @param token The token to sanitize
- * @returns Token with Bearer prefix
+ * @returns Token without Bearer prefix
  */
 export function sanitizeToken(token: string | undefined): string {
 	if (!token || token.trim() === "") {
@@ -16,10 +16,10 @@ export function sanitizeToken(token: string | undefined): string {
 
 	const trimmed = token.trim();
 	if (trimmed.startsWith(TOKEN_CONFIG.BEARER_PREFIX)) {
-		return trimmed;
+		return trimmed.substring(TOKEN_CONFIG.BEARER_PREFIX.length);
 	}
 
-	return `${TOKEN_CONFIG.BEARER_PREFIX}${trimmed}`;
+	return trimmed;
 }
 
 /**
