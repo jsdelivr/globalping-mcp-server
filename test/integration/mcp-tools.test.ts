@@ -180,10 +180,12 @@ const parseSSEResponse = (text: string) => {
 					return JSON.parse(data);
 				} catch (e) {
 					// Ignore parse errors for non-JSON data lines
+					console.warn("Failed to parse SSE data line:", data, e);
 				}
 			}
 		}
 	}
+	console.warn("No valid SSE data found in response:", text);
 	return null;
 };
 
@@ -303,6 +305,11 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 
 		it("should use default values when parameters are missing", async () => {
@@ -322,6 +329,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -347,6 +359,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -367,6 +384,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -390,6 +412,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -413,6 +440,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('mock-measurement-123');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 
@@ -434,6 +466,11 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
 			expect(data.result.content).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('Total Probes');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -454,6 +491,11 @@ describe("MCP Tools Integration", () => {
 
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
+			expect(data.result.content[0]).toHaveProperty('type', 'text');
+			expect(data.result.content[0].text).toContain('rateLimit');
+
+			// Verify mock API was called correctly
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
 		});
 	});
 
