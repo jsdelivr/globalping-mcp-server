@@ -5,6 +5,7 @@ import { z } from "zod";
 import { runMeasurement, getLocations, getRateLimits } from "../api";
 import { parseLocations, formatMeasurementSummary } from "./helpers";
 import type { GlobalpingMCP } from "../index";
+import { maskToken } from "../auth";
 
 /**
  * Register all Globalping tools on the MCP server
@@ -269,7 +270,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			protocol: z
 				.enum(["HTTP", "HTTPS"])
 				.optional()
-				.describe("Protocol to use (default: auto-detect from URL)"),
+				.describe("Protocol to use (default: HTTPS)"),
 			path: z
 				.string()
 				.optional()
@@ -280,9 +281,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async ({ target, locations, limit, method, protocol, path, query, port }) => {
 			const token = getToken();
 			const parsedLocations = parseLocations(locations);
-			if (!protocol) {
-				protocol = "HTTPS";
-			}
+
+			protocol = protocol ?? "HTTPS";
 
 			const result = await runMeasurement(
 				agent,
@@ -388,10 +388,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 		// Only show first few characters of token for security if present
 		if (token) {
-			const tokenPreview = token.startsWith("Bearer ")
-				? `Bearer ${token.substring(7, 15)}...`
-				: `${token.substring(0, 8)}...`;
-			output += `Token: ${tokenPreview}\n`;
+			output += `Token: ${maskToken(token)}\n`;
 		} else {
 			output += "Token: None\n";
 		}

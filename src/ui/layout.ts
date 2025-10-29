@@ -1,10 +1,10 @@
 /**
  * HTML layout template
  */
-import { AuthRequest } from "@cloudflare/workers-oauth-provider";
+import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
-import { PKCECodePair } from "../types";
+import type { PKCECodePair } from "../types";
 
 export const layout = (content: HtmlEscapedString | string, title: string) => html`
 	<!DOCTYPE html>
@@ -187,19 +187,18 @@ export const parseApproveFormBody = async (body: {
 	return { action, oauthReqInfo, email, password };
 };
 
-
 /**
  * Generate a random string for PKCE and state
  * @param length Length of the random string
  * @returns A URL-safe random string
  */
 export function generateRandomString(length: number): string {
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array)
-	.map(b => b.toString(16).padStart(2, '0'))
-	.join('')
-	.substring(0, length);
+	const array = new Uint8Array(length);
+	crypto.getRandomValues(array);
+	return Array.from(array)
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("")
+		.substring(0, length);
 }
 
 /**
@@ -207,73 +206,73 @@ export function generateRandomString(length: number): string {
  * @returns A code verifier and challenge pair
  */
 export async function createPKCECodes(): Promise<PKCECodePair> {
-  // Generate code verifier (random string between 43-128 chars)
-  const codeVerifier = generateRandomString(64);
-  
-  // Create code challenge using SHA-256
-  const encoder = new TextEncoder();
-  const data = encoder.encode(codeVerifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  
-  // Convert digest to base64url format
-  const base64Digest = btoa(String.fromCharCode(...new Uint8Array(digest)))
-	.replace(/\+/g, '-')
-	.replace(/\//g, '_')
-	.replace(/=/g, '');
-  
-  return {
-	codeVerifier,
-	codeChallenge: base64Digest
-  };
+	// Generate code verifier (random string between 43-128 chars)
+	const codeVerifier = generateRandomString(64);
+
+	// Create code challenge using SHA-256
+	const encoder = new TextEncoder();
+	const data = encoder.encode(codeVerifier);
+	const digest = await crypto.subtle.digest("SHA-256", data);
+
+	// Convert digest to base64url format
+	const base64Digest = btoa(String.fromCharCode(...new Uint8Array(digest)))
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=/g, "");
+
+	return {
+		codeVerifier,
+		codeChallenge: base64Digest,
+	};
 }
 
 const STANDARD_PROTOCOLS = new Set([
-	'http:', 
-	'https:', 
-	'ftp:', 
-	'file:',
-	'mailto:',
-	'tel:',
-	'ws:',
-	'wss:',
-	'sms:',
-	'data:',
-	'blob:',
-	'about:',
-	'chrome:',
-	'opera:',
-	'edge:',
-	'safari:',
-	'javascript:',
+	"http:",
+	"https:",
+	"ftp:",
+	"file:",
+	"mailto:",
+	"tel:",
+	"ws:",
+	"wss:",
+	"sms:",
+	"data:",
+	"blob:",
+	"about:",
+	"chrome:",
+	"opera:",
+	"edge:",
+	"safari:",
+	"javascript:",
 ]);
 
 /**
  * Check if a URL is a deep link
  * @param url The URL to check
- * @returns 
+ * @returns
  */
 export function isDeepLink(url: string): boolean {
-  try {
-	const parsedUrl = new URL(url);
-	const protocol = parsedUrl.protocol.toLowerCase();
-	return !STANDARD_PROTOCOLS.has(protocol);
-  } catch (e) {
-	return false;
-  }
+	try {
+		const parsedUrl = new URL(url);
+		const protocol = parsedUrl.protocol.toLowerCase();
+		return !STANDARD_PROTOCOLS.has(protocol);
+	} catch (e) {
+		return false;
+	}
 }
 
 export function isExceptionHost(urlString: string): boolean {
-  try {
-    const url = new URL(urlString);
-    const exceptionHosts = new Set([
-      'playground.ai.cloudflare.com',
-      'mcp.docker.com',
-	  'mcptotal.io',
-      // add more exception hosts here if needed
-    ]);
-    return exceptionHosts.has(url.hostname);
-  } catch (err) {
-    // Invalid URL string
-    return false;
-  }
+	try {
+		const url = new URL(urlString);
+		const exceptionHosts = new Set([
+			"playground.ai.cloudflare.com",
+			"mcp.docker.com",
+			"mcptotal.io",
+			// add more exception hosts here if needed
+		]);
+		return exceptionHosts.has(url.hostname);
+	} catch (err) {
+		// Invalid URL string
+		return false;
+	}
 }

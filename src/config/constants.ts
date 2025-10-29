@@ -31,7 +31,7 @@ export const OAUTH_CONFIG = {
 		TOKEN: "/token",
 		REGISTER: "/register",
 	},
-	API_ROUTES: ["/sse", "/mcp"],
+	API_ROUTES: ["/sse", "/mcp", "/streamable-http"],
 };
 
 export const MCP_CONFIG = {
@@ -81,7 +81,11 @@ export const STANDARD_PROTOCOLS = new Set([
 	"javascript:",
 ]);
 
-export const EXCEPTION_HOSTS = new Set(["playground.ai.cloudflare.com", "mcp.docker.com", "mcptotal.io"]);
+export const EXCEPTION_HOSTS = new Set([
+	"playground.ai.cloudflare.com",
+	"mcp.docker.com",
+	"mcptotal.io",
+]);
 
 export const PKCE_CONFIG = {
 	CODE_VERIFIER_LENGTH: 64,
