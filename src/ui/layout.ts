@@ -1,8 +1,10 @@
 /**
  * HTML layout template
  */
+import { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
+import { PKCECodePair } from "../types";
 
 export const layout = (content: HtmlEscapedString | string, title: string) => html`
 	<!DOCTYPE html>
