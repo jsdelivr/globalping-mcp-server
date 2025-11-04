@@ -24,7 +24,7 @@
 
 The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models like OpenAI's GPT and Anthropic's Claude to interact with Globalping's network measurement capabilities through natural language.
 
-It also supports oAuth authentication, which offers a secure way to interact with our API and benefits from higher rate limits associated with your account.
+It also supports two authentication methods: OAuth and API token authentication. Both methods offer a secure way to interact with our API and provide higher rate limits associated with your account.
 
 ### Key Features
 
@@ -33,7 +33,7 @@ It also supports oAuth authentication, which offers a secure way to interact wit
 - 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
 - 🔍 **Smart Context Handling**: Provides detailed parameter descriptions for AI clients to intelligently select measurement types and options
 - 🔄 **Comparative Analysis**: Allows to compare network performance between different targets
-- 🔑 **oAuth Support**: Use your own Globalping account for higher rate limits
+- 🔑 **Authentication Support**: Use OAuth or API token with your Globalping account for higher rate limits
 
 
 ## Installation
@@ -129,6 +129,58 @@ Legacy SSE transport:
 }
 ```
 5. Click "Save" and restart Cursor
+## Authentication
+
+The Globalping MCP server supports two authentication methods:
+- **OAuth Authentication**: Automatically handled by the server for secure access
+- **API Token Authentication**: Manual token configuration via Authorization header
+
+Both methods provide higher rate limits and priority access to the probe network.
+
+### Using Globalping API Token
+
+The server automatically detects when an API token is provided in the Authorization header and uses it for authentication instead of OAuth.
+
+#### Getting Your API Token
+
+1. Visit [globalping.io](https://globalping.io)
+2. Sign in to your account
+3. Navigate to your account settings to generate an API token
+
+#### Configuration with Authentication
+
+Streamable HTTP transport:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/mcp",
+                "--header",
+                "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
+            ]
+        }
+    }
+}
+```
+Legacy SSE transport:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/sse",
+                "--header",
+                "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
+            ]
+        }
+    }
+}
+```
 
 ## Connecting AI Assistants
 
@@ -200,10 +252,14 @@ You can also combine these with a plus sign for more specific targeting: "London
 The codebase is organized into modules:
 
 - `src/index.ts` - Main entry point and MCP agent definition
-- `src/globalping/types.ts` - TypeScript interfaces for the Globalping API
-- `src/globalping/api.ts` - API wrapper functions for Globalping
-- `src/globalping/tools.ts` - MCP tool implementations
-- `src/utils.ts` - Helper utilities for rendering the web UI
+- `src/app.ts` - OAuth web routes
+- `src/api` - Globalping API client
+- `src/auth` - Authentication utilities
+- `src/config` - Configuration and constants
+- `src/lib` - Utility functions
+- `src/mcp` - MCP tool handlers
+- `src/types` - TypeScript type definitions
+- `src/ui` - HTML templates
 
 
 ### Add Globalping credentials

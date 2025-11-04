@@ -1,148 +1,7 @@
 /**
  * Types for the Globalping API based on https://api.globalping.io/v1/spec.yaml
  */
-import {DurableObjectNamespace} from "@cloudflare/workers-types";
-
-// Common types
-export interface Location {
-	magic?: string;
-	continent?: string;
-	country?: string;
-	region?: string;
-	city?: string;
-	state?: string;
-	asn?: number;
-	network?: string;
-	tags?: string[];
-	measurementId?: string;
-}
-
-export interface Pagination {
-	limit?: number;
-	offset?: number;
-}
-
-// Base measurement types
-export interface BaseMeasurement {
-	target: string;
-	type: MeasurementType;
-	locations?: Location[];
-	limit?: number;
-	measurementOptions?: Record<string, any>;
-}
-
-export enum MeasurementType {
-	PING = "ping",
-	TRACEROUTE = "traceroute",
-	DNS = "dns",
-	MTR = "mtr",
-	HTTP = "http",
-}
-
-// Ping measurement
-export interface PingMeasurementOptions {
-	packets?: number;
-	packetSize?: number;
-}
-
-export interface PingMeasurement extends BaseMeasurement {
-	type: MeasurementType.PING;
-	measurementOptions?: PingMeasurementOptions;
-}
-
-// Traceroute measurement
-export interface TracerouteMeasurementOptions {
-	protocol?: "ICMP" | "TCP" | "UDP";
-	port?: number;
-	packetSize?: number;
-	maxHops?: number;
-}
-
-export interface TracerouteMeasurement extends BaseMeasurement {
-	type: MeasurementType.TRACEROUTE;
-	measurementOptions?: TracerouteMeasurementOptions;
-}
-
-// DNS measurement
-export interface DnsMeasurementOptions {
-	query?: string;
-	type?: string;
-	resolver?: string;
-	trace?: boolean;
-	protocol?: "udp" | "tcp" | "tls" | "https";
-}
-
-export interface DnsMeasurement extends BaseMeasurement {
-	type: MeasurementType.DNS;
-	measurementOptions?: DnsMeasurementOptions;
-}
-
-// MTR measurement
-export interface MtrMeasurementOptions {
-	packets?: number;
-	port?: number;
-	protocol?: "ICMP" | "TCP" | "UDP";
-	packetSize?: number;
-	maxHops?: number;
-}
-
-export interface MtrMeasurement extends BaseMeasurement {
-	type: MeasurementType.MTR;
-	measurementOptions?: MtrMeasurementOptions;
-}
-
-// HTTP measurement
-export interface HttpMeasurementOptions {
-	protocol?: "http" | "https";
-	path?: string;
-	host?: string;
-	headers?: Record<string, string>;
-	method?: "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
-	body?: string;
-	query?: Record<string, string>;
-	port?: number;
-	protocol2?: string;
-	resolveHost?: boolean;
-	insecure?: boolean;
-	redirects?: boolean;
-	ipv4?: boolean;
-	ipv6?: boolean;
-}
-
-export interface HttpMeasurement extends BaseMeasurement {
-	type: MeasurementType.HTTP;
-	measurementOptions?: HttpMeasurementOptions;
-}
-
-// Measurement response types
-export interface CreateMeasurementResponse {
-	id: string;
-	probesCount: number;
-	created: string;
-	status: "in-progress" | "complete" | "error";
-	results?: ProbeResult[];
-}
-
-export interface ProbeResult {
-	probe: {
-		continent: string;
-		region: string;
-		country: string;
-		state: string;
-		city: string;
-		asn: number;
-		longitude: number;
-		latitude: number;
-		network: string;
-		tags: string[];
-	};
-	result: {
-		status: "finished" | "error" | "timeout";
-		rawOutput: string;
-		rawError?: string;
-	};
-	[key: string]: any; // Additional measurement-specific data
-}
+import type { DurableObjectNamespace } from "@cloudflare/workers-types";
 
 // OAuth types
 export interface GlobalpingOAuthConfig {
@@ -160,89 +19,357 @@ export interface GlobalpingOAuthTokenResponse {
 	created_at?: number;
 }
 
-// Tool parameter types for MCP
-export interface PingToolParams {
-	target: string;
-	location?: string; // Magic field
-	packets?: number;
-	packetSize?: number;
-	limit?: number;
-}
-
-export interface TracerouteToolParams {
-	target: string;
-	location?: string; // Magic field
-	protocol?: "ICMP" | "TCP" | "UDP";
-	port?: number;
-	packetSize?: number;
-	maxHops?: number;
-	limit?: number;
-}
-
-export interface DnsToolParams {
-	target: string;
-	location?: string; // Magic field
-	query?: string;
-	type?: string;
-	resolver?: string;
-	trace?: boolean;
-	protocol?: "udp" | "tcp" | "tls" | "https";
-	limit?: number;
-}
-
-export interface MtrToolParams {
-	target: string;
-	location?: string; // Magic field
-	packets?: number;
-	port?: number;
-	protocol?: "ICMP" | "TCP" | "UDP";
-	packetSize?: number;
-	maxHops?: number;
-	limit?: number;
-}
-
-export interface HttpToolParams {
-	target: string;
-	location?: string; // Magic field
-	protocol?: "http" | "https";
-	path?: string;
-	host?: string;
-	headers?: Record<string, string>;
-	method?: "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
-	body?: string;
-	query?: Record<string, string>;
-	port?: number;
-	resolveHost?: boolean;
-	insecure?: boolean;
-	redirects?: boolean;
-	ipv4?: boolean;
-	ipv6?: boolean;
-	limit?: number;
-}
-
-export interface CompareToolParams {
-	firstTarget: string;
-	secondTarget: string;
-	location?: string; // Magic field
-	type: MeasurementType;
-	options?: Record<string, any>;
-	limit?: number;
-}
-
-export interface GetMeasurementToolParams {
-	id: string;
-}
-
-// Rate limit info
-export interface RateLimitResponse {
-	limit: number;
-	remaining: number;
-	reset: number;
-}
-
 // Environment interface
 export interface GlobalpingEnv {
 	GLOBALPING_CLIENT_ID: string;
 	globalping_mcp_object: DurableObjectNamespace;
 	OAUTH_KV: KVNamespace;
+}
+
+/**
+ * Globalping API Types
+ * Based on https://api.globalping.io/v1/spec.yaml
+ */
+
+// Measurement types supported by Globalping
+export type MeasurementType = "ping" | "traceroute" | "dns" | "mtr" | "http";
+
+// Base measurement request options
+export interface BaseMeasurementOptions {
+	target: string;
+	inProgressUpdates?: boolean;
+	locations?: LocationOption[] | string;
+	limit?: number;
+}
+
+// Ping measurement options
+export interface PingMeasurementOptions extends BaseMeasurementOptions {
+	type: "ping";
+	measurementOptions?: {
+		packets?: number;
+		ipVersion?: 4 | 6;
+	};
+}
+
+// Traceroute measurement options
+export interface TracerouteMeasurementOptions extends BaseMeasurementOptions {
+	type: "traceroute";
+	measurementOptions?: {
+		port?: number;
+		protocol?: "ICMP" | "TCP" | "UDP";
+		ipVersion?: 4 | 6;
+	};
+}
+
+// DNS measurement options
+export interface DnsMeasurementOptions extends BaseMeasurementOptions {
+	type: "dns";
+	measurementOptions?: {
+		query?: {
+			type?:
+				| "A"
+				| "AAAA"
+				| "ANY"
+				| "CNAME"
+				| "DNSKEY"
+				| "DS"
+				| "HTTPS"
+				| "MX"
+				| "NS"
+				| "NSEC"
+				| "PTR"
+				| "RRSIG"
+				| "SOA"
+				| "TXT"
+				| "SRV"
+				| "SVCB";
+		};
+		resolver?: string;
+		port?: number;
+		protocol?: "TCP" | "UDP";
+		ipVersion?: 4 | 6;
+		trace?: boolean;
+	};
+}
+
+// MTR measurement options
+export interface MtrMeasurementOptions extends BaseMeasurementOptions {
+	type: "mtr";
+	measurementOptions?: {
+		port?: number;
+		protocol?: "ICMP" | "TCP" | "UDP";
+		ipVersion?: 4 | 6;
+		packets?: number;
+	};
+}
+
+// HTTP measurement options
+export interface HttpMeasurementOptions extends BaseMeasurementOptions {
+	type: "http";
+	measurementOptions?: {
+		request?: {
+			host?: string;
+			path?: string;
+			query?: string;
+			method?: "HEAD" | "GET" | "OPTIONS";
+			headers?: Record<string, string>;
+		};
+		resolver?: string;
+		port?: number;
+		protocol?: "HTTP" | "HTTPS" | "HTTP2";
+		ipVersion?: 4 | 6;
+	};
+}
+
+// Union type of all measurement options
+export type MeasurementOptions =
+	| PingMeasurementOptions
+	| TracerouteMeasurementOptions
+	| DnsMeasurementOptions
+	| MtrMeasurementOptions
+	| HttpMeasurementOptions;
+
+// Location filtering option
+export interface LocationOption {
+	continent?: string;
+	region?: string;
+	country?: string;
+	state?: string | null;
+	city?: string;
+	asn?: number;
+	network?: string;
+	tags?: string[];
+	magic?: string;
+	limit?: number;
+}
+
+// Response from the create measurement API
+export interface CreateMeasurementResponse {
+	id: string;
+	probesCount: number;
+}
+
+// Measurement result statuses
+export type TestStatus = "in-progress" | "finished" | "failed" | "offline";
+export type MeasurementStatus = "in-progress" | "finished";
+
+// Probe location information
+export interface ProbeLocation {
+	continent: string;
+	region: string;
+	country: string;
+	state: string | null;
+	city: string;
+	asn: number;
+	network: string;
+	latitude: number;
+	longitude: number;
+	tags: string[];
+	resolvers: string[];
+}
+
+// Base test result interface
+export interface BaseTestResult {
+	status: TestStatus;
+	rawOutput: string;
+}
+
+// Finished ping test result
+export interface FinishedPingTestResult extends BaseTestResult {
+	status: "finished";
+	resolvedAddress: string | null;
+	resolvedHostname: string | null;
+	stats: {
+		min: number | null;
+		avg: number | null;
+		max: number | null;
+		total: number;
+		rcv: number;
+		drop: number;
+		loss: number;
+	};
+	timings: Array<{
+		rtt: number;
+		ttl: number;
+	}>;
+}
+
+// Finished traceroute test result
+export interface FinishedTracerouteTestResult extends BaseTestResult {
+	status: "finished";
+	resolvedAddress: string | null;
+	resolvedHostname: string | null;
+	hops: Array<{
+		resolvedAddress: string | null;
+		resolvedHostname: string | null;
+		timings: Array<{
+			rtt: number;
+		}>;
+	}>;
+}
+
+// DNS answer
+export interface DnsAnswer {
+	name: string;
+	type: string;
+	ttl: number;
+	class: string;
+	value: string;
+}
+
+// DNS hop result
+export interface DnsTestHopResult {
+	resolver: string;
+	answers: DnsAnswer[];
+	timings: {
+		total: number;
+	};
+}
+
+// Finished simple DNS test result
+export interface FinishedSimpleDnsTestResult extends BaseTestResult {
+	status: "finished";
+	statusCode: number;
+	statusCodeName: string;
+	resolver: string;
+	answers: DnsAnswer[];
+	timings: {
+		total: number;
+	};
+}
+
+// Finished trace DNS test result
+export interface FinishedTraceDnsTestResult extends BaseTestResult {
+	status: "finished";
+	hops: DnsTestHopResult[];
+}
+
+// Finished MTR test result
+export interface FinishedMtrTestResult extends BaseTestResult {
+	status: "finished";
+	resolvedAddress: string | null;
+	resolvedHostname: string | null;
+	hops: Array<{
+		resolvedAddress: string | null;
+		resolvedHostname: string | null;
+		asn: number[];
+		stats: {
+			min: number;
+			avg: number;
+			max: number;
+			stDev: number;
+			jMin: number;
+			jAvg: number;
+			jMax: number;
+			total: number;
+			rcv: number;
+			drop: number;
+			loss: number;
+		};
+		timings: Array<{
+			rtt: number;
+		}>;
+	}>;
+}
+
+// TLS certificate information
+export interface TlsCertificate {
+	authorized: boolean;
+	protocol: string;
+	cipherName: string;
+	createdAt: string;
+	expiresAt: string;
+	subject: {
+		CN?: string;
+		alt?: string;
+	};
+	issuer: {
+		C?: string;
+		O?: string;
+		CN?: string;
+	};
+	keyType: "RSA" | "EC" | null;
+	keyBits: number | null;
+	serialNumber: string;
+	fingerprint256: string;
+	publicKey: string | null;
+	error?: string;
+}
+
+// Finished HTTP test result
+export interface FinishedHttpTestResult extends BaseTestResult {
+	status: "finished";
+	resolvedAddress: string | null;
+	rawHeaders: string;
+	rawBody: string | null;
+	truncated: boolean;
+	headers: Record<string, string | string[]>;
+	statusCode: number;
+	statusCodeName: string;
+	timings: {
+		total: number | null;
+		dns: number | null;
+		tcp: number | null;
+		tls: number | null;
+		firstByte: number | null;
+		download: number | null;
+	};
+	tls: TlsCertificate | null;
+}
+
+// In-progress test result
+export interface InProgressTestResult extends BaseTestResult {
+	status: "in-progress";
+}
+
+// Failed test result
+export interface FailedTestResult extends BaseTestResult {
+	status: "failed";
+}
+
+// Offline test result
+export interface OfflineTestResult extends BaseTestResult {
+	status: "offline";
+}
+
+// Union type of all test results
+export type TestResult =
+	| InProgressTestResult
+	| FailedTestResult
+	| OfflineTestResult
+	| FinishedPingTestResult
+	| FinishedTracerouteTestResult
+	| FinishedSimpleDnsTestResult
+	| FinishedTraceDnsTestResult
+	| FinishedMtrTestResult
+	| FinishedHttpTestResult;
+
+// Measurement result item
+export interface MeasurementResultItem {
+	probe: ProbeLocation;
+	result: TestResult;
+}
+
+// Complete measurement response
+export interface MeasurementResponse {
+	id: string;
+	type: MeasurementType;
+	status: MeasurementStatus;
+	createdAt: string;
+	updatedAt: string;
+	target: string;
+	probesCount: number;
+	locations?: LocationOption[];
+	limit?: number;
+	measurementOptions?: any;
+	results: MeasurementResultItem[];
+}
+
+// Error response
+export interface ErrorResponse {
+	error: {
+		type: string;
+		message: string;
+		params?: Record<string, string>;
+	};
 }

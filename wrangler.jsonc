@@ -1,52 +1,41 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "globalping-mcp-server",
-  "main": "src/index.ts",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-  "placement": {
-    "mode": "smart"
-  },
-  "routes": [
-    {
-      "pattern": "mcp.globalping.dev",
-      "custom_domain": true
-    }
-  ],
-  "compatibility_date": "2025-03-10",
-  "migrations": [
-    {
-      "new_sqlite_classes": [
-        "GlobalpingMCP"
-      ],
-      "tag": "v1"
-    },
-    {
-      "tag": "v2",
-      "renamed_classes": [
-        {
-          "from": "MyMCP",
-          "to": "GlobalpingMCP"
-        }
-      ]
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "GlobalpingMCP",
-        "name": "globalping_mcp_object"
-      }
-    ]
-  },
-  "kv_namespaces": [
-    {
-      "binding": "OAUTH_KV",
-      "id": "548283d6cfa344339e00d74b353069be"
-    }
-  ],
-  "observability": {
-    "enabled": true
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "globalping-mcp-server",
+	"main": "src/index.ts",
+	"compatibility_flags": ["nodejs_compat"],
+	"placement": {
+		"mode": "smart"
+	},
+	"routes": [
+		{
+			"pattern": "mcp.globalping.dev",
+			"custom_domain": true
+		}
+	],
+	"compatibility_date": "2025-03-10",
+	"migrations": [
+		{
+			"new_sqlite_classes": ["GlobalpingMCP"],
+			"tag": "v1"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "GlobalpingMCP",
+				"name": "globalping_mcp_object"
+			}
+		]
+	},
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "548283d6cfa344339e00d74b353069be"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"preview_urls": false,
+	"workers_dev": true
 }

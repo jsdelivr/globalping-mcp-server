@@ -1,21 +1,21 @@
-{ 
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
-  "name": "io.globalping/mcp",
-  "description": "Interact with a global network measurement platform.Run network commands from any point in the world",
-  "status": "active",
-  "repository": {
-    "url": "https://github.com/jsdelivr/globalping-mcp-server",
-    "source": "github"
-  },
-  "version": "1.0.0",
-  "remotes": [
-    {
-      "type": "sse",
-      "url": "https://mcp.globalping.io/sse"
-    },
-	{
-      "type": "streamable-http",
-      "url": "https://mcp.globalping.io/mcp"
-    }
-  ]
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+	"name": "io.globalping/mcp",
+	"description": "Interact with a global network measurement platform.Run network commands from any point in the world",
+	"status": "active",
+	"repository": {
+		"url": "https://github.com/jsdelivr/globalping-mcp-server",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "sse",
+			"url": "https://mcp.globalping.io/sse"
+		},
+		{
+			"type": "streamable-http",
+			"url": "https://mcp.globalping.io/mcp"
+		}
+	]
 }
