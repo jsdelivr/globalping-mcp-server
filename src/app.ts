@@ -9,6 +9,7 @@ import {
 	generateRandomString,
 	isDeepLink,
 	isExceptionHost,
+	isLocalhost,
 	isTrustedRedirectUri,
 } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
@@ -77,7 +78,7 @@ app.get("/authorize", async (c) => {
 	// Validate redirect_uri
 	if (
 		`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri &&
-		!/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri) &&
+		!isLocalhost(oauthReqInfo.redirectUri) &&
 		!isDeepLink(oauthReqInfo.redirectUri) &&
 		!isExceptionHost(oauthReqInfo.redirectUri)
 	) {
