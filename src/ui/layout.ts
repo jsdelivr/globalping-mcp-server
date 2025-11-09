@@ -83,6 +83,17 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 					text-decoration: underline;
 				}
 
+				/* Preserve text-white for button-styled links */
+				.markdown a.bg-primary,
+				.markdown a.bg-secondary {
+					color: white !important;
+				}
+
+				.markdown a.bg-primary:hover,
+				.markdown a.bg-secondary:hover {
+					text-decoration: none;
+				}
+
 				.markdown blockquote {
 					border-left: 4px solid #f39c12;
 					padding-left: 1rem;
@@ -276,3 +287,90 @@ export function isExceptionHost(urlString: string): boolean {
 		return false;
 	}
 }
+
+/**
+ * Create a manual redirect confirmation page
+ * Per OAuth 2.0 Security Best Practices (RFC 6819 section 7.12.2),
+ * untrusted redirect URIs should require manual user confirmation
+ * @param redirectUri The redirect URI to display
+ * @returns HTML string for the confirmation page
+ */
+export const manualRedirectPage = (redirectUri: string) => html`
+	<div class="markdown max-w-2xl mx-auto">
+		<div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-accent">
+			<div class="mb-6">
+				<svg
+					class="w-16 h-16 mx-auto text-accent"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+					></path>
+				</svg>
+			</div>
+
+			<h1 class="text-center mb-4">Authentication successful</h1>
+
+			<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+				<div class="flex">
+					<div class="flex-shrink-0">
+						<svg
+							class="h-5 w-5 text-yellow-400"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</div>
+					<div class="ml-3">
+						<p class="text-sm text-yellow-700 font-medium">
+							Security notice
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<p class="mb-4">
+				Your authentication was successful. However, for security reasons, you
+				need to manually complete the redirect to the following URL:
+			</p>
+
+			<div class="bg-gray-100 p-4 rounded-md mb-6 break-all">
+				<code class="text-sm text-gray-800">${redirectUri}</code>
+			</div>
+
+			<div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+				<p class="text-sm text-blue-700">
+					<strong>Why do I need to click?</strong> As a security measure, this
+					authorization server requires manual confirmation before redirecting
+					to third-party websites. This helps protect you from potential
+					phishing attacks.
+				</p>
+			</div>
+
+			<div class="text-center">
+				<a
+					href="${redirectUri}"
+					class="inline-block bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+				>
+					Click here to complete authentication
+				</a>
+			</div>
+
+			<p class="text-sm text-gray-500 mt-6 text-center">
+				Only click the button above if you trust the destination and initiated
+				this authentication request.
+			</p>
+		</div>
+	</div>
+`;

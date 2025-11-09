@@ -3,8 +3,14 @@
  */
 import { Hono } from "hono";
 import { html } from "hono/html";
-import { layout } from "./ui";
-import { createPKCECodes, generateRandomString, isDeepLink, isExceptionHost } from "./lib";
+import { layout, manualRedirectPage } from "./ui";
+import {
+	createPKCECodes,
+	generateRandomString,
+	isDeepLink,
+	isExceptionHost,
+	isTrustedRedirectUri,
+} from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
 
@@ -245,8 +251,15 @@ app.get("/auth/callback", async (c) => {
 			},
 		});
 
-		// Redirect to the client app
-		return Response.redirect(redirectTo, 302);
+		// Per OAuth 2.0 Security Best Practices (RFC 6819 section 7.12.2),
+		// only automatically redirect to trusted URIs
+		if (isTrustedRedirectUri(redirectTo)) {
+			// Auto-redirect for trusted URIs (localhost, deep links, exception hosts)
+			return Response.redirect(redirectTo, 302);
+		}
+
+		// Show manual confirmation page for untrusted HTTPS URIs
+		return c.html(layout(await manualRedirectPage(redirectTo), "Complete Authentication"));
 	} catch (error: any) {
 		console.error("Token exchange error:", error);
 		return c.html(
