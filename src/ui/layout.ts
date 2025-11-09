@@ -272,22 +272,6 @@ export function isDeepLink(url: string): boolean {
 	}
 }
 
-export function isExceptionHost(urlString: string): boolean {
-	try {
-		const url = new URL(urlString);
-		const exceptionHosts = new Set([
-			"playground.ai.cloudflare.com",
-			"mcp.docker.com",
-			"mcptotal.io",
-			// add more exception hosts here if needed
-		]);
-		return exceptionHosts.has(url.hostname);
-	} catch (err) {
-		// Invalid URL string
-		return false;
-	}
-}
-
 /**
  * Create a manual redirect confirmation page
  * Per OAuth 2.0 Security Best Practices (RFC 6819 section 7.12.2),

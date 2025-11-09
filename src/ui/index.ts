@@ -5,5 +5,4 @@ export {
 	generateRandomString,
 	createPKCECodes,
 	isDeepLink,
-	isExceptionHost,
 } from "./layout";
