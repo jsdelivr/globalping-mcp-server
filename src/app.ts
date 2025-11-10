@@ -260,7 +260,11 @@ app.get("/auth/callback", async (c) => {
 		}
 
 		// Show manual confirmation page for untrusted HTTPS URIs
-		return c.html(layout(await manualRedirectPage(redirectTo), "Complete Authentication"));
+		// Extract origin for cleaner display (without query params/paths)
+		const displayUrl = new URL(redirectTo).origin;
+		return c.html(
+			layout(await manualRedirectPage(redirectTo, displayUrl), "Complete Authentication"),
+		);
 	} catch (error: any) {
 		console.error("Token exchange error:", error);
 		return c.html(

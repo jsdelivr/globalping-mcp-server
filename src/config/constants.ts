@@ -91,3 +91,9 @@ export const RANDOM_STRING_CONFIG = {
 	PAD_LENGTH: 2,
 	PAD_CHAR: "0",
 };
+
+export const EXCEPTION_HOSTS = new Set([
+	"playground.ai.cloudflare.com",
+	"mcp.docker.com",
+	"mcptotal.io",
+]);

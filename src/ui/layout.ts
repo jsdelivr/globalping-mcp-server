@@ -1,10 +1,8 @@
 /**
  * HTML layout template
  */
-import type { AuthRequest } from "@cloudflare/workers-oauth-provider";
 import { html } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
-import type { PKCECodePair } from "../types";
 
 export const layout = (content: HtmlEscapedString | string, title: string) => html`
 	<!DOCTYPE html>
@@ -182,104 +180,15 @@ export const layout = (content: HtmlEscapedString | string, title: string) => ht
 	</html>
 `;
 
-export const parseApproveFormBody = async (body: {
-	[x: string]: string | File;
-}) => {
-	const action = body.action as string;
-	const email = body.email as string;
-	const password = body.password as string;
-	let oauthReqInfo: AuthRequest | null = null;
-	try {
-		oauthReqInfo = JSON.parse(body.oauthReqInfo as string) as AuthRequest;
-	} catch (e) {
-		oauthReqInfo = null;
-	}
-
-	return { action, oauthReqInfo, email, password };
-};
-
-/**
- * Generate a random string for PKCE and state
- * @param length Length of the random string
- * @returns A URL-safe random string
- */
-export function generateRandomString(length: number): string {
-	const array = new Uint8Array(length);
-	crypto.getRandomValues(array);
-	return Array.from(array)
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("")
-		.substring(0, length);
-}
-
-/**
- * Create a code verifier and code challenge pair for PKCE
- * @returns A code verifier and challenge pair
- */
-export async function createPKCECodes(): Promise<PKCECodePair> {
-	// Generate code verifier (random string between 43-128 chars)
-	const codeVerifier = generateRandomString(64);
-
-	// Create code challenge using SHA-256
-	const encoder = new TextEncoder();
-	const data = encoder.encode(codeVerifier);
-	const digest = await crypto.subtle.digest("SHA-256", data);
-
-	// Convert digest to base64url format
-	const base64Digest = btoa(String.fromCharCode(...new Uint8Array(digest)))
-		.replace(/\+/g, "-")
-		.replace(/\//g, "_")
-		.replace(/=/g, "");
-
-	return {
-		codeVerifier,
-		codeChallenge: base64Digest,
-	};
-}
-
-const STANDARD_PROTOCOLS = new Set([
-	"http:",
-	"https:",
-	"ftp:",
-	"file:",
-	"mailto:",
-	"tel:",
-	"ws:",
-	"wss:",
-	"sms:",
-	"data:",
-	"blob:",
-	"about:",
-	"chrome:",
-	"opera:",
-	"edge:",
-	"safari:",
-	"javascript:",
-]);
-
-/**
- * Check if a URL is a deep link
- * @param url The URL to check
- * @returns
- */
-export function isDeepLink(url: string): boolean {
-	try {
-		const parsedUrl = new URL(url);
-		const protocol = parsedUrl.protocol.toLowerCase();
-		return !STANDARD_PROTOCOLS.has(protocol);
-	} catch (e) {
-		return false;
-	}
-}
-
 /**
  * Create a manual redirect confirmation page
  * Per OAuth 2.0 Security Best Practices (RFC 6819 section 7.12.2),
  * untrusted redirect URIs should require manual user confirmation
- * @param redirectUri The redirect URI to display
+ * @param redirectUri The full redirect URI for the actual redirect
+ * @param displayUrl The origin to display to the user (cleaner than full URL)
  * @returns HTML string for the confirmation page
  */
-export const manualRedirectPage = (redirectUri: string) => html`
+export const manualRedirectPage = (redirectUri: string, displayUrl: string) => html`
 	<div class="markdown max-w-2xl mx-auto">
 		<div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-accent">
 			<div class="mb-6">
@@ -330,7 +239,7 @@ export const manualRedirectPage = (redirectUri: string) => html`
 			</p>
 
 			<div class="bg-gray-100 p-4 rounded-md mb-6 break-all">
-				<code class="text-sm text-gray-800">${redirectUri}</code>
+				<code class="text-sm text-gray-800">${displayUrl}</code>
 			</div>
 
 			<div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
