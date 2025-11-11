@@ -1,1 +1,1 @@
-export * from "./layout";
+export { layout, manualRedirectPage } from "./layout";

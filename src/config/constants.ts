@@ -81,12 +81,6 @@ export const STANDARD_PROTOCOLS = new Set([
 	"javascript:",
 ]);
 
-export const EXCEPTION_HOSTS = new Set([
-	"playground.ai.cloudflare.com",
-	"mcp.docker.com",
-	"mcptotal.io",
-]);
-
 export const PKCE_CONFIG = {
 	CODE_VERIFIER_LENGTH: 64,
 	HASH_ALGORITHM: "SHA-256",
@@ -97,3 +91,9 @@ export const RANDOM_STRING_CONFIG = {
 	PAD_LENGTH: 2,
 	PAD_CHAR: "0",
 };
+
+export const EXCEPTION_HOSTS = new Set([
+	"playground.ai.cloudflare.com",
+	"mcp.docker.com",
+	"mcptotal.io",
+]);

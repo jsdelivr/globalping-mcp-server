@@ -3,8 +3,8 @@
  */
 import { Hono } from "hono";
 import { html } from "hono/html";
-import { layout } from "./ui";
-import { createPKCECodes, generateRandomString, isDeepLink, isExceptionHost } from "./lib";
+import { layout, manualRedirectPage } from "./ui";
+import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
 
@@ -44,7 +44,7 @@ async function getUserData(accessToken: string): Promise<any> {
 }
 
 // Root route - redirect to repository
-app.get("/", async (c) => {
+app.get("/", async (_c) => {
 	return Response.redirect(GLOBALPING_REPOSITORY_URL);
 });
 
@@ -68,16 +68,23 @@ app.get("/authorize", async (c) => {
 		);
 	}
 
-	// Validate redirect_uri
-	if (
-		`${new URL(c.req.url).origin}/auth/callback` !== oauthReqInfo.redirectUri &&
-		!/http:\/\/localhost:\d+\/(.*)/is.test(oauthReqInfo.redirectUri) &&
-		!isDeepLink(oauthReqInfo.redirectUri) &&
-		!isExceptionHost(oauthReqInfo.redirectUri)
-	) {
+	// Basic validation: just check redirect_uri is set and parsable
+	// The callback endpoint will later decide if auto-redirect or show manual confirmation
+	if (!oauthReqInfo.redirectUri) {
 		return c.html(
 			layout(
-				await html`<h1>Invalid redirect URI</h1><p>Redirect URI does not match the original request.</p>`,
+				await html`<h1>Invalid request</h1><p>Missing redirect URI.</p>`,
+				"Invalid request",
+			),
+		);
+	}
+
+	try {
+		new URL(oauthReqInfo.redirectUri);
+	} catch (error) {
+		return c.html(
+			layout(
+				await html`<h1>Invalid redirect URI</h1><p>Redirect URI is malformed.</p>`,
 				"Invalid redirect URI",
 			),
 		);
@@ -245,8 +252,19 @@ app.get("/auth/callback", async (c) => {
 			},
 		});
 
-		// Redirect to the client app
-		return Response.redirect(redirectTo, 302);
+		// Per OAuth 2.0 Security Best Practices (RFC 6819 section 7.12.2),
+		// only automatically redirect to trusted URIs
+		if (isTrustedRedirectUri(redirectTo)) {
+			// Auto-redirect for trusted URIs (localhost, deep links)
+			return Response.redirect(redirectTo, 302);
+		}
+
+		// Show manual confirmation page for untrusted HTTPS URIs
+		// Extract origin for cleaner display (without query params/paths)
+		const displayUrl = new URL(redirectTo).origin;
+		return c.html(
+			layout(await manualRedirectPage(redirectTo, displayUrl), "Complete Authentication"),
+		);
 	} catch (error: any) {
 		console.error("Token exchange error:", error);
 		return c.html(
