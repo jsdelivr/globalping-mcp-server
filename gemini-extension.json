@@ -1,7 +1,7 @@
 {
 	"name": "globalping",
-	"version": "0.0.2",
-	"description": "Enable AI models to interact with a global network measurement platform and run network measurements, benchmarks and tests.",
+	"version": "1.0.0",
+	"description": "Interact with a global network of probes and run network measurements, benchmarks and tests.",
 	"mcpServers": {
 		"globalping-mcp": {
 			"httpUrl": "https://mcp.globalping.dev/mcp",
