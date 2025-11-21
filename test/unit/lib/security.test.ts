@@ -465,6 +465,14 @@ describe("validateHost", () => {
 			expect(validateHost("[:1]")).toBe(false);
 		});
 
+		it("should reject IPv6 addresses with protocol prefixes", () => {
+			// Host headers should never include protocols
+			expect(validateHost("http://[::1]")).toBe(false);
+			expect(validateHost("https://[::1]")).toBe(false);
+			expect(validateHost("http://[::1]:8080")).toBe(false);
+			expect(validateHost("https://[::1]:8443")).toBe(false);
+		});
+
 		it("should reject subdomain attacks", () => {
 			expect(validateHost("evil.mcp.globalping.io")).toBe(false);
 			expect(validateHost("subdomain.globalping.io")).toBe(false);
