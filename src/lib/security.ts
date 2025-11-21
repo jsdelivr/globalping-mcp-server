@@ -47,6 +47,7 @@ function getAllowedHostnames(): Set<string> {
  * @example
  * validateHost("mcp.globalping.io") // true
  * validateHost("localhost:3000") // true (port is stripped)
+ * validateHost("[::1]:3000") // true (becomes ::1)
  * validateHost("evil-attacker.com") // false
  * validateHost(null) // false
  */
@@ -55,8 +56,22 @@ export function validateHost(host: string | null): boolean {
 		return false;
 	}
 
-	// Normalize: strip port and convert to lowercase
-	const normalizedHost = host.split(":")[0].toLowerCase();
+	// Normalize: handle IPv6 addresses with brackets, strip port, and convert to lowercase
+	let normalizedHost = host;
+
+	// Remove surrounding square brackets for IPv6 addresses
+	if (normalizedHost.startsWith("[") && normalizedHost.includes("]")) {
+		normalizedHost = normalizedHost.substring(1, normalizedHost.indexOf("]"));
+	}
+
+	// Split off port (handle case where there's no port)
+	const colonIndex = normalizedHost.lastIndexOf(":");
+	if (colonIndex !== -1) {
+		// Only split if the colon is not part of an IPv6 address (which would already have brackets removed)
+		normalizedHost = normalizedHost.substring(0, colonIndex);
+	}
+
+	normalizedHost = normalizedHost.toLowerCase();
 
 	// Check against allowed hostnames
 	const allowedHostnames = getAllowedHostnames();
@@ -96,14 +111,14 @@ export function validateOrigin(origin: string | null): boolean {
 		return true;
 	}
 
-	// For localhost/127.0.0.1, allow port variations by checking baseOrigin
+	// For localhost/127.0.0.1/::1, allow port variations by checking baseOrigin
 	// For production hosts, require exact match (no port stripping)
 	try {
 		const originUrl = new URL(origin);
 		const hostname = originUrl.hostname.toLowerCase();
 
 		// Only strip ports for localhost/127.0.0.1
-		if (hostname === "localhost" || hostname === "127.0.0.1") {
+		if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
 			const baseOrigin = `${originUrl.protocol}//${hostname}`;
 			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
 				return true;

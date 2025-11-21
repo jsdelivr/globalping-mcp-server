@@ -4,11 +4,7 @@
 import { Hono } from "hono";
 import { html } from "hono/html";
 import { layout, manualRedirectPage } from "./ui";
-import {
-	createPKCECodes,
-	generateRandomString,
-	isTrustedRedirectUri,
-} from "./lib";
+import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
 

@@ -23,11 +23,13 @@ describe("validateOrigin", () => {
 		it("should accept localhost HTTP origins without port", () => {
 			expect(validateOrigin("http://localhost")).toBe(true);
 			expect(validateOrigin("http://127.0.0.1")).toBe(true);
+			expect(validateOrigin("http://[::1]")).toBe(true);
 		});
 
 		it("should accept localhost HTTPS origins without port", () => {
 			expect(validateOrigin("https://localhost")).toBe(true);
 			expect(validateOrigin("https://127.0.0.1")).toBe(true);
+			expect(validateOrigin("https://[::1]")).toBe(true);
 		});
 
 		it("should accept localhost with port numbers", () => {
@@ -35,6 +37,7 @@ describe("validateOrigin", () => {
 			expect(validateOrigin("http://localhost:8080")).toBe(true);
 			expect(validateOrigin("http://127.0.0.1:3000")).toBe(true);
 			expect(validateOrigin("http://127.0.0.1:8080")).toBe(true);
+			expect(validateOrigin("http://[::1]:8080")).toBe(true);
 		});
 
 		it("should accept localhost HTTPS with port numbers", () => {
@@ -42,6 +45,8 @@ describe("validateOrigin", () => {
 			expect(validateOrigin("https://localhost:8443")).toBe(true);
 			expect(validateOrigin("https://127.0.0.1:3000")).toBe(true);
 			expect(validateOrigin("https://127.0.0.1:8443")).toBe(true);
+			expect(validateOrigin("https://[::1]:8443")).toBe(true);
+			expect(validateOrigin("https://[::1]:3000")).toBe(true);
 		});
 
 		it("should accept MCP client protocol schemes", () => {
@@ -126,12 +131,6 @@ describe("validateOrigin", () => {
 			// URLs normalize protocol to lowercase
 			const url = new URL("HTTPS://mcp.globalping.io");
 			expect(validateOrigin(url.origin)).toBe(true);
-		});
-
-		it("should handle IPv6 localhost addresses", () => {
-			// IPv6 localhost is not in our whitelist, should be rejected
-			expect(validateOrigin("http://[::1]")).toBe(false);
-			expect(validateOrigin("http://[::1]:3000")).toBe(false);
 		});
 	});
 
