@@ -30,10 +30,6 @@ function getAllowedHostnames(): Set<string> {
 		}
 	}
 
-	// Always include localhost variants for development
-	hostnames.add("localhost");
-	hostnames.add("127.0.0.1");
-
 	return hostnames;
 }
 
