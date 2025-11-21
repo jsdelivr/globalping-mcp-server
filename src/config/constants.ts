@@ -97,3 +97,36 @@ export const EXCEPTION_HOSTS = new Set([
 	"mcp.docker.com",
 	"mcptotal.io",
 ]);
+
+/**
+ * CORS configuration for MCP server
+ * Origin validation is REQUIRED by MCP spec to prevent DNS rebinding attacks
+ * @see https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+ */
+export const CORS_CONFIG = {
+	/**
+	 * Allowed origins for MCP connections
+	 * These should be explicitly whitelisted for security
+	 */
+	ALLOWED_ORIGINS: [
+		// Production origins
+		"https://mcp.globalping.io",
+		"https://mcp.globalping.dev",
+		// Local development origins (localhost and 127.0.0.1)
+		"http://localhost",
+		"http://127.0.0.1",
+		"https://localhost",
+		"https://127.0.0.1",
+		// Claude Desktop and other MCP clients
+		"vscode://",
+		"claude://",
+	],
+	METHODS: "GET, POST, DELETE, OPTIONS",
+	HEADERS: "Content-Type, Authorization, Mcp-Session-Id",
+	/**
+	 * Expose Mcp-Session-Id header for browser-based MCP clients
+	 * This is required for streamable HTTP transport session management
+	 */
+	EXPOSE_HEADERS: "Mcp-Session-Id",
+	MAX_AGE: 86400, // 24 hours
+};

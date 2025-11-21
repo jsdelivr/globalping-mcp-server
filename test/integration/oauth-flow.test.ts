@@ -211,21 +211,33 @@ describe("OAuth Routes Integration", () => {
 
 	describe("OAuth Callback - Success Paths", () => {
 		it("should successfully complete OAuth flow with valid code and state", async () => {
-			// First, we need to create a valid state in KV by simulating the authorize flow
+			// First, register a client with the OAuth provider
+			const clientId = "test-mcp-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+
+			const clientInfo = {
+				clientId: clientId,
+				redirectUris: [clientRedirectUri],
+				clientName: "Test MCP Client",
+			};
+
+			await env.OAUTH_KV.put(`client:${clientId}`, JSON.stringify(clientInfo));
+
+			// Create a valid state in KV by simulating the authorize flow
 			const testState = "test-oauth-state-123";
 			const testCode = "test-auth-code-456";
 
 			// Store state data in KV that the callback will retrieve
 			const stateData = {
 				redirectUri: "http://localhost/auth/callback",
-				clientRedirectUri: "http://localhost:3000/callback",
+				clientRedirectUri: clientRedirectUri,
 				codeVerifier: "test-verifier-123",
 				codeChallenge: "test-challenge-456",
-				clientId: "test-mcp-client",
+				clientId: clientId,
 				state: testState,
 				oauthReqInfo: {
-					clientId: "test-mcp-client",
-					redirectUri: "http://localhost:3000/callback",
+					clientId: clientId,
+					redirectUri: clientRedirectUri,
 					state: "client-state-789",
 					scope: "measurements",
 				},

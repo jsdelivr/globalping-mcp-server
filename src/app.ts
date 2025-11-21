@@ -48,6 +48,20 @@ app.get("/", async (_c) => {
 	return Response.redirect(GLOBALPING_REPOSITORY_URL);
 });
 
+// OAuth 2.1 Protected Resource Metadata (OpenAI Apps SDK requirement)
+// This endpoint is required for ChatGPT and other OAuth 2.1 clients to discover
+// authorization servers and understand how to authenticate with this MCP server
+app.get("/.well-known/oauth-protected-resource", async (c) => {
+	const origin = new URL(c.req.url).origin;
+
+	return c.json({
+		resource: origin,
+		authorization_servers: ["https://auth.globalping.io"],
+		scopes_supported: ["measurements"],
+		resource_documentation: "https://www.globalping.io",
+	});
+});
+
 // Authorization endpoint
 app.get("/authorize", async (c) => {
 	let oauthReqInfo: AuthRequest | undefined;
