@@ -96,14 +96,20 @@ export function validateOrigin(origin: string | null): boolean {
 		return true;
 	}
 
-	// For localhost/127.0.0.1, also check with port numbers
+	// For localhost/127.0.0.1, allow port variations by checking baseOrigin
+	// For production hosts, require exact match (no port stripping)
 	try {
 		const originUrl = new URL(origin);
-		const baseOrigin = `${originUrl.protocol}//${originUrl.hostname}`;
+		const hostname = originUrl.hostname.toLowerCase();
 
-		if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
-			return true;
+		// Only strip ports for localhost/127.0.0.1
+		if (hostname === "localhost" || hostname === "127.0.0.1") {
+			const baseOrigin = `${originUrl.protocol}//${hostname}`;
+			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
+				return true;
+			}
 		}
+		// For production hosts, exact match only (already checked above)
 	} catch {
 		// Invalid origin URL
 		return false;
@@ -120,14 +126,84 @@ export function validateOrigin(origin: string | null): boolean {
  *
  * @remarks
  * The Mcp-Session-Id header must be exposed for browser-based clients
- * to access it, as required by the MCP streamable HTTP transport spec
+ * to access it, as required by the MCP streamable HTTP transport spec.
+ * The origin is returned as an array - per-request validation should select
+ * the matching origin from this list and set Access-Control-Allow-Origin
+ * to that single value (never as a comma-separated list, per CORS spec).
  */
 export function getCorsOptions() {
 	return {
-		origin: CORS_CONFIG.ALLOWED_ORIGINS.join(","),
+		origin: CORS_CONFIG.ALLOWED_ORIGINS,
 		methods: CORS_CONFIG.METHODS,
 		headers: CORS_CONFIG.HEADERS,
 		exposeHeaders: CORS_CONFIG.EXPOSE_HEADERS,
 		maxAge: CORS_CONFIG.MAX_AGE,
 	};
+}
+
+/**
+ * Get CORS options for a specific request with proper origin validation
+ * Returns a single origin string per CORS spec requirements
+ *
+ * @param request - The incoming HTTP request
+ * @returns CORS configuration with single matching origin, or "*" if no origin header
+ *
+ * @remarks
+ * This function performs per-request origin validation and returns corsOptions
+ * formatted for MCP transport. The origin field will be a single string (never
+ * comma-separated) as required by the CORS specification.
+ */
+export function getCorsOptionsForRequest(request: Request) {
+	const requestOrigin = request.headers.get("Origin");
+	const matchingOrigin = getMatchingOrigin(requestOrigin);
+
+	return {
+		// Use matching origin if valid, otherwise "*" for requests without Origin header
+		// (non-browser clients like Claude Desktop don't send Origin)
+		origin: matchingOrigin || "*",
+		methods: CORS_CONFIG.METHODS,
+		headers: CORS_CONFIG.HEADERS,
+		exposeHeaders: CORS_CONFIG.EXPOSE_HEADERS,
+		maxAge: CORS_CONFIG.MAX_AGE,
+	};
+}
+
+/**
+ * Get the matching allowed origin for CORS headers
+ * Per CORS spec, Access-Control-Allow-Origin must be a single origin or "*"
+ *
+ * @param requestOrigin - The Origin header from the incoming request
+ * @returns The matching origin to use in Access-Control-Allow-Origin header, or null if not allowed
+ *
+ * @example
+ * getMatchingOrigin("http://localhost:3000") // "http://localhost:3000" or "http://localhost"
+ * getMatchingOrigin("https://mcp.globalping.io") // "https://mcp.globalping.io"
+ * getMatchingOrigin("https://evil.com") // null
+ */
+export function getMatchingOrigin(requestOrigin: string | null): string | null {
+	if (!requestOrigin || !validateOrigin(requestOrigin)) {
+		return null;
+	}
+
+	// Check for exact match first
+	if (CORS_CONFIG.ALLOWED_ORIGINS.includes(requestOrigin)) {
+		return requestOrigin;
+	}
+
+	// For localhost/127.0.0.1 with ports, return the base origin if it matches
+	try {
+		const originUrl = new URL(requestOrigin);
+		const hostname = originUrl.hostname.toLowerCase();
+
+		if (hostname === "localhost" || hostname === "127.0.0.1") {
+			const baseOrigin = `${originUrl.protocol}//${hostname}`;
+			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
+				return baseOrigin;
+			}
+		}
+	} catch {
+		// Invalid URL, already rejected by validateOrigin
+	}
+
+	return null;
 }

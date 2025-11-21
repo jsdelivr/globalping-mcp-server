@@ -8,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./mcp";
 import { sanitizeToken } from "./auth";
-import { validateOrigin, validateHost, getCorsOptions } from "./lib";
+import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
@@ -395,14 +395,14 @@ async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: Execution
 	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
 		return GlobalpingMCP.serveSSE(MCP_CONFIG.ROUTES.SSE, {
 			binding: MCP_CONFIG.BINDING_NAME,
-			corsOptions: getCorsOptions(),
+			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
 	}
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
 		return GlobalpingMCP.serve(MCP_CONFIG.ROUTES.MCP, {
 			binding: MCP_CONFIG.BINDING_NAME,
-			corsOptions: getCorsOptions(),
+			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
 	}
 
@@ -476,7 +476,7 @@ async function handleAPITokenRequest<
 		return agent
 			.serveSSE(MCP_CONFIG.ROUTES.SSE, {
 				binding: MCP_CONFIG.BINDING_NAME,
-				corsOptions: getCorsOptions(),
+				corsOptions: getCorsOptionsForRequest(req),
 			})
 			.fetch(req, env, ctx);
 	}
@@ -485,7 +485,7 @@ async function handleAPITokenRequest<
 		return agent
 			.serve(MCP_CONFIG.ROUTES.MCP, {
 				binding: MCP_CONFIG.BINDING_NAME,
-				corsOptions: getCorsOptions(),
+				corsOptions: getCorsOptionsForRequest(req),
 			})
 			.fetch(req, env, ctx);
 	}

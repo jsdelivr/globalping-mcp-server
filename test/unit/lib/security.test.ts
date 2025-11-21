@@ -4,7 +4,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { validateOrigin, validateHost, getCorsOptions } from "../../../src/lib/security";
+import {
+	validateOrigin,
+	validateHost,
+	getCorsOptions,
+	getMatchingOrigin,
+	getCorsOptionsForRequest,
+} from "../../../src/lib/security";
 import { CORS_CONFIG } from "../../../src/config";
 
 describe("validateOrigin", () => {
@@ -146,6 +152,15 @@ describe("validateOrigin", () => {
 			expect(validateOrigin("http://mcp.globalping.io")).toBe(false);
 			expect(validateOrigin("http://mcp.globalping.dev")).toBe(false);
 		});
+
+		it("should require exact port match for production hosts", () => {
+			// Production hosts should NOT allow port variations
+			// Only localhost/127.0.0.1 should allow different ports
+			expect(validateOrigin("https://mcp.globalping.io:8443")).toBe(false);
+			expect(validateOrigin("https://mcp.globalping.io:443")).toBe(false);
+			expect(validateOrigin("https://mcp.globalping.dev:8080")).toBe(false);
+			// Standard HTTPS port (443) is implicit, but explicit port should be rejected
+		});
 	});
 });
 
@@ -160,13 +175,13 @@ describe("getCorsOptions", () => {
 		expect(corsOptions).toHaveProperty("maxAge");
 	});
 
-	it("should include all allowed origins as comma-separated string", () => {
+	it("should include all allowed origins as an array", () => {
 		const corsOptions = getCorsOptions();
-		const origins = corsOptions.origin.split(",");
 
-		expect(origins.length).toBe(CORS_CONFIG.ALLOWED_ORIGINS.length);
+		expect(Array.isArray(corsOptions.origin)).toBe(true);
+		expect(corsOptions.origin.length).toBe(CORS_CONFIG.ALLOWED_ORIGINS.length);
 		for (const origin of CORS_CONFIG.ALLOWED_ORIGINS) {
-			expect(origins).toContain(origin);
+			expect(corsOptions.origin).toContain(origin);
 		}
 	});
 
@@ -201,6 +216,102 @@ describe("getCorsOptions", () => {
 	it("should allow Mcp-Session-Id in request headers", () => {
 		const corsOptions = getCorsOptions();
 		expect(corsOptions.headers).toContain("Mcp-Session-Id");
+	});
+});
+
+describe("getMatchingOrigin", () => {
+	it("should return exact match for production origins", () => {
+		expect(getMatchingOrigin("https://mcp.globalping.io")).toBe("https://mcp.globalping.io");
+		expect(getMatchingOrigin("https://mcp.globalping.dev")).toBe("https://mcp.globalping.dev");
+	});
+
+	it("should return exact match for localhost with ports", () => {
+		expect(getMatchingOrigin("http://localhost:3000")).toBe("http://localhost");
+		expect(getMatchingOrigin("http://127.0.0.1:8080")).toBe("http://127.0.0.1");
+	});
+
+	it("should return base origin for localhost without ports", () => {
+		expect(getMatchingOrigin("http://localhost")).toBe("http://localhost");
+		expect(getMatchingOrigin("https://127.0.0.1")).toBe("https://127.0.0.1");
+	});
+
+	it("should return null for invalid origins", () => {
+		expect(getMatchingOrigin("https://evil.com")).toBeNull();
+		expect(getMatchingOrigin("http://attacker.example.com")).toBeNull();
+		expect(getMatchingOrigin(null)).toBeNull();
+		expect(getMatchingOrigin("")).toBeNull();
+	});
+
+	it("should reject production origins with non-standard ports", () => {
+		expect(getMatchingOrigin("https://mcp.globalping.io:8443")).toBeNull();
+		expect(getMatchingOrigin("https://mcp.globalping.dev:3000")).toBeNull();
+	});
+
+	it("should handle MCP client protocols", () => {
+		expect(getMatchingOrigin("vscode://")).toBe("vscode://");
+		expect(getMatchingOrigin("claude://")).toBe("claude://");
+	});
+});
+
+describe("getCorsOptionsForRequest", () => {
+	it("should return single origin for valid browser requests", () => {
+		// Mock Request with Origin header (Origin is a forbidden header in Fetch API)
+		const mockRequest = {
+			headers: {
+				get: (name: string) =>
+					name.toLowerCase() === "origin" ? "http://localhost:3000" : null,
+			},
+		} as unknown as Request;
+
+		const corsOptions = getCorsOptionsForRequest(mockRequest);
+
+		expect(corsOptions.origin).toBe("http://localhost");
+		expect(typeof corsOptions.origin).toBe("string");
+	});
+
+	it("should return wildcard for requests without Origin header", () => {
+		const mockRequest = {
+			headers: {
+				get: () => null,
+			},
+		} as unknown as Request;
+
+		const corsOptions = getCorsOptionsForRequest(mockRequest);
+
+		expect(corsOptions.origin).toBe("*");
+	});
+
+	it("should return wildcard for invalid origins", () => {
+		const mockRequest = {
+			headers: {
+				get: (name: string) =>
+					name.toLowerCase() === "origin" ? "https://evil.com" : null,
+			},
+		} as unknown as Request;
+
+		const corsOptions = getCorsOptionsForRequest(mockRequest);
+
+		expect(corsOptions.origin).toBe("*");
+	});
+
+	it("should include all CORS configuration", () => {
+		const mockRequest = {
+			headers: {
+				get: (name: string) =>
+					name.toLowerCase() === "origin" ? "https://mcp.globalping.io" : null,
+			},
+		} as unknown as Request;
+
+		const corsOptions = getCorsOptionsForRequest(mockRequest);
+
+		expect(corsOptions).toHaveProperty("methods");
+		expect(corsOptions).toHaveProperty("headers");
+		expect(corsOptions).toHaveProperty("exposeHeaders");
+		expect(corsOptions).toHaveProperty("maxAge");
+		expect(corsOptions.methods).toBe(CORS_CONFIG.METHODS);
+		expect(corsOptions.headers).toBe(CORS_CONFIG.HEADERS);
+		expect(corsOptions.exposeHeaders).toBe(CORS_CONFIG.EXPOSE_HEADERS);
+		expect(corsOptions.maxAge).toBe(CORS_CONFIG.MAX_AGE);
 	});
 });
 
