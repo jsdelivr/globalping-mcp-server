@@ -1,9 +1,71 @@
 /**
  * Security utilities for the Globalping MCP server
- * Includes Origin header validation to prevent DNS rebinding attacks
+ * Includes Origin and Host header validation to prevent DNS rebinding attacks
  */
 
 import { CORS_CONFIG } from "../config";
+
+/**
+ * Extract allowed hostnames from CORS_CONFIG.ALLOWED_ORIGINS
+ * Strips scheme, port, and path to get base hostnames
+ *
+ * @returns Set of allowed hostnames (e.g., "localhost", "127.0.0.1", "mcp.globalping.io")
+ */
+function getAllowedHostnames(): Set<string> {
+	const hostnames = new Set<string>();
+
+	for (const origin of CORS_CONFIG.ALLOWED_ORIGINS) {
+		try {
+			// Handle protocol schemes like vscode://, claude://
+			if (origin.includes("://")) {
+				const url = new URL(origin);
+				hostnames.add(url.hostname.toLowerCase());
+			} else {
+				// Handle bare hostnames or protocols without full URLs
+				hostnames.add(origin.toLowerCase());
+			}
+		} catch {
+			// If URL parsing fails, treat it as a bare hostname
+			hostnames.add(origin.toLowerCase());
+		}
+	}
+
+	// Always include localhost variants for development
+	hostnames.add("localhost");
+	hostnames.add("127.0.0.1");
+
+	return hostnames;
+}
+
+/**
+ * Validate Host header to prevent DNS rebinding attacks
+ * Required alongside Origin validation for defense-in-depth
+ *
+ * The Host header specifies the domain name of the server and must match
+ * our allowed hostnames to prevent attackers from directing requests
+ * through DNS rebinding.
+ *
+ * @param host - The Host header value from the request
+ * @returns true if the host is valid and allowed, false otherwise
+ *
+ * @example
+ * validateHost("mcp.globalping.io") // true
+ * validateHost("localhost:3000") // true (port is stripped)
+ * validateHost("evil-attacker.com") // false
+ * validateHost(null) // false
+ */
+export function validateHost(host: string | null): boolean {
+	if (!host) {
+		return false;
+	}
+
+	// Normalize: strip port and convert to lowercase
+	const normalizedHost = host.split(":")[0].toLowerCase();
+
+	// Check against allowed hostnames
+	const allowedHostnames = getAllowedHostnames();
+	return allowedHostnames.has(normalizedHost);
+}
 
 /**
  * Validate Origin header against whitelist to prevent DNS rebinding attacks

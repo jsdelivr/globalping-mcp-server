@@ -1,10 +1,10 @@
 /**
  * Unit tests for security utilities
- * Tests Origin header validation for DNS rebinding attack prevention
+ * Tests Origin and Host header validation for DNS rebinding attack prevention
  */
 
 import { describe, it, expect } from "vitest";
-import { validateOrigin, getCorsOptions } from "../../../src/lib/security";
+import { validateOrigin, validateHost, getCorsOptions } from "../../../src/lib/security";
 import { CORS_CONFIG } from "../../../src/config";
 
 describe("validateOrigin", () => {
@@ -201,5 +201,119 @@ describe("getCorsOptions", () => {
 	it("should allow Mcp-Session-Id in request headers", () => {
 		const corsOptions = getCorsOptions();
 		expect(corsOptions.headers).toContain("Mcp-Session-Id");
+	});
+});
+
+describe("validateHost", () => {
+	describe("valid hosts", () => {
+		it("should accept production hostnames", () => {
+			expect(validateHost("mcp.globalping.io")).toBe(true);
+			expect(validateHost("mcp.globalping.dev")).toBe(true);
+		});
+
+		it("should accept localhost variants", () => {
+			expect(validateHost("localhost")).toBe(true);
+			expect(validateHost("127.0.0.1")).toBe(true);
+		});
+
+		it("should accept hosts with port numbers", () => {
+			expect(validateHost("localhost:3000")).toBe(true);
+			expect(validateHost("localhost:8080")).toBe(true);
+			expect(validateHost("127.0.0.1:3000")).toBe(true);
+			expect(validateHost("mcp.globalping.io:443")).toBe(true);
+		});
+
+		it("should be case-insensitive", () => {
+			expect(validateHost("LOCALHOST")).toBe(true);
+			expect(validateHost("MCP.GLOBALPING.IO")).toBe(true);
+			expect(validateHost("Localhost:3000")).toBe(true);
+		});
+
+		it("should strip port numbers before validation", () => {
+			// Port should be stripped, so these should match base hostnames
+			expect(validateHost("localhost:9999")).toBe(true);
+			expect(validateHost("127.0.0.1:65535")).toBe(true);
+		});
+	});
+
+	describe("invalid hosts", () => {
+		it("should reject null host", () => {
+			expect(validateHost(null)).toBe(false);
+		});
+
+		it("should reject empty string host", () => {
+			expect(validateHost("")).toBe(false);
+		});
+
+		it("should reject malicious external hosts", () => {
+			expect(validateHost("evil.com")).toBe(false);
+			expect(validateHost("attacker.example.com")).toBe(false);
+			expect(validateHost("malicious-site.com")).toBe(false);
+		});
+
+		it("should reject hosts with wrong IP addresses", () => {
+			expect(validateHost("192.168.1.1")).toBe(false);
+			expect(validateHost("10.0.0.1")).toBe(false);
+			expect(validateHost("172.16.0.1")).toBe(false);
+		});
+
+		it("should reject subdomain attacks", () => {
+			expect(validateHost("evil.mcp.globalping.io")).toBe(false);
+			expect(validateHost("subdomain.globalping.io")).toBe(false);
+		});
+
+		it("should reject similar but different domains", () => {
+			expect(validateHost("mcp.globalping.io.evil.com")).toBe(false);
+			expect(validateHost("mcpglobalping.io")).toBe(false);
+			expect(validateHost("mcp-globalping.io")).toBe(false);
+		});
+
+		it("should reject localhost-like domains", () => {
+			expect(validateHost("localhost.evil.com")).toBe(false);
+			expect(validateHost("127.0.0.1.evil.com")).toBe(false);
+			expect(validateHost("my-localhost.com")).toBe(false);
+		});
+	});
+
+	describe("DNS rebinding attack prevention", () => {
+		it("should prevent DNS rebinding with spoofed hosts", () => {
+			// Attacker tries to use their domain as Host header
+			expect(validateHost("attacker.com")).toBe(false);
+			expect(validateHost("rebinding-attack.net")).toBe(false);
+		});
+
+		it("should prevent homograph attacks in Host header", () => {
+			// Using unicode characters that look similar
+			expect(validateHost("mсp.globalping.io")).toBe(false); // Cyrillic 'с'
+		});
+
+		it("should work with getAllowedHostnames extraction", () => {
+			// Hostnames should be extracted from CORS_CONFIG.ALLOWED_ORIGINS
+			// including protocol schemes like vscode:// and claude://
+			expect(validateHost("localhost")).toBe(true);
+			expect(validateHost("127.0.0.1")).toBe(true);
+		});
+	});
+
+	describe("port handling", () => {
+		it("should strip standard HTTP port (80)", () => {
+			expect(validateHost("localhost:80")).toBe(true);
+		});
+
+		it("should strip standard HTTPS port (443)", () => {
+			expect(validateHost("mcp.globalping.io:443")).toBe(true);
+		});
+
+		it("should strip custom ports", () => {
+			expect(validateHost("localhost:3000")).toBe(true);
+			expect(validateHost("localhost:8080")).toBe(true);
+			expect(validateHost("127.0.0.1:5000")).toBe(true);
+		});
+
+		it("should handle malformed port numbers", () => {
+			// If port is present but malformed, the hostname part should still be validated
+			expect(validateHost("localhost:abc")).toBe(true); // Port stripped, localhost remains
+			expect(validateHost("evil.com:80")).toBe(false); // Still evil after port strip
+		});
 	});
 });

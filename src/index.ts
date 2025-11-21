@@ -8,7 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./mcp";
 import { sanitizeToken } from "./auth";
-import { validateOrigin, getCorsOptions } from "./lib";
+import { validateOrigin, validateHost, getCorsOptions } from "./lib";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
@@ -363,6 +363,19 @@ For more information, visit: https://www.globalping.io
 async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
 	const { pathname } = new URL(req.url);
 
+	// Validate Host header to prevent DNS rebinding attacks (first layer)
+	// This check happens before Origin validation for defense-in-depth
+	const host = req.headers.get("Host");
+	if (!validateHost(host)) {
+		console.error(`[Security] Rejected request with invalid Host header: ${host}`);
+		return new Response("Forbidden: Invalid Host", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
+
 	// Validate Origin header for all MCP requests to prevent DNS rebinding attacks
 	// Required by MCP specification for Streamable HTTP transport
 	// Note: We only validate when Origin header is present. Browser requests
@@ -370,6 +383,7 @@ async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: Execution
 	// VSCode extension) may not send this header.
 	const origin = req.headers.get("Origin");
 	if (origin && !validateOrigin(origin)) {
+		console.error(`[Security] Rejected request with invalid Origin header: ${origin}`);
 		return new Response("Forbidden: Invalid Origin", {
 			status: 403,
 			headers: {
@@ -403,11 +417,27 @@ async function handleAPITokenRequest<
 >(agent: T, req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
 	const { pathname } = new URL(req.url);
 
+	// Validate Host header to prevent DNS rebinding attacks (first layer)
+	// This check happens before Origin validation for defense-in-depth
+	const host = req.headers.get("Host");
+	if (!validateHost(host)) {
+		console.error(`[Security] Rejected API token request with invalid Host header: ${host}`);
+		return new Response("Forbidden: Invalid Host", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
+
 	// Validate Origin header to prevent DNS rebinding attacks
 	// Note: We only validate when Origin header is present. Browser requests
 	// will always include Origin, while non-browser MCP clients may not.
 	const origin = req.headers.get("Origin");
 	if (origin && !validateOrigin(origin)) {
+		console.error(
+			`[Security] Rejected API token request with invalid Origin header: ${origin}`,
+		);
 		return new Response("Forbidden: Invalid Origin", {
 			status: 403,
 			headers: {

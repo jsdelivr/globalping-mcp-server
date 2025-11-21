@@ -4,7 +4,13 @@
 import { Hono } from "hono";
 import { html } from "hono/html";
 import { layout, manualRedirectPage } from "./ui";
-import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
+import {
+	createPKCECodes,
+	generateRandomString,
+	isTrustedRedirectUri,
+	validateOrigin,
+	getCorsOptions,
+} from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
 
@@ -52,7 +58,29 @@ app.get("/", async (_c) => {
 // This endpoint is required for ChatGPT and other OAuth 2.1 clients to discover
 // authorization servers and understand how to authenticate with this MCP server
 app.get("/.well-known/oauth-protected-resource", async (c) => {
+	// Validate Origin header to prevent DNS rebinding attacks
+	// Only return metadata to allowed, secure origins
+	const requestOrigin = c.req.header("Origin");
+	if (requestOrigin && !validateOrigin(requestOrigin)) {
+		return c.text("Forbidden: Invalid Origin", 403);
+	}
+
+	// Build origin from request URL and enforce HTTPS
 	const origin = new URL(c.req.url).origin;
+
+	// Reject non-HTTPS origins in production (allow HTTP only for localhost)
+	const url = new URL(origin);
+	if (url.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(url.hostname)) {
+		return c.text("Forbidden: HTTPS required", 403);
+	}
+
+	// Apply CORS headers using the same configuration as MCP routes
+	const corsOptions = getCorsOptions();
+	c.header("Access-Control-Allow-Origin", corsOptions.origin);
+	c.header("Access-Control-Allow-Methods", corsOptions.methods);
+	c.header("Access-Control-Allow-Headers", corsOptions.headers);
+	c.header("Access-Control-Expose-Headers", corsOptions.exposeHeaders);
+	c.header("Access-Control-Max-Age", corsOptions.maxAge.toString());
 
 	return c.json({
 		resource: origin,
