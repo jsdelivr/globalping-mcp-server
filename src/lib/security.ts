@@ -47,7 +47,7 @@ function getAllowedHostnames(): Set<string> {
  * @example
  * validateHost("mcp.globalping.io") // true
  * validateHost("localhost:3000") // true (port is stripped)
- * validateHost("[::1]:3000") // true (becomes ::1)
+ * validateHost("[::1]:3000") // true (becomes [::1])
  * validateHost("evil-attacker.com") // false
  * validateHost(null) // false
  */
@@ -56,21 +56,31 @@ export function validateHost(host: string | null): boolean {
 		return false;
 	}
 
-	// Normalize: handle IPv6 addresses with brackets, strip port, and convert to lowercase
-	let normalizedHost = host;
+	let normalizedHost: string;
 
-	// Remove surrounding square brackets for IPv6 addresses
-	if (normalizedHost.startsWith("[") && normalizedHost.includes("]")) {
-		normalizedHost = normalizedHost.substring(1, normalizedHost.indexOf("]"));
+	// Detect IPv6 addresses (start with '[')
+	if (host.startsWith("[")) {
+		// IPv6 address with brackets
+		const closeBracketIndex = host.indexOf("]");
+		if (closeBracketIndex === -1) {
+			// Malformed IPv6 - missing closing bracket
+			return false;
+		}
+
+		// Extract IPv6 address with brackets (e.g., "[::1]" from "[::1]:8080")
+		// Preserve the brackets as getAllowedHostnames returns IPv6 with brackets
+		normalizedHost = host.substring(0, closeBracketIndex + 1);
+	} else {
+		// Non-IPv6 hostname - strip port using lastIndexOf(":")
+		const colonIndex = host.lastIndexOf(":");
+		if (colonIndex !== -1) {
+			normalizedHost = host.substring(0, colonIndex);
+		} else {
+			normalizedHost = host;
+		}
 	}
 
-	// Split off port (handle case where there's no port)
-	const colonIndex = normalizedHost.lastIndexOf(":");
-	if (colonIndex !== -1) {
-		// Only split if the colon is not part of an IPv6 address (which would already have brackets removed)
-		normalizedHost = normalizedHost.substring(0, colonIndex);
-	}
-
+	// Normalize to lowercase
 	normalizedHost = normalizedHost.toLowerCase();
 
 	// Check against allowed hostnames
@@ -117,7 +127,8 @@ export function validateOrigin(origin: string | null): boolean {
 		const originUrl = new URL(origin);
 		const hostname = originUrl.hostname.toLowerCase();
 
-		// Only strip ports for localhost/127.0.0.1
+		// Only strip ports for localhost/127.0.0.1/[::1]
+		// Note: URL.hostname for http://[::1]:3000 is "[::1]" (with brackets)
 		if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
 			const baseOrigin = `${originUrl.protocol}//${hostname}`;
 			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
@@ -205,12 +216,12 @@ export function getMatchingOrigin(requestOrigin: string | null): string | null {
 		return requestOrigin;
 	}
 
-	// For localhost/127.0.0.1 with ports, return the base origin if it matches
+	// For localhost/127.0.0.1/[::1] with ports, return the base origin if it matches
 	try {
 		const originUrl = new URL(requestOrigin);
 		const hostname = originUrl.hostname.toLowerCase();
 
-		if (hostname === "localhost" || hostname === "127.0.0.1") {
+		if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
 			const baseOrigin = `${originUrl.protocol}//${hostname}`;
 			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
 				return baseOrigin;

@@ -234,6 +234,18 @@ describe("getMatchingOrigin", () => {
 		expect(getMatchingOrigin("https://127.0.0.1")).toBe("https://127.0.0.1");
 	});
 
+	it("should return exact match for IPv6 localhost with ports", () => {
+		expect(getMatchingOrigin("http://[::1]:3000")).toBe("http://[::1]");
+		expect(getMatchingOrigin("http://[::1]:8080")).toBe("http://[::1]");
+		expect(getMatchingOrigin("https://[::1]:8443")).toBe("https://[::1]");
+		expect(getMatchingOrigin("https://[::1]:3000")).toBe("https://[::1]");
+	});
+
+	it("should return base origin for IPv6 localhost without ports", () => {
+		expect(getMatchingOrigin("http://[::1]")).toBe("http://[::1]");
+		expect(getMatchingOrigin("https://[::1]")).toBe("https://[::1]");
+	});
+
 	it("should return null for invalid origins", () => {
 		expect(getMatchingOrigin("https://evil.com")).toBeNull();
 		expect(getMatchingOrigin("http://attacker.example.com")).toBeNull();
@@ -266,6 +278,49 @@ describe("getCorsOptionsForRequest", () => {
 
 		expect(corsOptions.origin).toBe("http://localhost");
 		expect(typeof corsOptions.origin).toBe("string");
+	});
+
+	it("should return single origin for IPv6 localhost requests", () => {
+		const mockRequestHttp = {
+			headers: {
+				get: (name: string) =>
+					name.toLowerCase() === "origin" ? "http://[::1]:3000" : null,
+			},
+		} as unknown as Request;
+
+		const corsOptionsHttp = getCorsOptionsForRequest(mockRequestHttp);
+
+		expect(corsOptionsHttp.origin).toBe("http://[::1]");
+		expect(typeof corsOptionsHttp.origin).toBe("string");
+
+		const mockRequestHttps = {
+			headers: {
+				get: (name: string) =>
+					name.toLowerCase() === "origin" ? "https://[::1]:8443" : null,
+			},
+		} as unknown as Request;
+
+		const corsOptionsHttps = getCorsOptionsForRequest(mockRequestHttps);
+
+		expect(corsOptionsHttps.origin).toBe("https://[::1]");
+		expect(typeof corsOptionsHttps.origin).toBe("string");
+	});
+
+	it("should normalize IPv6 localhost ports to base origin", () => {
+		// Test different ports all normalize to the same base origin
+		const ports = [3000, 8080, 8443, 5173];
+
+		for (const port of ports) {
+			const mockRequest = {
+				headers: {
+					get: (name: string) =>
+						name.toLowerCase() === "origin" ? `http://[::1]:${port}` : null,
+				},
+			} as unknown as Request;
+
+			const corsOptions = getCorsOptionsForRequest(mockRequest);
+			expect(corsOptions.origin).toBe("http://[::1]");
+		}
 	});
 
 	it("should return wildcard for requests without Origin header", () => {
@@ -344,6 +399,32 @@ describe("validateHost", () => {
 			expect(validateHost("localhost:9999")).toBe(true);
 			expect(validateHost("127.0.0.1:65535")).toBe(true);
 		});
+
+		it("should accept IPv6 localhost without port", () => {
+			expect(validateHost("[::1]")).toBe(true);
+		});
+
+		it("should accept IPv6 localhost with port numbers", () => {
+			expect(validateHost("[::1]:3000")).toBe(true);
+			expect(validateHost("[::1]:8080")).toBe(true);
+			expect(validateHost("[::1]:8787")).toBe(true);
+			expect(validateHost("[::1]:8443")).toBe(true);
+		});
+
+		it("should strip port from IPv6 addresses", () => {
+			// IPv6 with various ports should all normalize to [::1]
+			expect(validateHost("[::1]:9999")).toBe(true);
+			expect(validateHost("[::1]:65535")).toBe(true);
+			expect(validateHost("[::1]:80")).toBe(true);
+			expect(validateHost("[::1]:443")).toBe(true);
+		});
+
+		it("should handle IPv6 in various formats", () => {
+			// Test that [::1] is properly recognized and validated
+			expect(validateHost("[::1]")).toBe(true);
+			// With scheme-like prefix (though Host header shouldn't have this, test robustness)
+			expect(validateHost("[::1]:8080")).toBe(true);
+		});
 	});
 
 	describe("invalid hosts", () => {
@@ -365,6 +446,23 @@ describe("validateHost", () => {
 			expect(validateHost("192.168.1.1")).toBe(false);
 			expect(validateHost("10.0.0.1")).toBe(false);
 			expect(validateHost("172.16.0.1")).toBe(false);
+		});
+
+		it("should reject non-localhost IPv6 addresses", () => {
+			// Only [::1] should be accepted, other IPv6 addresses should be rejected
+			expect(validateHost("[2001:db8::1]")).toBe(false);
+			expect(validateHost("[fe80::1]")).toBe(false);
+			expect(validateHost("[::ffff:192.0.2.1]")).toBe(false);
+			expect(validateHost("[2001:db8::1]:8080")).toBe(false);
+		});
+
+		it("should reject malformed IPv6 addresses", () => {
+			// Missing brackets, incomplete addresses, etc.
+			expect(validateHost("::1")).toBe(false);
+			expect(validateHost("::1:8080")).toBe(false);
+			expect(validateHost("[::1")).toBe(false);
+			expect(validateHost("::1]")).toBe(false);
+			expect(validateHost("[:1]")).toBe(false);
 		});
 
 		it("should reject subdomain attacks", () => {
