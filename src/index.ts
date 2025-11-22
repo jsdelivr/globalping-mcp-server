@@ -16,6 +16,14 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 		version: MCP_CONFIG.VERSION,
 		icons: MCP_CONFIG.ICONS,
 		websiteUrl: MCP_CONFIG.WEBSITE_URL,
+		capabilities: {
+			tools: {
+				listChanged: true,
+			},
+			resources: {},
+			prompts: {},
+			logging: {},
+		},
 	});
 
 	// Initialize the state

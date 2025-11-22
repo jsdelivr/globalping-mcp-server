@@ -8,6 +8,28 @@ import type { GlobalpingMCP } from "../index";
 import { maskToken } from "../auth";
 
 /**
+ * Helper to wrap tool execution with error handling
+ */
+async function handleToolExecution(
+	operation: () => Promise<any>,
+	errorMessagePrefix: string
+) {
+	try {
+		return await operation();
+	} catch (error: any) {
+		return {
+			content: [
+				{
+					type: "text",
+					text: `${errorMessagePrefix}: ${error.message || String(error)}`,
+				},
+			],
+			isError: true,
+		};
+	}
+}
+
+/**
  * Register all Globalping tools on the MCP server
  * @param agent The GlobalpingMCP instance
  * @param getToken Function to retrieve the current auth token
@@ -51,51 +73,53 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async ({ target, locations, limit, packets }) => {
-			const token = getToken();
-			const parsedLocations = parseLocations(locations);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
-				agent,
-				{
-					type: "ping",
-					target,
-					locations: parsedLocations,
-					limit: limit || 3,
-					measurementOptions: {
-						packets: packets || 3,
-					},
-				},
-				token,
-			);
-
-			// Cache the measurement
-			agent.state.measurements[result.id] = result;
-			agent.state.lastMeasurementId = result.id;
-
-			const summary = formatMeasurementSummary(result);
-
-			const output = {
-				measurementId: result.id,
-				type: result.type,
-				status: result.status,
-				target: result.target,
-				probesCount: result.probesCount,
-				results: result.results,
-			};
-
-			return {
-				content: [
+				const result = await runMeasurement(
+					agent,
 					{
-						type: "text",
-						text: summary,
+						type: "ping",
+						target,
+						locations: parsedLocations,
+						limit: limit || 3,
+						measurementOptions: {
+							packets: packets || 3,
+						},
 					},
-					{
-						type: "text",
-						text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
-					},
-				],
-				structuredContent: output,
-			};
+					token,
+				);
+
+				// Cache the measurement
+				agent.state.measurements[result.id] = result;
+				agent.state.lastMeasurementId = result.id;
+
+				const summary = formatMeasurementSummary(result);
+
+				const output = {
+					measurementId: result.id,
+					type: result.type,
+					status: result.status,
+					target: result.target,
+					probesCount: result.probesCount,
+					results: result.results,
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: summary,
+						},
+						{
+							type: "text",
+							text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "Ping test failed");
 		},
 	);
 
@@ -141,51 +165,53 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async ({ target, locations, limit, protocol, port }) => {
-			const token = getToken();
-			const parsedLocations = parseLocations(locations);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
-				agent,
-				{
-					type: "traceroute",
-					target,
-					locations: parsedLocations,
-					limit: limit || 3,
-					measurementOptions: {
-						protocol: protocol as any,
-						port: port || 80,
-					},
-				},
-				token,
-			);
-
-			agent.state.measurements[result.id] = result;
-			agent.state.lastMeasurementId = result.id;
-
-			const summary = formatMeasurementSummary(result);
-
-			const output = {
-				measurementId: result.id,
-				type: result.type,
-				status: result.status,
-				target: result.target,
-				probesCount: result.probesCount,
-				results: result.results,
-			};
-
-			return {
-				content: [
+				const result = await runMeasurement(
+					agent,
 					{
-						type: "text",
-						text: summary,
+						type: "traceroute",
+						target,
+						locations: parsedLocations,
+						limit: limit || 3,
+						measurementOptions: {
+							protocol: protocol as any,
+							port: port || 80,
+						},
 					},
-					{
-						type: "text",
-						text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
-					},
-				],
-				structuredContent: output,
-			};
+					token,
+				);
+
+				agent.state.measurements[result.id] = result;
+				agent.state.lastMeasurementId = result.id;
+
+				const summary = formatMeasurementSummary(result);
+
+				const output = {
+					measurementId: result.id,
+					type: result.type,
+					status: result.status,
+					target: result.target,
+					probesCount: result.probesCount,
+					results: result.results,
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: summary,
+						},
+						{
+							type: "text",
+							text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "Traceroute test failed");
 		},
 	);
 
@@ -253,54 +279,56 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async ({ target, locations, limit, queryType, resolver, trace }) => {
-			const token = getToken();
-			const parsedLocations = parseLocations(locations);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
-				agent,
-				{
-					type: "dns",
-					target,
-					locations: parsedLocations,
-					limit: limit || 3,
-					measurementOptions: {
-						query: {
-							type: queryType || "A",
+				const result = await runMeasurement(
+					agent,
+					{
+						type: "dns",
+						target,
+						locations: parsedLocations,
+						limit: limit || 3,
+						measurementOptions: {
+							query: {
+								type: queryType || "A",
+							},
+							resolver,
+							trace: trace || false,
 						},
-						resolver,
-						trace: trace || false,
 					},
-				},
-				token,
-			);
+					token,
+				);
 
-			agent.state.measurements[result.id] = result;
-			agent.state.lastMeasurementId = result.id;
+				agent.state.measurements[result.id] = result;
+				agent.state.lastMeasurementId = result.id;
 
-			const summary = formatMeasurementSummary(result);
+				const summary = formatMeasurementSummary(result);
 
-			const output = {
-				measurementId: result.id,
-				type: result.type,
-				status: result.status,
-				target: result.target,
-				probesCount: result.probesCount,
-				results: result.results,
-			};
+				const output = {
+					measurementId: result.id,
+					type: result.type,
+					status: result.status,
+					target: result.target,
+					probesCount: result.probesCount,
+					results: result.results,
+				};
 
-			return {
-				content: [
-					{
-						type: "text",
-						text: summary,
-					},
-					{
-						type: "text",
-						text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
-					},
-				],
-				structuredContent: output,
-			};
+				return {
+					content: [
+						{
+							type: "text",
+							text: summary,
+						},
+						{
+							type: "text",
+							text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "DNS lookup failed");
 		},
 	);
 
@@ -350,52 +378,54 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async ({ target, locations, limit, protocol, port, packets }) => {
-			const token = getToken();
-			const parsedLocations = parseLocations(locations);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const parsedLocations = parseLocations(locations);
 
-			const result = await runMeasurement(
-				agent,
-				{
-					type: "mtr",
-					target,
-					locations: parsedLocations,
-					limit: limit || 3,
-					measurementOptions: {
-						protocol: protocol as any,
-						port: port || 80,
-						packets: packets || 3,
-					},
-				},
-				token,
-			);
-
-			agent.state.measurements[result.id] = result;
-			agent.state.lastMeasurementId = result.id;
-
-			const summary = formatMeasurementSummary(result);
-
-			const output = {
-				measurementId: result.id,
-				type: result.type,
-				status: result.status,
-				target: result.target,
-				probesCount: result.probesCount,
-				results: result.results,
-			};
-
-			return {
-				content: [
+				const result = await runMeasurement(
+					agent,
 					{
-						type: "text",
-						text: summary,
+						type: "mtr",
+						target,
+						locations: parsedLocations,
+						limit: limit || 3,
+						measurementOptions: {
+							protocol: protocol as any,
+							port: port || 80,
+							packets: packets || 3,
+						},
 					},
-					{
-						type: "text",
-						text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
-					},
-				],
-				structuredContent: output,
-			};
+					token,
+				);
+
+				agent.state.measurements[result.id] = result;
+				agent.state.lastMeasurementId = result.id;
+
+				const summary = formatMeasurementSummary(result);
+
+				const output = {
+					measurementId: result.id,
+					type: result.type,
+					status: result.status,
+					target: result.target,
+					probesCount: result.probesCount,
+					results: result.results,
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: summary,
+						},
+						{
+							type: "text",
+							text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "MTR test failed");
 		},
 	);
 
@@ -454,58 +484,60 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async ({ target, locations, limit, method, protocol, path, query, port }) => {
-			const token = getToken();
-			const parsedLocations = parseLocations(locations);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const parsedLocations = parseLocations(locations);
 
-			protocol = protocol ?? "HTTPS";
+				protocol = protocol ?? "HTTPS";
 
-			const result = await runMeasurement(
-				agent,
-				{
-					type: "http",
-					target,
-					locations: parsedLocations,
-					limit: limit || 3,
-					measurementOptions: {
-						request: {
-							method: method || "GET",
-							path,
-							query,
+				const result = await runMeasurement(
+					agent,
+					{
+						type: "http",
+						target,
+						locations: parsedLocations,
+						limit: limit || 3,
+						measurementOptions: {
+							request: {
+								method: method || "GET",
+								path,
+								query,
+							},
+							protocol: protocol,
+							port: port || (protocol === "HTTPS" ? 443 : 80),
 						},
-						protocol: protocol,
-						port: port || (protocol === "HTTPS" ? 443 : 80),
 					},
-				},
-				token,
-			);
+					token,
+				);
 
-			agent.state.measurements[result.id] = result;
-			agent.state.lastMeasurementId = result.id;
+				agent.state.measurements[result.id] = result;
+				agent.state.lastMeasurementId = result.id;
 
-			const summary = formatMeasurementSummary(result);
+				const summary = formatMeasurementSummary(result);
 
-			const output = {
-				measurementId: result.id,
-				type: result.type,
-				status: result.status,
-				target: result.target,
-				probesCount: result.probesCount,
-				results: result.results,
-			};
+				const output = {
+					measurementId: result.id,
+					type: result.type,
+					status: result.status,
+					target: result.target,
+					probesCount: result.probesCount,
+					results: result.results,
+				};
 
-			return {
-				content: [
-					{
-						type: "text",
-						text: summary,
-					},
-					{
-						type: "text",
-						text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
-					},
-				],
-				structuredContent: output,
-			};
+				return {
+					content: [
+						{
+							type: "text",
+							text: summary,
+						},
+						{
+							type: "text",
+							text: `Raw data is available by calling getMeasurement with ID: ${result.id}`,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "HTTP request failed");
 		},
 	);
 
@@ -536,71 +568,73 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async () => {
-			const token = getToken();
-			const probes = await getLocations(agent, token);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const probes = await getLocations(agent, token);
 
-			// Group probes by continent and country
-			const grouped: Record<string, Record<string, any[]>> = {};
+				// Group probes by continent and country
+				const grouped: Record<string, Record<string, any[]>> = {};
 
-			for (const probe of probes) {
-				const continent = probe.location.continent;
-				const country = probe.location.country;
+				for (const probe of probes) {
+					const continent = probe.location.continent;
+					const country = probe.location.country;
 
-				if (!grouped[continent]) {
-					grouped[continent] = {};
+					if (!grouped[continent]) {
+						grouped[continent] = {};
+					}
+
+					if (!grouped[continent][country]) {
+						grouped[continent][country] = [];
+					}
+
+					grouped[continent][country].push(probe);
 				}
 
-				if (!grouped[continent][country]) {
-					grouped[continent][country] = [];
-				}
+				// Format the output
+				let textOutput = "Available Globalping Probe Locations:\n\n";
 
-				grouped[continent][country].push(probe);
-			}
+				const continents = [];
+				for (const [continent, countries] of Object.entries(grouped)) {
+					textOutput += `${continent}:\n`;
 
-			// Format the output
-			let textOutput = "Available Globalping Probe Locations:\n\n";
+					const countryList = [];
+					for (const [country, probes] of Object.entries(countries)) {
+						const cities = [...new Set(probes.map((p) => p.location.city))];
+						textOutput += `  ${country}: ${cities.join(", ")}\n`;
+						countryList.push({
+							name: country,
+							cities: cities,
+						});
+					}
 
-			const continents = [];
-			for (const [continent, countries] of Object.entries(grouped)) {
-				textOutput += `${continent}:\n`;
-
-				const countryList = [];
-				for (const [country, probes] of Object.entries(countries)) {
-					const cities = [...new Set(probes.map((p) => p.location.city))];
-					textOutput += `  ${country}: ${cities.join(", ")}\n`;
-					countryList.push({
-						name: country,
-						cities: cities,
+					continents.push({
+						name: continent,
+						countries: countryList,
 					});
+
+					textOutput += "\n";
 				}
 
-				continents.push({
-					name: continent,
-					countries: countryList,
-				});
+				textOutput += `\nTotal Probes: ${probes.length}\n`;
+				textOutput +=
+					'\nNote: To specify locations, use the "magic" field syntax in the locations parameter. ';
+				textOutput += 'For example: ["US", "Europe", "AS13335", "London+UK"]\n';
 
-				textOutput += "\n";
-			}
+				const output = {
+					totalProbes: probes.length,
+					continents: continents,
+				};
 
-			textOutput += `\nTotal Probes: ${probes.length}\n`;
-			textOutput +=
-				'\nNote: To specify locations, use the "magic" field syntax in the locations parameter. ';
-			textOutput += 'For example: ["US", "Europe", "AS13335", "London+UK"]\n';
-
-			const output = {
-				totalProbes: probes.length,
-				continents: continents,
-			};
-
-			return {
-				content: [
-					{
-						type: "text",
-						text: textOutput,
-					},
-				],
-				structuredContent: output,
-			};
+				return {
+					content: [
+						{
+							type: "text",
+							text: textOutput,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "Failed to list locations");
 		},
 	);
 
@@ -631,60 +665,62 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async () => {
-			const token = getToken();
-			const limits = await getRateLimits(agent, token);
+			return handleToolExecution(async () => {
+				const token = getToken();
+				const limits = await getRateLimits(agent, token);
 
-			let textOutput = "Globalping Rate Limits:\n\n";
+				let textOutput = "Globalping Rate Limits:\n\n";
 
-			// Add authentication status to the output
-			textOutput += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
+				// Add authentication status to the output
+				textOutput += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
 
-			// Only show first few characters of token for security if present
-			if (token) {
-				textOutput += `Token: ${maskToken(token)}\n`;
-			} else {
-				textOutput += "Token: None\n";
-			}
+				// Only show first few characters of token for security if present
+				if (token) {
+					textOutput += `Token: ${maskToken(token)}\n`;
+				} else {
+					textOutput += "Token: None\n";
+				}
 
-			// Add the raw API response to the output
-			textOutput += `\nAPI Response:\n${JSON.stringify(limits, null, 2)}\n\n`;
+				// Add the raw API response to the output
+				textOutput += `\nAPI Response:\n${JSON.stringify(limits, null, 2)}\n\n`;
 
-			// Format parsed data
-			const rateLimit = limits.rateLimit.measurements.create;
+				// Format parsed data
+				const rateLimit = limits.rateLimit.measurements.create;
 
-			textOutput += `Type: ${rateLimit.type}\n`;
-			textOutput += `Limit: ${rateLimit.limit} measurements\n`;
-			textOutput += `Remaining: ${rateLimit.remaining} measurements\n`;
-			textOutput += `Reset: in ${rateLimit.reset} seconds\n\n`;
+				textOutput += `Type: ${rateLimit.type}\n`;
+				textOutput += `Limit: ${rateLimit.limit} measurements\n`;
+				textOutput += `Remaining: ${rateLimit.remaining} measurements\n`;
+				textOutput += `Reset: in ${rateLimit.reset} seconds\n\n`;
 
-			if (limits.credits) {
-				textOutput += `Credits Remaining: ${limits.credits.remaining}\n`;
-			}
+				if (limits.credits) {
+					textOutput += `Credits Remaining: ${limits.credits.remaining}\n`;
+				}
 
-			const output = {
-				authenticated: agent.getIsAuthenticated(),
-				rateLimit: {
-					type: rateLimit.type,
-					limit: rateLimit.limit,
-					remaining: rateLimit.remaining,
-					reset: rateLimit.reset,
-				},
-				credits: limits.credits
-					? {
-							remaining: limits.credits.remaining,
-						}
-					: undefined,
-			};
-
-			return {
-				content: [
-					{
-						type: "text",
-						text: textOutput,
+				const output = {
+					authenticated: agent.getIsAuthenticated(),
+					rateLimit: {
+						type: rateLimit.type,
+						limit: rateLimit.limit,
+						remaining: rateLimit.remaining,
+						reset: rateLimit.reset,
 					},
-				],
-				structuredContent: output,
-			};
+					credits: limits.credits
+						? {
+								remaining: limits.credits.remaining,
+							}
+						: undefined,
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: textOutput,
+						},
+					],
+					structuredContent: output,
+				};
+			}, "Failed to check rate limits");
 		},
 	);
 }
