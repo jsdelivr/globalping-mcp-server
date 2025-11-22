@@ -229,6 +229,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
+				target: z.string().describe("Domain name to resolve (e.g., 'google.com')"),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -347,6 +348,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
+				target: z
+					.string()
+					.describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
