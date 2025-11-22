@@ -350,7 +350,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			inputSchema: {
 				target: z
 					.string()
-					.describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
+					.min(1)
+					.describe("Destination hostname or IP to run the MTR against"),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -556,7 +557,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "List Probe Locations",
 			description:
-				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simplify provide the location you need to the tools above, the field is smart and will auto select the right probes.",
+				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simply provide the location you need to the tools above, the field is smart and will auto select the right probes.",
 			annotations: {
 				readOnlyHint: true,
 			},

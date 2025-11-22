@@ -67,6 +67,15 @@ export function validateHost(host: string | null): boolean {
 			return false;
 		}
 
+		// Validate suffix after closing bracket
+		const suffix = host.substring(closeBracketIndex + 1);
+		if (suffix !== "") {
+			// If there's a suffix, it must be :port (colon followed by digits)
+			if (!/^:\d+$/.test(suffix)) {
+				return false;
+			}
+		}
+
 		// Extract IPv6 address with brackets (e.g., "[::1]" from "[::1]:8080")
 		// Preserve the brackets as getAllowedHostnames returns IPv6 with brackets
 		normalizedHost = host.substring(0, closeBracketIndex + 1);

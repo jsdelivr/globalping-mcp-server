@@ -51,10 +51,12 @@ app.get("/", async (_c) => {
 
 // Serve Gemini extension manifest
 app.get("/gemini-extension.json", (c) => {
+	c.header("Cache-Control", "public, max-age=3600");
 	return c.json(geminiExtension);
 });
 
 app.get("/.well-known/gemini-extension.json", (c) => {
+	c.header("Cache-Control", "public, max-age=3600");
 	return c.json(geminiExtension);
 });
 
