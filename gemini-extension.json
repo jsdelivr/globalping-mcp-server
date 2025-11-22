@@ -2,6 +2,7 @@
 	"name": "globalping",
 	"version": "1.0.0",
 	"description": "Interact with a global network of probes and run network measurements, benchmarks and tests.",
+	"instructions": "You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.\n\nKey guidelines:\n- Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').\n- Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.\n- Use 'compareLocations' to understand how to benchmark performance.\n- If a user asks for 'latency' or 'reachability', use 'ping'.\n- If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.\n- If a user asks about 'website availability', use 'http'.\n- If a user asks about 'dns propagation', use 'dns'.",
 	"mcpServers": {
 		"globalping-mcp": {
 			"httpUrl": "https://mcp.globalping.dev/mcp",

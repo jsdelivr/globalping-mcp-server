@@ -46,6 +46,17 @@ You can integrate our Globalping MCP server with various AI tools that support t
 
 Here are instructions for the top 3 most popular tools:
 
+#### Gemini CLI
+
+To add the Globalping MCP server to Gemini CLI:
+
+1. Ensure you have the [Gemini CLI](https://github.com/google/gemini-cli) installed.
+2. Run the following command:
+
+```bash
+gemini extensions install https://github.com/jsdelivr/globalping-mcp-server
+```
+
 #### Claude Desktop App
 
 Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):

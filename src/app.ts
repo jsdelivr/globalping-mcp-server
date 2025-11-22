@@ -7,6 +7,7 @@ import { layout, manualRedirectPage } from "./ui";
 import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
+import geminiExtension from "../gemini-extension.json";
 
 // Globalping OAuth configuration
 const GLOBALPING_AUTH_URL = "https://auth.globalping.io/oauth/authorize";
@@ -46,6 +47,15 @@ async function getUserData(accessToken: string): Promise<any> {
 // Root route - redirect to repository
 app.get("/", async (_c) => {
 	return Response.redirect(GLOBALPING_REPOSITORY_URL);
+});
+
+// Serve Gemini extension manifest
+app.get("/gemini-extension.json", (c) => {
+	return c.json(geminiExtension);
+});
+
+app.get("/.well-known/gemini-extension.json", (c) => {
+	return c.json(geminiExtension);
 });
 
 // Authorization endpoint

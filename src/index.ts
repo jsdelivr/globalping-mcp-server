@@ -16,6 +16,16 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 		version: MCP_CONFIG.VERSION,
 		icons: MCP_CONFIG.ICONS,
 		websiteUrl: MCP_CONFIG.WEBSITE_URL,
+		instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
+
+Key guidelines:
+- Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
+- Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.
+- Use 'compareLocations' to understand how to benchmark performance.
+- If a user asks for 'latency' or 'reachability', use 'ping'.
+- If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
+- If a user asks about 'website availability', use 'http'.
+- If a user asks about 'dns propagation', use 'dns'.`,
 		capabilities: {
 			tools: {
 				listChanged: true,
@@ -237,6 +247,7 @@ Available Tools:
 
 Location Formats:
 When specifying locations, use the magic field format in an array. Examples:
+- Global diversity: ["world"] (increase 'limit' for more locations)
 - Continents: ["EU", "NA", "AS"]
 - Countries: ["US", "DE", "JP"]
 - Cities: ["London", "Tokyo", "New York"]

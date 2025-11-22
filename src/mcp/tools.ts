@@ -53,7 +53,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -141,14 +141,17 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
 					.min(1)
 					.max(100)
 					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
+					.describe(
+						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+					),
+
 				protocol: z
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
@@ -226,19 +229,20 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z.string().describe("Domain name to resolve (e.g., 'example.com')"),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
 					.min(1)
 					.max(100)
 					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
+					.describe(
+						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+					),
 				queryType: z
 					.enum([
 						"A",
@@ -343,21 +347,20 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z
-					.string()
-					.describe("Domain name or IP to test (e.g., 'google.com', '8.8.8.8')"),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
 					.min(1)
 					.max(100)
 					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
+					.describe(
+						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+					),
 				protocol: z
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
@@ -445,14 +448,16 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
 					.min(1)
 					.max(100)
 					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
+					.describe(
+						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+					),
 				method: z
 					.enum(["GET", "HEAD", "OPTIONS"])
 					.optional()
