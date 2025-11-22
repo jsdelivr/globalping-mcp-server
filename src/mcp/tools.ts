@@ -41,7 +41,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Ping Test",
 			description:
-				"Perform a ping test to a target from various global locations to measure network latency and packet loss",
+				"Measure network latency, packet loss, and reachability to a target (domain or IP) from globally distributed probes. Use this tool to check if a server is online, debug connection issues, or assess global performance.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -53,7 +53,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']. You can also use a previous measurement ID to compare results with the same probes.",
+						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -129,7 +129,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Traceroute Test",
 			description:
-				"Perform a traceroute test to map the network path to a target and identify routing issues",
+				"Trace the network path to a target (domain or IP) from global locations. Use this tool to identify where packets are being dropped, analyze routing paths, or pinpoint latency sources in the network.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -141,7 +141,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']",
+						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -221,7 +221,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "DNS Lookup",
 			description:
-				"Perform a DNS lookup for a domain to resolve DNS records and troubleshoot DNS issues from global locations",
+				"Resolve DNS records (A, AAAA, MX, etc.) for a domain from global locations. Use this tool to verify DNS propagation, troubleshoot resolution failures, or check if users in different regions are seeing the correct records.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -231,7 +231,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']",
+						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -338,7 +338,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "MTR Test",
 			description:
-				"Perform an MTR (My Traceroute) test combining ping and traceroute functionality for comprehensive network diagnostics",
+				"Run an MTR (My Traceroute) diagnostic, which combines Ping and Traceroute. Use this tool to analyze packet loss and latency trends at every hop in the network path over time, helpful for spotting intermittent issues.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -350,7 +350,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']",
+						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -435,7 +435,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "HTTP Request",
 			description:
-				"Perform an HTTP request to a URL from global locations to test web server availability and performance",
+				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -445,7 +445,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.union([z.array(z.string()), z.string()])
 					.optional()
 					.describe(
-						"Specific locations to run the test from using the magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK']",
+						"Specific locations to run the test from using the Globalping magic field syntax. Examples: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
 					),
 				limit: z
 					.number()
@@ -547,7 +547,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "List Probe Locations",
 			description:
-				"List all available Globalping probe locations grouped by continent and country to help select test locations",
+				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simplify provide the location you need to the tools above, the field is smart and will auto select the right probes.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -644,7 +644,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Check Rate Limits",
 			description:
-				"Show your current rate limits for the Globalping API including remaining measurements and credits",
+				"Check current API rate limits and remaining credits. Use this tool to monitor your usage quota and verify if you can perform additional measurements.",
 			annotations: {
 				readOnlyHint: true,
 			},

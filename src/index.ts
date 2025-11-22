@@ -52,7 +52,7 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 			{
 				title: "Get Previous Measurement",
 				description:
-					"Use this when you need to retrieve a previously run measurement by its ID",
+					"Retrieve the full details of a past measurement using its ID. Use this tool to access raw JSON data, individual probe results, or cached measurements when the initial summary is insufficient.",
 				annotations: {
 					readOnlyHint: true,
 				},
@@ -99,7 +99,7 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 			{
 				title: "Compare Locations Guide",
 				description:
-					"Use this when you need guidance on running comparison measurements using the same probes across different targets",
+					"Get a guide on how to run comparison tests using the exact same probes as a previous measurement. Use this tool when you need to benchmark different targets from the same vantage points.",
 				annotations: {
 					readOnlyHint: true,
 				},
@@ -119,7 +119,7 @@ When you need to compare network measurements across different locations or betw
 To use the same probes as a previous measurement:
 
 1. First, run a measurement to establish your baseline, for example:
-   \`ping target="google.com" locations=["US+Cloudflare"]\`
+   \`ping target="google.com" locations=["US+eyeball"]\`
 
 2. When the measurement completes, note the measurement ID (shown in the results)
 
@@ -159,7 +159,7 @@ This approach allows for direct side-by-side comparisons of different targets us
 			{
 				title: "Globalping MCP Help",
 				description:
-					"Use this when you need help information about the Globalping MCP server and its available tools",
+					"Get a comprehensive guide to the Globalping MCP server. Use this tool to learn about available tools, understand location formatting (magic fields), or see example usage patterns.",
 				annotations: {
 					readOnlyHint: true,
 				},
@@ -261,7 +261,7 @@ For more information, visit: https://www.globalping.io
 			{
 				title: "Authentication Status",
 				description:
-					"Use this when you need to check if the user is authenticated with Globalping",
+					"Check the current authentication status. Use this tool to verify if the user is logged in and has a valid token for executing measurements.",
 				annotations: {
 					readOnlyHint: true,
 				},
