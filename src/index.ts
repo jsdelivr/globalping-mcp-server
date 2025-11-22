@@ -22,6 +22,7 @@ Key guidelines:
 - Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
 - Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.
 - Use 'compareLocations' to understand how to benchmark performance.
+- Authentication: You can authenticate via OAuth (prompted automatically) or by providing a Globalping API token in the 'Authorization' header (Bearer <token>) for higher rate limits.
 - If a user asks for 'latency' or 'reachability', use 'ping'.
 - If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
 - If a user asks about 'website availability', use 'http'.
