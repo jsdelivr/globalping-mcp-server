@@ -160,6 +160,7 @@ const makeMCPRequest = async (mcpRequest: any, token?: string, sessionId?: strin
 	return await SELF.fetch("http://localhost/mcp", {
 		method: "POST",
 		headers: {
+			Host: "localhost",
 			"Content-Type": "application/json",
 			Accept: "application/json, text/event-stream",
 			...(sessionId && { "Mcp-Session-Id": sessionId }),
@@ -236,6 +237,7 @@ describe("MCP Tools Integration", () => {
 		const initResponse = await SELF.fetch("http://localhost/mcp", {
 			method: "POST",
 			headers: {
+				Host: "localhost",
 				"Content-Type": "application/json",
 				Accept: "application/json, text/event-stream",
 				Authorization: `Bearer ${validToken}`,
@@ -265,6 +267,7 @@ describe("MCP Tools Integration", () => {
 		await SELF.fetch("http://localhost/mcp", {
 			method: "POST",
 			headers: {
+				Host: "localhost",
 				"Content-Type": "application/json",
 				Accept: "application/json, text/event-stream",
 				Authorization: `Bearer ${validToken}`,

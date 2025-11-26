@@ -46,6 +46,25 @@ You can integrate our Globalping MCP server with various AI tools that support t
 
 Here are instructions for the top 3 most popular tools:
 
+#### Gemini CLI
+
+To add the Globalping MCP server to Gemini CLI:
+
+1. Ensure you have the [Gemini CLI](https://github.com/google/gemini-cli) installed.
+2. Run the following command:
+
+```bash
+gemini extensions install https://github.com/jsdelivr/globalping-mcp-server
+```
+
+This will automatically configure the server with OAuth authentication enabled. You will be prompted to log in when you first use the extension.
+
+**Note:** If you prefer to use a Globalping API token (for higher rate limits or automation), you can manually add the server with the Authorization header instead of using the extension installer:
+
+```bash
+gemini mcp add globalping https://mcp.globalping.dev/mcp --header "Authorization: Bearer YOUR_TOKEN"
+```
+
 #### Claude Desktop App
 
 Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):

@@ -8,6 +8,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./mcp";
 import { sanitizeToken } from "./auth";
+import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
@@ -15,6 +16,25 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 		version: MCP_CONFIG.VERSION,
 		icons: MCP_CONFIG.ICONS,
 		websiteUrl: MCP_CONFIG.WEBSITE_URL,
+		instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
+
+Key guidelines:
+- Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
+- Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.
+- Use 'compareLocations' to understand how to benchmark performance.
+- Authentication: You can authenticate via OAuth (prompted automatically) or by providing a Globalping API token in the 'Authorization' header (Bearer <token>) for higher rate limits.
+- If a user asks for 'latency' or 'reachability', use 'ping'.
+- If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
+- If a user asks about 'website availability', use 'http'.
+- If a user asks about 'dns propagation', use 'dns'.`,
+		capabilities: {
+			tools: {
+				listChanged: true,
+			},
+			resources: {},
+			prompts: {},
+			logging: {},
+		},
 	});
 
 	// Initialize the state
@@ -38,14 +58,25 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 		});
 
 		// Tool to retrieve previous measurement by ID
-		this.server.tool(
+		this.server.registerTool(
 			"getMeasurement",
 			{
-				id: z
-					.string()
-					.describe(
-						"The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')",
-					),
+				title: "Get Previous Measurement",
+				description:
+					"Retrieve the full details of a past measurement using its ID. Use this tool to access raw JSON data, individual probe results, or cached measurements when the initial summary is insufficient.",
+				annotations: {
+					readOnlyHint: true,
+				},
+				inputSchema: {
+					id: z
+						.string()
+						.describe(
+							"The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')",
+						),
+				},
+				outputSchema: {
+					measurement: z.object({}),
+				},
 			},
 			async ({ id }) => {
 				// Check if we have this measurement cached in state
@@ -58,6 +89,7 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 								text: `Cached measurement found:\n\n${JSON.stringify(measurement, null, 2)}`,
 							},
 						],
+						structuredContent: { measurement },
 					};
 				}
 
@@ -73,8 +105,22 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 		);
 
 		// Tool to explain comparison measurements
-		this.server.tool("compareLocations", {}, async () => {
-			const helpText = `
+		this.server.registerTool(
+			"compareLocations",
+			{
+				title: "Compare Locations Guide",
+				description:
+					"Get a guide on how to run comparison tests using the exact same probes as a previous measurement. Use this tool when you need to benchmark different targets from the same vantage points.",
+				annotations: {
+					readOnlyHint: true,
+				},
+				inputSchema: {},
+				outputSchema: {
+					guide: z.string(),
+				},
+			},
+			async () => {
+				const helpText = `
 Globalping Comparison Measurements Guide
 
 When you need to compare network measurements across different locations or between different targets, you can use measurement IDs to ensure the same probes are used.
@@ -84,7 +130,7 @@ When you need to compare network measurements across different locations or betw
 To use the same probes as a previous measurement:
 
 1. First, run a measurement to establish your baseline, for example:
-   \`ping target="google.com" locations=["US+Cloudflare"]\`
+   \`ping target="google.com" locations=["US+eyeball"]\`
 
 2. When the measurement completes, note the measurement ID (shown in the results)
 
@@ -111,14 +157,30 @@ This ensures the exact same probes are used for both measurements, allowing for 
 This approach allows for direct side-by-side comparisons of different targets using the exact same network vantage points.
 `;
 
-			return {
-				content: [{ type: "text", text: helpText }],
-			};
-		});
+				return {
+					content: [{ type: "text", text: helpText }],
+					structuredContent: { guide: helpText },
+				};
+			},
+		);
 
 		// Tool to get help about the available tools
-		this.server.tool("help", {}, async () => {
-			const helpText = `
+		this.server.registerTool(
+			"help",
+			{
+				title: "Globalping MCP Help",
+				description:
+					"Get a comprehensive guide to the Globalping MCP server. Use this tool to learn about available tools, understand location formatting (magic fields), or see example usage patterns.",
+				annotations: {
+					readOnlyHint: true,
+				},
+				inputSchema: {},
+				outputSchema: {
+					helpText: z.string(),
+				},
+			},
+			async () => {
+				const helpText = `
 Globalping MCP Server Help
 
 This MCP server provides access to the Globalping API, which allows you to monitor, debug, and benchmark internet infrastructure using a globally distributed network of probes.
@@ -186,6 +248,7 @@ Available Tools:
 
 Location Formats:
 When specifying locations, use the magic field format in an array. Examples:
+- Global diversity: ["world"] (increase 'limit' for more locations)
 - Continents: ["EU", "NA", "AS"]
 - Countries: ["US", "DE", "JP"]
 - Cities: ["London", "Tokyo", "New York"]
@@ -197,31 +260,57 @@ When specifying locations, use the magic field format in an array. Examples:
 For more information, visit: https://www.globalping.io
 `;
 
-			return {
-				content: [{ type: "text", text: helpText }],
-			};
-		});
+				return {
+					content: [{ type: "text", text: helpText }],
+					structuredContent: { helpText },
+				};
+			},
+		);
 
 		// Tool to check authentication status
-		this.server.tool("authStatus", {}, async () => {
-			let status = "Not authenticated";
-			let message =
-				"You are not authenticated with Globalping. Use the /login route to authenticate.";
+		this.server.registerTool(
+			"authStatus",
+			{
+				title: "Authentication Status",
+				description:
+					"Check the current authentication status. Use this tool to verify if the user is logged in and has a valid token for executing measurements.",
+				annotations: {
+					readOnlyHint: true,
+				},
+				inputSchema: {},
+				outputSchema: {
+					authenticated: z.boolean(),
+					status: z.string(),
+					message: z.string(),
+				},
+			},
+			async () => {
+				let status = "Not authenticated";
+				let message =
+					"You are not authenticated with Globalping. Use the /login route to authenticate.";
 
-			if (this.props?.isAuthenticated) {
-				status = "Authenticated";
-				message = "You are authenticated with Globalping.";
-			}
+				if (this.props?.isAuthenticated) {
+					status = "Authenticated";
+					message = "You are authenticated with Globalping.";
+				}
 
-			return {
-				content: [
-					{
-						type: "text",
-						text: `Authentication Status: ${status}\n\n${message}`,
-					},
-				],
-			};
-		});
+				const output = {
+					authenticated: !!this.props?.isAuthenticated,
+					status,
+					message,
+				};
+
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Authentication Status: ${status}\n\n${message}`,
+						},
+					],
+					structuredContent: output,
+				};
+			},
+		);
 	}
 
 	async setOAuthState(state: any): Promise<any> {
@@ -294,15 +383,46 @@ For more information, visit: https://www.globalping.io
 async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
 	const { pathname } = new URL(req.url);
 
+	// Validate Host header to prevent DNS rebinding attacks (first layer)
+	// This check happens before Origin validation for defense-in-depth
+	const host = req.headers.get("Host");
+	if (!validateHost(host)) {
+		console.error(`[Security] Rejected request with invalid Host header: ${host}`);
+		return new Response("Forbidden: Invalid Host", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
+
+	// Validate Origin header for all MCP requests to prevent DNS rebinding attacks
+	// Required by MCP specification for Streamable HTTP transport
+	// Note: We only validate when Origin header is present. Browser requests
+	// will always include Origin, while non-browser MCP clients (Claude Desktop,
+	// VSCode extension) may not send this header.
+	const origin = req.headers.get("Origin");
+	if (origin && !validateOrigin(origin)) {
+		console.error(`[Security] Rejected request with invalid Origin header: ${origin}`);
+		return new Response("Forbidden: Invalid Origin", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
+
 	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
 		return GlobalpingMCP.serveSSE(MCP_CONFIG.ROUTES.SSE, {
 			binding: MCP_CONFIG.BINDING_NAME,
+			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
 	}
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
 		return GlobalpingMCP.serve(MCP_CONFIG.ROUTES.MCP, {
 			binding: MCP_CONFIG.BINDING_NAME,
+			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
 	}
 
@@ -316,6 +436,35 @@ async function handleAPITokenRequest<
 	T extends typeof McpAgent<unknown, unknown, Record<string, unknown>>,
 >(agent: T, req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
 	const { pathname } = new URL(req.url);
+
+	// Validate Host header to prevent DNS rebinding attacks (first layer)
+	// This check happens before Origin validation for defense-in-depth
+	const host = req.headers.get("Host");
+	if (!validateHost(host)) {
+		console.error(`[Security] Rejected API token request with invalid Host header: ${host}`);
+		return new Response("Forbidden: Invalid Host", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
+
+	// Validate Origin header to prevent DNS rebinding attacks
+	// Note: We only validate when Origin header is present. Browser requests
+	// will always include Origin, while non-browser MCP clients may not.
+	const origin = req.headers.get("Origin");
+	if (origin && !validateOrigin(origin)) {
+		console.error(
+			`[Security] Rejected API token request with invalid Origin header: ${origin}`,
+		);
+		return new Response("Forbidden: Invalid Origin", {
+			status: 403,
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		});
+	}
 
 	const authHeader = req.headers.get("Authorization");
 	if (!authHeader) {
@@ -345,13 +494,19 @@ async function handleAPITokenRequest<
 
 	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
 		return agent
-			.serveSSE(MCP_CONFIG.ROUTES.SSE, { binding: MCP_CONFIG.BINDING_NAME })
+			.serveSSE(MCP_CONFIG.ROUTES.SSE, {
+				binding: MCP_CONFIG.BINDING_NAME,
+				corsOptions: getCorsOptionsForRequest(req),
+			})
 			.fetch(req, env, ctx);
 	}
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
 		return agent
-			.serve(MCP_CONFIG.ROUTES.MCP, { binding: MCP_CONFIG.BINDING_NAME })
+			.serve(MCP_CONFIG.ROUTES.MCP, {
+				binding: MCP_CONFIG.BINDING_NAME,
+				corsOptions: getCorsOptionsForRequest(req),
+			})
 			.fetch(req, env, ctx);
 	}
 

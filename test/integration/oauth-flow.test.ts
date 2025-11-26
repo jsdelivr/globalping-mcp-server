@@ -120,6 +120,9 @@ describe("OAuth Routes Integration", () => {
 		it("should redirect to GitHub repository", async () => {
 			const response = await SELF.fetch("http://localhost/", {
 				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
 				redirect: "manual",
 			});
 
@@ -132,7 +135,12 @@ describe("OAuth Routes Integration", () => {
 
 	describe("Authorization Endpoint", () => {
 		it("should validate and reject missing OAuth request parameters", async () => {
-			const response = await SELF.fetch("http://localhost/authorize", { method: "GET" });
+			const response = await SELF.fetch("http://localhost/authorize", {
+				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
+			});
 
 			expect(response.status).toBe(200);
 			const html = await response.text();
@@ -143,7 +151,12 @@ describe("OAuth Routes Integration", () => {
 		it("should reject invalid redirect URI", async () => {
 			const response = await SELF.fetch(
 				"http://localhost/authorize?client_id=test&redirect_uri=https://evil.com&response_type=code&state=test",
-				{ method: "GET" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
 			);
 
 			expect(response.status).toBe(200);
@@ -154,7 +167,12 @@ describe("OAuth Routes Integration", () => {
 
 	describe("OAuth Callback - Error Paths", () => {
 		it("should handle missing code and state parameters", async () => {
-			const response = await SELF.fetch("http://localhost/auth/callback", { method: "GET" });
+			const response = await SELF.fetch("http://localhost/auth/callback", {
+				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
+			});
 
 			expect(response.status).toBe(200);
 			const html = await response.text();
@@ -164,7 +182,12 @@ describe("OAuth Routes Integration", () => {
 		it("should handle expired or invalid state", async () => {
 			const response = await SELF.fetch(
 				"http://localhost/auth/callback?code=test-code&state=invalid-state-xyz",
-				{ method: "GET" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
 			);
 
 			expect(response.status).toBe(200);
@@ -175,7 +198,12 @@ describe("OAuth Routes Integration", () => {
 		it("should handle OAuth provider errors", async () => {
 			const response = await SELF.fetch(
 				"http://localhost/auth/callback?error=access_denied&error_description=User+denied+access",
-				{ method: "GET" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
 			);
 
 			expect(response.status).toBe(200);
@@ -198,7 +226,12 @@ describe("OAuth Routes Integration", () => {
 			for (const { error, description } of errorTypes) {
 				const response = await SELF.fetch(
 					`http://localhost/auth/callback?error=${error}&error_description=${encodeURIComponent(description)}`,
-					{ method: "GET" },
+					{
+						method: "GET",
+						headers: {
+							Host: "localhost",
+						},
+					},
 				);
 
 				expect(response.status).toBe(200);
@@ -211,21 +244,33 @@ describe("OAuth Routes Integration", () => {
 
 	describe("OAuth Callback - Success Paths", () => {
 		it("should successfully complete OAuth flow with valid code and state", async () => {
-			// First, we need to create a valid state in KV by simulating the authorize flow
+			// First, register a client with the OAuth provider
+			const clientId = "test-mcp-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+
+			const clientInfo = {
+				clientId: clientId,
+				redirectUris: [clientRedirectUri],
+				clientName: "Test MCP Client",
+			};
+
+			await env.OAUTH_KV.put(`client:${clientId}`, JSON.stringify(clientInfo));
+
+			// Create a valid state in KV by simulating the authorize flow
 			const testState = "test-oauth-state-123";
 			const testCode = "test-auth-code-456";
 
 			// Store state data in KV that the callback will retrieve
 			const stateData = {
 				redirectUri: "http://localhost/auth/callback",
-				clientRedirectUri: "http://localhost:3000/callback",
+				clientRedirectUri: clientRedirectUri,
 				codeVerifier: "test-verifier-123",
 				codeChallenge: "test-challenge-456",
-				clientId: "test-mcp-client",
+				clientId: clientId,
 				state: testState,
 				oauthReqInfo: {
-					clientId: "test-mcp-client",
-					redirectUri: "http://localhost:3000/callback",
+					clientId: clientId,
+					redirectUri: clientRedirectUri,
 					state: "client-state-789",
 					scope: "measurements",
 				},
@@ -239,7 +284,13 @@ describe("OAuth Routes Integration", () => {
 			// Now call the callback with valid code and state
 			const response = await SELF.fetch(
 				`http://localhost/auth/callback?code=${testCode}&state=${testState}`,
-				{ method: "GET", redirect: "manual" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+					redirect: "manual",
+				},
 			);
 
 			// Should redirect to the client's redirect URI with authorization code
@@ -320,7 +371,12 @@ describe("OAuth Routes Integration", () => {
 
 			const response = await SELF.fetch(
 				`http://localhost/auth/callback?code=test-code&state=${testState}`,
-				{ method: "GET" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
 			);
 
 			expect(response.status).toBe(200);
@@ -392,7 +448,12 @@ describe("OAuth Routes Integration", () => {
 
 			const response = await SELF.fetch(
 				`http://localhost/auth/callback?code=test-code&state=${testState}`,
-				{ method: "GET" },
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
 			);
 
 			expect(response.status).toBe(200);
@@ -403,7 +464,12 @@ describe("OAuth Routes Integration", () => {
 
 	describe("Error Response Format", () => {
 		it("should return HTML error pages with proper structure", async () => {
-			const response = await SELF.fetch("http://localhost/auth/callback", { method: "GET" });
+			const response = await SELF.fetch("http://localhost/auth/callback", {
+				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
+			});
 
 			expect(response.status).toBe(200);
 			expect(response.headers.get("Content-Type")).toContain("text/html");
@@ -418,6 +484,9 @@ describe("OAuth Routes Integration", () => {
 		it("should include error message in response body", async () => {
 			const response = await SELF.fetch("http://localhost/auth/callback?error=custom_error", {
 				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
 			});
 
 			const html = await response.text();

@@ -37,7 +37,8 @@ export function calculateAverages(results: any) {
 
 	// Only process finished ping results
 	const successfulResults = results.filter(
-		(item: any) => item.result.status === "finished" && item.result.stats,
+		(item: any) =>
+			item.result.status === "finished" && item.result.stats && item.result.stats.total > 0,
 	);
 
 	summary.successfulProbes = successfulResults.length;
@@ -48,22 +49,19 @@ export function calculateAverages(results: any) {
 
 	// Calculate sum of all stats
 	for (const item of successfulResults) {
-		summary.totalPackets += item.result.stats.total;
-		summary.totalReceived += item.result.stats.rcv;
-		summary.totalDropped += item.result.stats.drop;
+		const stats = item.result.stats;
+		summary.totalPackets += stats.total || 0;
+		summary.totalReceived += stats.rcv || 0;
+		summary.totalDropped += stats.drop || 0;
 
-		if (item.result.stats.min !== null) {
+		if (typeof stats.min === "number") {
 			summary.minRtt =
-				summary.minRtt === null
-					? item.result.stats.min
-					: Math.min(summary.minRtt, item.result.stats.min);
+				summary.minRtt === null ? stats.min : Math.min(summary.minRtt, stats.min);
 		}
 
-		if (item.result.stats.max !== null) {
+		if (typeof stats.max === "number") {
 			summary.maxRtt =
-				summary.maxRtt === null
-					? item.result.stats.max
-					: Math.max(summary.maxRtt, item.result.stats.max);
+				summary.maxRtt === null ? stats.max : Math.max(summary.maxRtt, stats.max);
 		}
 	}
 
@@ -76,7 +74,7 @@ export function calculateAverages(results: any) {
 	let avgRttCount = 0;
 
 	for (const item of successfulResults) {
-		if (item.result.stats.avg !== null) {
+		if (typeof item.result.stats.avg === "number") {
 			totalAvgRtt += item.result.stats.avg;
 			avgRttCount++;
 		}
@@ -132,10 +130,18 @@ export function formatMeasurementSummary(measurement: any): string {
 
 				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
 
-				if (testResult.status === "finished") {
+				if (testResult.status === "finished" && testResult.stats) {
 					summary += `  Status: ${testResult.status}\n`;
-					summary += `  RTT min/avg/max: ${testResult.stats.min ?? "N/A"}/${testResult.stats.avg ?? "N/A"}/${testResult.stats.max ?? "N/A"} ms\n`;
-					summary += `  Packet Loss: ${testResult.stats.loss.toFixed(2)}%\n`;
+					const min = testResult.stats.min !== undefined ? testResult.stats.min : "N/A";
+					const avg = testResult.stats.avg !== undefined ? testResult.stats.avg : "N/A";
+					const max = testResult.stats.max !== undefined ? testResult.stats.max : "N/A";
+					const loss =
+						typeof testResult.stats.loss === "number" && !isNaN(testResult.stats.loss)
+							? testResult.stats.loss.toFixed(2)
+							: "N/A";
+
+					summary += `  RTT min/avg/max: ${min}/${avg}/${max} ms\n`;
+					summary += `  Packet Loss: ${loss}%\n`;
 				} else {
 					summary += `  Status: ${testResult.status}\n`;
 				}
