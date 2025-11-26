@@ -21,6 +21,21 @@
 			}
 		]
 	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["GlobalpingMCP"]
+		},
+		{
+			"tag": "v2",
+			"renamed_classes": [
+				{
+					"from": "GlobalpingMCP",
+					"to": "GlobalpingMCP"
+				}
+			]
+		}
+	],
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_KV",
