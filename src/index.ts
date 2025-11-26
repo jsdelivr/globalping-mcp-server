@@ -389,6 +389,18 @@ For more information, visit: https://www.globalping.io
 		const hasAPIToken =
 			this.props?.accessToken && isValidAPIToken(this.props.accessToken);
 
+		// Check API token first (most specific) to prevent misclassification
+		// as OAuth when API token flow sets isAuthenticated and userName
+		if (hasAPIToken) {
+			return {
+				userId: "api_token_user",
+				userName: "API Token User",
+				userData: {
+					authMethod: "api_token",
+				},
+			};
+		}
+
 		if (isAuth && this.props?.userName) {
 			return {
 				userId: "oauth_user",
@@ -396,16 +408,6 @@ For more information, visit: https://www.globalping.io
 				userData: {
 					authMethod: "oauth",
 					clientId: this.props.clientId || "unknown",
-				},
-			};
-		}
-
-		if (hasAPIToken) {
-			return {
-				userId: "api_token_user",
-				userName: "API Token User",
-				userData: {
-					authMethod: "api_token",
 				},
 			};
 		}
