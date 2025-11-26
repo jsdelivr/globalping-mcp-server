@@ -133,3 +133,11 @@ export const CORS_CONFIG = {
 	EXPOSE_HEADERS: "Mcp-Session-Id",
 	MAX_AGE: 86400, // 24 hours
 };
+
+/**
+ * MCPcat configuration for analytics and telemetry
+ */
+export const MCPCAT_CONFIG = {
+	ENABLED: true, // Set to false to disable MCPcat in dev environments
+	PROJECT_ID_ENV_VAR: "MCPCAT_PROJECT_ID",
+} as const;
