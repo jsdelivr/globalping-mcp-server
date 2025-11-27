@@ -111,12 +111,12 @@ To add the Globalping MCP server to Cursor:
 Streamable HTTP transport:
 ```json
 {
-  "mcpServers": {
-    "globalping": {
-        "url": "https://mcp.globalping.dev/mcp",
-        "type": "http"
+    "mcpServers": {
+        "globalping": {
+            "url": "https://mcp.globalping.dev/mcp",
+            "type": "http"
+        }
     }
-  }
 }
 ```
 Legacy SSE transport:
@@ -157,15 +157,15 @@ The server automatically detects when an API token is provided in the Authorizat
 Streamable HTTP transport:
 ```json
 {
-  "mcpServers": {
-    "globalping": {
-      "url": "https://mcp.globalping.dev/mcp",
-      "type": "http",
-      "headers": {
-        "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
-      }
+    "mcpServers": {
+        "globalping": {
+            "url": "https://mcp.globalping.dev/mcp",
+            "type": "http",
+            "headers": {
+                "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
+            }
+        }
     }
-  }
 }
 ```
 Legacy SSE transport:
