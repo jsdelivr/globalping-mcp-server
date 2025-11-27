@@ -561,7 +561,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			annotations: {
 				readOnlyHint: true,
 			},
-			inputSchema: {},
 			outputSchema: {
 				totalProbes: z.number(),
 				continents: z.array(
@@ -658,7 +657,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			annotations: {
 				readOnlyHint: true,
 			},
-			inputSchema: {},
 			outputSchema: {
 				authenticated: z.boolean(),
 				rateLimit: z.object({

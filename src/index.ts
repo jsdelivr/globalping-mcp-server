@@ -135,7 +135,6 @@ Key guidelines:
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					guide: z.string(),
 				},
@@ -195,7 +194,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					helpText: z.string(),
 				},
@@ -298,7 +296,6 @@ For more information, visit: https://www.globalping.io
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					authenticated: z.boolean(),
 					status: z.string(),
