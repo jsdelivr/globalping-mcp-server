@@ -27,7 +27,7 @@
 		"patch-package": "^8.0.1",
 		"typescript": "^5.9.3",
 		"vitest": "^3.2.4",
-		"wrangler": "^4.42.0"
+		"wrangler": "^4.51.0"
 	},
 	"dependencies": {
 		"@cloudflare/workers-oauth-provider": "^0.1.0",

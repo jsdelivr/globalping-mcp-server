@@ -67,9 +67,7 @@ Key guidelines:
 				console.warn("⚠ MCPcat tracking initialization failed (non-fatal):", error);
 			}
 		} else {
-			console.log(
-				"✗ MCPcat tracking disabled (no project ID or disabled in config)",
-			);
+			console.log("✗ MCPcat tracking disabled (no project ID or disabled in config)");
 		}
 
 		// Register all the Globalping tools
@@ -387,8 +385,7 @@ For more information, visit: https://www.globalping.io
 		userData: Record<string, any>;
 	} {
 		const isAuth = this.props?.isAuthenticated;
-		const hasAPIToken =
-			this.props?.accessToken && isValidAPIToken(this.props.accessToken);
+		const hasAPIToken = this.props?.accessToken && isValidAPIToken(this.props.accessToken);
 
 		// Check API token first (most specific) to prevent misclassification
 		// as OAuth when API token flow sets isAuthenticated and userName
