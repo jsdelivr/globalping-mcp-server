@@ -9,6 +9,7 @@ import { z } from "zod";
 import { registerGlobalpingTools } from "./mcp";
 import { sanitizeToken } from "./auth";
 import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
+import * as mcpcat from "mcpcat";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
@@ -53,21 +54,14 @@ Key guidelines:
 
 		// Initialize MCPcat tracking if project ID is configured
 		if (this.env.MCPCAT_PROJECT_ID && MCPCAT_CONFIG.ENABLED) {
-			try {
-				// Dynamic import to avoid loading mcpcat in environments where it's not needed
-				// This prevents errors when mcpcat dependencies (like node:os) aren't available
-				const mcpcat = await import("mcpcat");
-				mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
-					// Identify users with generic labels
-					identify: async () => {
-						return this.getUserIdentification();
-					},
-				});
+			mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+				// Identify users with generic labels
+				identify: async () => {
+					return this.getUserIdentification();
+				},
+			});
 
-				console.log("✓ MCPcat tracking initialized");
-			} catch (error) {
-				console.error("✗ Failed to initialize MCPcat tracking:", error);
-			}
+			console.log("✓ MCPcat tracking initialized");
 		} else {
 			console.log(
 				"✗ MCPcat tracking disabled (no project ID or disabled in config)",
