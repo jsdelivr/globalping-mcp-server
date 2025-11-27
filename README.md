@@ -70,9 +70,25 @@ gemini mcp add globalping https://mcp.globalping.dev/mcp --header "Authorization
 Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):
 
 > [!note]
-> Claude Desktop doesn't yet support remote MCP servers over HTTP.
-> Until support is added, use the legacy SSE transport via the mcp-remote bridge.
+> Claude Desktop natively supports only stdio transport for local MCP servers.
+> For remote MCP servers, use the `mcp-remote` bridge, which supports both SSE and HTTP transports.
 
+Streamable HTTP transport:
+```json
+{
+    "mcpServers": {
+        "globalping": {
+            "command": "npx",
+            "args": [
+                "mcp-remote",
+                "https://mcp.globalping.dev/http"
+            ]
+        }
+    }
+}
+```
+
+Legacy SSE transport:
 ```json
 {
     "mcpServers": {
