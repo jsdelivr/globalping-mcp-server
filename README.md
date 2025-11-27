@@ -71,24 +71,8 @@ Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\conf
 
 > [!note]
 > Claude Desktop natively supports only stdio transport for local MCP servers.
-> For remote MCP servers, use the `mcp-remote` bridge, which supports both SSE and HTTP transports.
+> For remote MCP servers, use the `mcp-remote` bridge.
 
-Streamable HTTP transport:
-```json
-{
-    "mcpServers": {
-        "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/http"
-            ]
-        }
-    }
-}
-```
-
-Legacy SSE transport:
 ```json
 {
     "mcpServers": {
