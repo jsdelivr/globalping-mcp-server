@@ -113,8 +113,7 @@ Streamable HTTP transport:
 {
     "mcpServers": {
         "globalping": {
-            "url": "https://mcp.globalping.dev/mcp",
-            "type": "http"
+            "url": "https://mcp.globalping.dev/mcp"
         }
     }
 }
@@ -160,7 +159,6 @@ Streamable HTTP transport:
     "mcpServers": {
         "globalping": {
             "url": "https://mcp.globalping.dev/mcp",
-            "type": "http",
             "headers": {
                 "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
             }
