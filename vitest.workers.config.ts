@@ -22,6 +22,8 @@ export default defineWorkersConfig({
 					kvNamespaces: ["OAUTH_KV"],
 					bindings: {
 						GLOBALPING_CLIENT_ID: "test-client-id",
+						// Disable MCPcat during tests - it adds a required 'context' parameter to all tools for agents to understand their use-cases
+						MCPCAT_PROJECT_ID: "",
 					},
 				},
 				isolatedStorage: false,

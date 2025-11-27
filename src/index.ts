@@ -54,14 +54,18 @@ Key guidelines:
 
 		// Initialize MCPcat tracking if project ID is configured
 		if (this.env.MCPCAT_PROJECT_ID && MCPCAT_CONFIG.ENABLED) {
-			mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
-				// Identify users with generic labels
-				identify: async () => {
-					return this.getUserIdentification();
-				},
-			});
+			try {
+				mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+					// Identify users with generic labels
+					identify: async () => {
+						return this.getUserIdentification();
+					},
+				});
 
-			console.log("✓ MCPcat tracking initialized");
+				console.log("✓ MCPcat tracking initialized");
+			} catch (error) {
+				console.warn("⚠ MCPcat tracking initialization failed (non-fatal):", error);
+			}
 		} else {
 			console.log(
 				"✗ MCPcat tracking disabled (no project ID or disabled in config)",
