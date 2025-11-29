@@ -2,7 +2,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "globalping-mcp-server",
 	"main": "src/index.ts",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": ["nodejs_compat_v2"],
 	"placement": {
 		"mode": "smart"
 	},

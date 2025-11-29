@@ -10,6 +10,7 @@ declare namespace Cloudflare {
 		OAUTH_KV: KVNamespace;
 		GLOBALPING_CLIENT_ID: string;
 		globalping_mcp_object: DurableObjectNamespace<import("./src/index").GlobalpingMCP>;
+		MCPCAT_PROJECT_ID?: string;
 	}
 }
 interface Env extends Cloudflare.Env {}

@@ -5,6 +5,7 @@ export type Props = {
 	userName: string;
 	clientId: string;
 	isAuthenticated: boolean;
+	isOAuth: boolean;
 };
 
 // Define custom state for storing previous measurements

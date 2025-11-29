@@ -2,13 +2,14 @@ import { McpAgent } from "agents/mcp";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { isAPITokenRequest, isValidAPIToken } from "./auth";
 import app from "./app";
-import { MCP_CONFIG, OAUTH_CONFIG } from "./config";
+import { MCP_CONFIG, OAUTH_CONFIG, MCPCAT_CONFIG } from "./config";
 import type { GlobalpingEnv, Props, State } from "./types";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { registerGlobalpingTools } from "./mcp";
 import { sanitizeToken } from "./auth";
 import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
+import * as mcpcat from "mcpcat";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer({
@@ -50,6 +51,24 @@ Key guidelines:
 
 	async init() {
 		console.log("Initializing Globalping MCP...");
+
+		// Initialize MCPcat tracking if project ID is configured
+		if (this.env.MCPCAT_PROJECT_ID && MCPCAT_CONFIG.ENABLED) {
+			try {
+				mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+					// Identify users with generic labels
+					identify: async () => {
+						return this.getUserIdentification();
+					},
+				});
+
+				console.log("✓ MCPcat tracking initialized");
+			} catch (error) {
+				console.warn("⚠ MCPcat tracking initialization failed (non-fatal):", error);
+			}
+		} else {
+			console.log("✗ MCPcat tracking disabled (no project ID or disabled in config)");
+		}
 
 		// Register all the Globalping tools
 		registerGlobalpingTools(this, () => {
@@ -114,7 +133,6 @@ Key guidelines:
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					guide: z.string(),
 				},
@@ -174,7 +192,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					helpText: z.string(),
 				},
@@ -277,7 +294,6 @@ For more information, visit: https://www.globalping.io
 				annotations: {
 					readOnlyHint: true,
 				},
-				inputSchema: {},
 				outputSchema: {
 					authenticated: z.boolean(),
 					status: z.string(),
@@ -357,6 +373,50 @@ For more information, visit: https://www.globalping.io
 	getToken(): string | undefined {
 		// Return the access token from the props
 		return this.props?.accessToken;
+	}
+
+	/**
+	 * Returns generic user identification for MCPcat analytics
+	 * Does not expose PII - uses generic labels only
+	 */
+	private getUserIdentification(): {
+		userId: string;
+		userName: string;
+		userData: Record<string, any>;
+	} {
+		const isAuth = this.props?.isAuthenticated;
+		const hasAPIToken = !this.props?.isOAuth;
+
+		// Check API token first (most specific) to prevent misclassification
+		// as OAuth when API token flow sets isAuthenticated and userName
+		if (hasAPIToken) {
+			return {
+				userId: "api_token_user",
+				userName: "API Token User",
+				userData: {
+					authMethod: "api_token",
+				},
+			};
+		}
+
+		if (isAuth && this.props?.userName) {
+			return {
+				userId: "oauth_user",
+				userName: "OAuth User",
+				userData: {
+					authMethod: "oauth",
+					clientId: this.props.clientId || "unknown",
+				},
+			};
+		}
+
+		return {
+			userId: "anonymous_user",
+			userName: "Anonymous User",
+			userData: {
+				authMethod: "none",
+			},
+		};
 	}
 
 	setIsAuthenticated(isAuthenticated: boolean): void {
@@ -490,6 +550,7 @@ async function handleAPITokenRequest<
 		userName: "API Token User",
 		clientId: "",
 		isAuthenticated: true,
+		isOAuth: false,
 	} satisfies Props;
 
 	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {

@@ -18,10 +18,12 @@ export default defineWorkersConfig({
 				main: "./src/index.ts",
 				miniflare: {
 					compatibilityDate: "2025-03-10",
-					compatibilityFlags: ["nodejs_compat"],
+					compatibilityFlags: ["nodejs_compat_v2"],
 					kvNamespaces: ["OAUTH_KV"],
 					bindings: {
 						GLOBALPING_CLIENT_ID: "test-client-id",
+						// Disable MCPcat during tests - it adds a required 'context' parameter to all tools for agents to understand their use-cases
+						MCPCAT_PROJECT_ID: "",
 					},
 				},
 				isolatedStorage: false,
