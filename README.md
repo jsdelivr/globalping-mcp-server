@@ -69,21 +69,10 @@ gemini mcp add globalping https://mcp.globalping.dev/mcp --header "Authorization
 
 Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):
 
-Streamable HTTP transport:
-```json
-{
-    "mcpServers": {
-        "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/mcp"
-            ]
-        }
-    }
-}
-```
-Legacy SSE transport:
+> [!note]
+> Claude Desktop natively supports only stdio transport for local MCP servers.
+> For remote MCP servers, use the `mcp-remote` bridge.
+
 ```json
 {
     "mcpServers": {
@@ -115,8 +104,8 @@ When creating a Claude Assistant in the Anthropic Console:
 To add the Globalping MCP server to Cursor:
 
 1. Open Cursor settings
-2. Navigate to the MCP tab
-3. Click on "+ Add new global MCP server"
+2. Navigate to the Tools & MCP tab
+3. Click on "+ New MCP server"
 4. This opens the `mcp.json` config file, where you will need to add:
 
 Streamable HTTP transport:
@@ -124,11 +113,7 @@ Streamable HTTP transport:
 {
     "mcpServers": {
         "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/mcp"
-            ]
+            "url": "https://mcp.globalping.dev/mcp"
         }
     }
 }
@@ -147,7 +132,7 @@ Legacy SSE transport:
     }
 }
 ```
-5. Click "Save" and restart Cursor
+5. Save and restart Cursor
 ## Authentication
 
 The Globalping MCP server supports two authentication methods:
@@ -162,9 +147,9 @@ The server automatically detects when an API token is provided in the Authorizat
 
 #### Getting Your API Token
 
-1. Visit [globalping.io](https://globalping.io)
+1. Visit [dash.globalping.io](https://dash.globalping.io)
 2. Sign in to your account
-3. Navigate to your account settings to generate an API token
+3. Navigate to Tokens to generate a new API token
 
 #### Configuration with Authentication
 
@@ -173,13 +158,10 @@ Streamable HTTP transport:
 {
     "mcpServers": {
         "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/mcp",
-                "--header",
-                "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
-            ]
+            "url": "https://mcp.globalping.dev/mcp",
+            "headers": {
+                "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
+            }
         }
     }
 }
@@ -203,7 +185,7 @@ Legacy SSE transport:
 
 ## Connecting AI Assistants
 
-This MCP server can be used with any MCP-compatible AI assistant, including:
+You can use our MCP server with any MCP-compatible AI assistant, including:
 
 - Claude Desktop
 - Anthropic Assistants
@@ -211,7 +193,7 @@ This MCP server can be used with any MCP-compatible AI assistant, including:
 - Windsurf
 - Any custom implementation of the MCP protocol
 
-See the MCP documentation for details on connecting clients to this server.
+See your tool's MCP documentation for details on connecting clients to this server.
 
 
 ## Available Tools
