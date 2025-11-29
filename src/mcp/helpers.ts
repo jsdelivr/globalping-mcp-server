@@ -136,7 +136,8 @@ export function formatMeasurementSummary(measurement: any): string {
 					const avg = testResult.stats.avg !== undefined ? testResult.stats.avg : "N/A";
 					const max = testResult.stats.max !== undefined ? testResult.stats.max : "N/A";
 					const loss =
-						typeof testResult.stats.loss === "number" && !isNaN(testResult.stats.loss)
+						typeof testResult.stats.loss === "number" &&
+						!Number.isNaN(testResult.stats.loss)
 							? testResult.stats.loss.toFixed(2)
 							: "N/A";
 

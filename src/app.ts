@@ -261,6 +261,7 @@ app.get("/auth/callback", async (c) => {
 				state,
 				userName: userData.username,
 				isAuthenticated: true,
+				isOAuth: true,
 			},
 		});
 

@@ -24,6 +24,7 @@ export interface GlobalpingEnv {
 	GLOBALPING_CLIENT_ID: string;
 	globalping_mcp_object: DurableObjectNamespace;
 	OAUTH_KV: KVNamespace;
+	MCPCAT_PROJECT_ID?: string;
 }
 
 /**
