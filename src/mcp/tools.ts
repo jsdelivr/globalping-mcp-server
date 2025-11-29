@@ -6,6 +6,7 @@ import { runMeasurement, getLocations, getRateLimits } from "../api";
 import { parseLocations, formatMeasurementSummary } from "./helpers";
 import type { GlobalpingMCP } from "../index";
 import { maskToken } from "../auth";
+import { isPublicTarget } from "../lib";
 
 /**
  * Helper to wrap tool execution with error handling
@@ -41,14 +42,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Ping Test",
 			description:
-				"Measure network latency, packet loss, and reachability to a target (domain or IP) from globally distributed probes. Use this tool to check if a server is online, debug connection issues, or assess global performance.",
+				"Measure network latency, packet loss, and reachability to a target (domain or IP) from globally distributed probes. Use this tool to check if a server is online, debug connection issues, or assess global performance. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: true,
 			},
 			inputSchema: {
 				target: z
 					.string()
-					.describe("Domain name or IP to test (e.g., 'google.com', '1.1.1.1')"),
+					.describe("Public domain name or IP address to test (e.g., 'google.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -74,6 +75,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		},
 		async ({ target, locations, limit, packets }) => {
 			return handleToolExecution(async () => {
+				// Validate target is public
+				const validation = isPublicTarget(target);
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid target: ${validation.reason}. Globalping only supports public endpoints. Private IP addresses (RFC1918), localhost, and link-local addresses are not allowed.`,
+					);
+				}
+
 				const token = getToken();
 				const parsedLocations = parseLocations(locations);
 
@@ -129,14 +138,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Traceroute Test",
 			description:
-				"Trace the network path to a target (domain or IP) from global locations. Use this tool to identify where packets are being dropped, analyze routing paths, or pinpoint latency sources in the network.",
+				"Trace the network path to a target (domain or IP) from global locations. Use this tool to identify where packets are being dropped, analyze routing paths, or pinpoint latency sources in the network. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: true,
 			},
 			inputSchema: {
 				target: z
 					.string()
-					.describe("Domain name or IP to test (e.g., 'cloudflare.com', '1.1.1.1')"),
+					.describe("Public domain name or IP address to test (e.g., 'cloudflare.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -169,6 +178,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		},
 		async ({ target, locations, limit, protocol, port }) => {
 			return handleToolExecution(async () => {
+				// Validate target is public
+				const validation = isPublicTarget(target);
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid target: ${validation.reason}. Globalping only supports public endpoints. Private IP addresses (RFC1918), localhost, and link-local addresses are not allowed.`,
+					);
+				}
+
 				const token = getToken();
 				const parsedLocations = parseLocations(locations);
 
@@ -224,12 +241,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "DNS Lookup",
 			description:
-				"Resolve DNS records (A, AAAA, MX, etc.) for a domain from global locations. Use this tool to verify DNS propagation, troubleshoot resolution failures, or check if users in different regions are seeing the correct records.",
+				"Resolve DNS records (A, AAAA, MX, etc.) for a domain from global locations. Use this tool to verify DNS propagation, troubleshoot resolution failures, or check if users in different regions are seeing the correct records. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z.string().describe("Domain name to resolve (e.g., 'google.com')"),
+				target: z.string().describe("Public domain name to resolve (e.g., 'google.com'). Private domains, localhost, and link-local addresses are not supported."),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -285,6 +302,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		},
 		async ({ target, locations, limit, queryType, resolver, trace }) => {
 			return handleToolExecution(async () => {
+				// Validate target is public
+				const validation = isPublicTarget(target);
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid target: ${validation.reason}. Globalping only supports public endpoints. Private IP addresses (RFC1918), localhost, and link-local addresses are not allowed.`,
+					);
+				}
+
 				const token = getToken();
 				const parsedLocations = parseLocations(locations);
 
@@ -343,7 +368,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "MTR Test",
 			description:
-				"Run an MTR (My Traceroute) diagnostic, which combines Ping and Traceroute. Use this tool to analyze packet loss and latency trends at every hop in the network path over time, helpful for spotting intermittent issues.",
+				"Run an MTR (My Traceroute) diagnostic, which combines Ping and Traceroute. Use this tool to analyze packet loss and latency trends at every hop in the network path over time, helpful for spotting intermittent issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: true,
 			},
@@ -351,7 +376,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				target: z
 					.string()
 					.min(1)
-					.describe("Destination hostname or IP to run the MTR against"),
+					.describe("Public destination hostname or IP address to run the MTR against. Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -387,6 +412,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		},
 		async ({ target, locations, limit, protocol, port, packets }) => {
 			return handleToolExecution(async () => {
+				// Validate target is public
+				const validation = isPublicTarget(target);
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid target: ${validation.reason}. Globalping only supports public endpoints. Private IP addresses (RFC1918), localhost, and link-local addresses are not allowed.`,
+					);
+				}
+
 				const token = getToken();
 				const parsedLocations = parseLocations(locations);
 
@@ -443,12 +476,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "HTTP Request",
 			description:
-				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues.",
+				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z.string().describe("Domain name or IP to test (e.g., 'example.com')"),
+				target: z.string().describe("Public domain name or IP address to test (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -495,6 +528,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		},
 		async ({ target, locations, limit, method, protocol, path, query, port }) => {
 			return handleToolExecution(async () => {
+				// Validate target is public
+				const validation = isPublicTarget(target);
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid target: ${validation.reason}. Globalping only supports public endpoints. Private IP addresses (RFC1918), localhost, and link-local addresses are not allowed.`,
+					);
+				}
+
 				const token = getToken();
 				const parsedLocations = parseLocations(locations);
 
