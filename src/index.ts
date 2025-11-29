@@ -385,7 +385,7 @@ For more information, visit: https://www.globalping.io
 		userData: Record<string, any>;
 	} {
 		const isAuth = this.props?.isAuthenticated;
-		const hasAPIToken = this.props?.accessToken && isValidAPIToken(this.props.accessToken);
+		const hasAPIToken = !this.props?.isOAuth;
 
 		// Check API token first (most specific) to prevent misclassification
 		// as OAuth when API token flow sets isAuthenticated and userName
@@ -550,6 +550,7 @@ async function handleAPITokenRequest<
 		userName: "API Token User",
 		clientId: "",
 		isAuthenticated: true,
+		isOAuth: false,
 	} satisfies Props;
 
 	if (pathname === MCP_CONFIG.ROUTES.SSE || pathname === MCP_CONFIG.ROUTES.SSE_MESSAGE) {
