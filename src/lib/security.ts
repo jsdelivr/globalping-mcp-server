@@ -233,7 +233,7 @@ export function getMatchingOrigin(requestOrigin: string | null): string | null {
 		if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
 			const baseOrigin = `${originUrl.protocol}//${hostname}`;
 			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
-				return baseOrigin;
+				return originUrl.port ? `${baseOrigin}:${originUrl.port}` : baseOrigin;
 			}
 		}
 	} catch {

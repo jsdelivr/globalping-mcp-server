@@ -225,8 +225,8 @@ describe("getMatchingOrigin", () => {
 	});
 
 	it("should return exact match for localhost with ports", () => {
-		expect(getMatchingOrigin("http://localhost:3000")).toBe("http://localhost");
-		expect(getMatchingOrigin("http://127.0.0.1:8080")).toBe("http://127.0.0.1");
+		expect(getMatchingOrigin("http://localhost:3000")).toBe("http://localhost:3000");
+		expect(getMatchingOrigin("http://127.0.0.1:8080")).toBe("http://127.0.0.1:8080");
 	});
 
 	it("should return base origin for localhost without ports", () => {
@@ -235,10 +235,10 @@ describe("getMatchingOrigin", () => {
 	});
 
 	it("should return exact match for IPv6 localhost with ports", () => {
-		expect(getMatchingOrigin("http://[::1]:3000")).toBe("http://[::1]");
-		expect(getMatchingOrigin("http://[::1]:8080")).toBe("http://[::1]");
-		expect(getMatchingOrigin("https://[::1]:8443")).toBe("https://[::1]");
-		expect(getMatchingOrigin("https://[::1]:3000")).toBe("https://[::1]");
+		expect(getMatchingOrigin("http://[::1]:3000")).toBe("http://[::1]:3000");
+		expect(getMatchingOrigin("http://[::1]:8080")).toBe("http://[::1]:8080");
+		expect(getMatchingOrigin("https://[::1]:8443")).toBe("https://[::1]:8443");
+		expect(getMatchingOrigin("https://[::1]:3000")).toBe("https://[::1]:3000");
 	});
 
 	it("should return base origin for IPv6 localhost without ports", () => {
@@ -276,7 +276,7 @@ describe("getCorsOptionsForRequest", () => {
 
 		const corsOptions = getCorsOptionsForRequest(mockRequest);
 
-		expect(corsOptions.origin).toBe("http://localhost");
+		expect(corsOptions.origin).toBe("http://localhost:3000");
 		expect(typeof corsOptions.origin).toBe("string");
 	});
 
@@ -290,7 +290,7 @@ describe("getCorsOptionsForRequest", () => {
 
 		const corsOptionsHttp = getCorsOptionsForRequest(mockRequestHttp);
 
-		expect(corsOptionsHttp.origin).toBe("http://[::1]");
+		expect(corsOptionsHttp.origin).toBe("http://[::1]:3000");
 		expect(typeof corsOptionsHttp.origin).toBe("string");
 
 		const mockRequestHttps = {
@@ -302,7 +302,7 @@ describe("getCorsOptionsForRequest", () => {
 
 		const corsOptionsHttps = getCorsOptionsForRequest(mockRequestHttps);
 
-		expect(corsOptionsHttps.origin).toBe("https://[::1]");
+		expect(corsOptionsHttps.origin).toBe("https://[::1]:8443");
 		expect(typeof corsOptionsHttps.origin).toBe("string");
 	});
 
@@ -319,7 +319,7 @@ describe("getCorsOptionsForRequest", () => {
 			} as unknown as Request;
 
 			const corsOptions = getCorsOptionsForRequest(mockRequest);
-			expect(corsOptions.origin).toBe("http://[::1]");
+			expect(corsOptions.origin).toBe(`http://[::1]:${port}`);
 		}
 	});
 

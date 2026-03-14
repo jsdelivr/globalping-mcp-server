@@ -46,7 +46,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			inputSchema: {
 				target: z
 					.string()
-					.describe("Public domain name or IP address to test (e.g., 'google.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
+					.describe(
+						"Public domain name or IP address to test (e.g., 'google.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -142,7 +144,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			inputSchema: {
 				target: z
 					.string()
-					.describe("Public domain name or IP address to test (e.g., 'cloudflare.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
+					.describe(
+						"Public domain name or IP address to test (e.g., 'cloudflare.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -243,7 +247,11 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z.string().describe("Public domain name to resolve (e.g., 'google.com'). Private domains, localhost, and link-local addresses are not supported."),
+				target: z
+					.string()
+					.describe(
+						"Public domain name to resolve (e.g., 'google.com'). Private domains, localhost, and link-local addresses are not supported.",
+					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -373,7 +381,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				target: z
 					.string()
 					.min(1)
-					.describe("Public destination hostname or IP address to run the MTR against. Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
+					.describe(
+						"Public destination hostname or IP address to run the MTR against. Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()
@@ -478,7 +488,11 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				readOnlyHint: true,
 			},
 			inputSchema: {
-				target: z.string().describe("Public domain name or IP address to test (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported."),
+				target: z
+					.string()
+					.describe(
+						"Public domain name or IP address to test (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
 					.optional()

@@ -69,7 +69,12 @@ export function isPrivateIPv6(ip: string): boolean {
 	}
 
 	// fe80::/10 - Link-local addresses
-	if (cleanIp.startsWith("fe8") || cleanIp.startsWith("fe9") || cleanIp.startsWith("fea") || cleanIp.startsWith("feb")) {
+	if (
+		cleanIp.startsWith("fe8") ||
+		cleanIp.startsWith("fe9") ||
+		cleanIp.startsWith("fea") ||
+		cleanIp.startsWith("feb")
+	) {
 		return true;
 	}
 
@@ -106,7 +111,11 @@ export function isLoopbackIPv6(ip: string): boolean {
 	const cleanIp = ip.replace(/^\[|\]$/g, "").toLowerCase();
 
 	// ::1 is the only IPv6 loopback
-	return cleanIp === "::1" || cleanIp === "0:0:0:0:0:0:0:1" || cleanIp === "0000:0000:0000:0000:0000:0000:0000:0001";
+	return (
+		cleanIp === "::1" ||
+		cleanIp === "0:0:0:0:0:0:0:1" ||
+		cleanIp === "0000:0000:0000:0000:0000:0000:0000:0001"
+	);
 }
 
 /**
