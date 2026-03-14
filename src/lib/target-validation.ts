@@ -109,13 +109,11 @@ export function isLoopbackIPv4(ip: string): boolean {
  */
 export function isLoopbackIPv6(ip: string): boolean {
 	const cleanIp = ip.replace(/^\[|\]$/g, "").toLowerCase();
-
-	// ::1 is the only IPv6 loopback
-	return (
-		cleanIp === "::1" ||
-		cleanIp === "0:0:0:0:0:0:0:1" ||
-		cleanIp === "0000:0000:0000:0000:0000:0000:0000:0001"
-	);
+	try {
+		return new URL(`http://[${cleanIp}]`).origin === "http://[::1]";
+	} catch {
+		return false;
+	}
 }
 
 /**
