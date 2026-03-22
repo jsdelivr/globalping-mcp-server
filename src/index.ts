@@ -12,12 +12,23 @@ import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
 import * as mcpcat from "mcpcat";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
-	server = new McpServer({
-		name: MCP_CONFIG.NAME,
-		version: MCP_CONFIG.VERSION,
-		icons: MCP_CONFIG.ICONS,
-		websiteUrl: MCP_CONFIG.WEBSITE_URL,
-		instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
+	server = new McpServer(
+		{
+			name: MCP_CONFIG.NAME,
+			version: MCP_CONFIG.VERSION,
+			icons: MCP_CONFIG.ICONS,
+			websiteUrl: MCP_CONFIG.WEBSITE_URL,
+		},
+		{
+			capabilities: {
+				tools: {
+					listChanged: true,
+				},
+				resources: {},
+				prompts: {},
+				logging: {},
+			},
+			instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
 
 Key guidelines:
 - Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
@@ -28,15 +39,8 @@ Key guidelines:
 - If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
 - If a user asks about 'website availability', use 'http'.
 - If a user asks about 'dns propagation', use 'dns'.`,
-		capabilities: {
-			tools: {
-				listChanged: true,
-			},
-			resources: {},
-			prompts: {},
-			logging: {},
 		},
-	});
+	);
 
 	// Initialize the state
 	initialState: State = {
@@ -492,9 +496,12 @@ async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: Execution
 /**
  * Handle API token requests (direct API access without OAuth)
  */
-async function handleAPITokenRequest<
-	T extends typeof McpAgent<unknown, unknown, Record<string, unknown>>,
->(agent: T, req: Request, env: GlobalpingEnv, ctx: ExecutionContext) {
+async function handleAPITokenRequest(
+	agent: typeof GlobalpingMCP,
+	req: Request,
+	env: GlobalpingEnv,
+	ctx: ExecutionContext,
+) {
 	const { pathname } = new URL(req.url);
 
 	// Validate Host header to prevent DNS rebinding attacks (first layer)

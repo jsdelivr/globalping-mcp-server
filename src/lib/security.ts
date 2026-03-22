@@ -225,7 +225,8 @@ export function getMatchingOrigin(requestOrigin: string | null): string | null {
 		return requestOrigin;
 	}
 
-	// For localhost/127.0.0.1/[::1] with ports, return the base origin if it matches
+	// For localhost/127.0.0.1/[::1], check the base origin (without port) against
+	// CORS_CONFIG.ALLOWED_ORIGINS, then return the origin including the port when present
 	try {
 		const originUrl = new URL(requestOrigin);
 		const hostname = originUrl.hostname.toLowerCase();
@@ -233,7 +234,7 @@ export function getMatchingOrigin(requestOrigin: string | null): string | null {
 		if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]") {
 			const baseOrigin = `${originUrl.protocol}//${hostname}`;
 			if (CORS_CONFIG.ALLOWED_ORIGINS.includes(baseOrigin)) {
-				return baseOrigin;
+				return originUrl.port ? `${baseOrigin}:${originUrl.port}` : baseOrigin;
 			}
 		}
 	} catch {
