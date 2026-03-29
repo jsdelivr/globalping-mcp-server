@@ -36,6 +36,10 @@ It also supports two authentication methods: OAuth and API token authentication.
 - 🔑 **Authentication Support**: Use OAuth or API token with your Globalping account for higher rate limits
 
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/jsdelivr-globalping-mcp-server).
+
 ## Installation
 
 The remote MCP server is available under these endpoints:
