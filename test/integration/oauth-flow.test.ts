@@ -198,6 +198,31 @@ describe("OAuth Routes Integration", () => {
 			expect(html).toContain("Only S256 code challenge method is supported");
 		});
 
+		it("should reject authorization request with code_challenge but no code_challenge_method", async () => {
+			const clientId = "test-pkce-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+			await env.OAUTH_KV.put(
+				`client:${clientId}`,
+				JSON.stringify({
+					clientId,
+					redirectUris: [clientRedirectUri],
+					clientName: "PKCE Test Client",
+				}),
+			);
+
+			const response = await SELF.fetch(
+				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123`,
+				{
+					method: "GET",
+					headers: { Host: "localhost" },
+				},
+			);
+
+			expect(response.status).toBe(200);
+			const html = await response.text();
+			expect(html).toContain("Only S256 code challenge method is supported");
+		});
+
 		it("should accept authorization request with valid S256 PKCE", async () => {
 			const clientId = "test-pkce-client";
 			const clientRedirectUri = "http://localhost:3000/callback";

@@ -80,7 +80,7 @@ app.get("/authorize", async (c) => {
 		);
 	}
 
-	// Encforce PKCE with S256 for public clients (RFC 7636 section 4.2)
+	// Enforce PKCE with S256 for public clients (RFC 7636 section 4.2)
 	if (!oauthReqInfo.codeChallenge) {
 		return c.html(
 			layout(
