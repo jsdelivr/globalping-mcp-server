@@ -148,6 +148,84 @@ describe("OAuth Routes Integration", () => {
 			expect(html).toMatch(/Invalid request|Invalid redirect URI/);
 		});
 
+		it("should reject authorization request without code_challenge (PKCE bypass)", async () => {
+			const clientId = "test-pkce-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+			await env.OAUTH_KV.put(
+				`client:${clientId}`,
+				JSON.stringify({
+					clientId,
+					redirectUris: [clientRedirectUri],
+					clientName: "PKCE Test Client",
+				}),
+			);
+
+			const response = await SELF.fetch(
+				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test`,
+				{
+					method: "GET",
+					headers: { Host: "localhost" },
+				},
+			);
+
+			expect(response.status).toBe(200);
+			const html = await response.text();
+			expect(html).toContain("PKCE code challenge is required");
+		});
+
+		it("should reject authorization request with code_challenge_method=plain (PKCE downgrade)", async () => {
+			const clientId = "test-pkce-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+			await env.OAUTH_KV.put(
+				`client:${clientId}`,
+				JSON.stringify({
+					clientId,
+					redirectUris: [clientRedirectUri],
+					clientName: "PKCE Test Client",
+				}),
+			);
+
+			const response = await SELF.fetch(
+				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123&code_challenge_method=plain`,
+				{
+					method: "GET",
+					headers: { Host: "localhost" },
+				},
+			);
+
+			expect(response.status).toBe(200);
+			const html = await response.text();
+			expect(html).toContain("Only S256 code challenge method is supported");
+		});
+
+		it("should accept authorization request with valid S256 PKCE", async () => {
+			const clientId = "test-pkce-client";
+			const clientRedirectUri = "http://localhost:3000/callback";
+			await env.OAUTH_KV.put(
+				`client:${clientId}`,
+				JSON.stringify({
+					clientId,
+					redirectUris: [clientRedirectUri],
+					clientName: "PKCE Test Client",
+				}),
+			);
+
+			const response = await SELF.fetch(
+				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256`,
+				{
+					method: "GET",
+					headers: { Host: "localhost" },
+					redirect: "manual",
+				},
+			);
+
+			expect(response.status).toBe(302);
+			const location = response.headers.get("Location");
+			expect(location).toContain("auth.globalping.io/oauth/authorize");
+			expect(location).toContain("code_challenge");
+			expect(location).toContain("code_challenge_method=S256");
+		});
+
 		it("should reject invalid redirect URI", async () => {
 			const response = await SELF.fetch(
 				"http://localhost/authorize?client_id=test&redirect_uri=https://evil.com&response_type=code&state=test",
