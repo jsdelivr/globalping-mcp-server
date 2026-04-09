@@ -80,6 +80,25 @@ app.get("/authorize", async (c) => {
 		);
 	}
 
+	// Enforce PKCE with S256 for public clients (RFC 7636 section 4.2)
+	if (!oauthReqInfo.codeChallenge) {
+		return c.html(
+			layout(
+				await html`<h1>Invalid request</h1><p>PKCE code challenge is required.</p>`,
+				"Invalid request",
+			),
+		);
+	}
+
+	if (oauthReqInfo.codeChallengeMethod !== "S256") {
+		return c.html(
+			layout(
+				await html`<h1>Invalid request</h1><p>Only S256 code challenge method is supported.</p>`,
+				"Invalid request",
+			),
+		);
+	}
+
 	// Basic validation: just check redirect_uri is set and parsable
 	// The callback endpoint will later decide if auto-redirect or show manual confirmation
 	if (!oauthReqInfo.redirectUri) {
