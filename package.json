@@ -30,7 +30,7 @@
 		"wrangler": "^4.73.0"
 	},
 	"dependencies": {
-		"@cloudflare/workers-oauth-provider": "^0.1.0",
+		"@cloudflare/workers-oauth-provider": "^0.7.2",
 		"@modelcontextprotocol/sdk": "^1.20.2",
 		"agents": "^0.7.6",
 		"globalping": "^0.2.0",

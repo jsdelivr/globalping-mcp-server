@@ -24,9 +24,6 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 				tools: {
 					listChanged: true,
 				},
-				resources: {},
-				prompts: {},
-				logging: {},
 			},
 			instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
 
@@ -601,6 +598,10 @@ export default {
 			tokenEndpoint: OAUTH_CONFIG.ENDPOINTS.TOKEN,
 			clientRegistrationEndpoint: OAUTH_CONFIG.ENDPOINTS.REGISTER,
 			scopesSupported: OAUTH_CONFIG.SCOPES,
+			resourceMetadata: {
+				resource: `${new URL(req.url).origin}/mcp`,
+				authorization_servers: [new URL(req.url).origin],
+			},
 		}).fetch(req, env, ctx);
 	},
 };
