@@ -149,7 +149,7 @@ When you need to compare network measurements across different locations or betw
 To use the same probes as a previous measurement:
 
 1. First, run a measurement to establish your baseline, for example:
-   \`ping target="google.com" locations=["US+eyeball"]\`
+   \`ping target="google.com" locations=["US+eyeball-network"]\`
 
 2. When the measurement completes, note the measurement ID (shown in the results)
 
