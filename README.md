@@ -111,8 +111,7 @@ gemini extensions install https://github.com/jsdelivr/globalping-mcp-server
 
 ### VS Code & GitHub Copilot
 
-* **Command Palette**: Run `MCP: Add Server` and enter `[https://mcp.globalping.dev/mcp](https://mcp.globalping.dev/mcp)`.
-* **One-Click URL Scheme**: Open [vscode:mcp/install?url=https%3A%2F%2Fmcp.globalping.dev%2Fmcp](vscode:mcp/install?url=https%3A%2F%2Fmcp.globalping.dev%2Fmcp) in your browser.
+* **Command Palette**: Run `MCP: Add Server` and enter `https://mcp.globalping.dev/mcp`.
 
 ### Generic MCP Clients
 
@@ -129,7 +128,7 @@ For any client supporting the standard Streamable HTTP MCP transport, add:
 
 ```
 
-> **Legacy Clients (SSE / stdio fallback):** If your client strictly requires SSE over a local process bridge, configure `npx mcp-remote [https://mcp.globalping.dev/sse](https://mcp.globalping.dev/sse)`.
+> **Legacy Clients (SSE / stdio fallback):** If your client strictly requires SSE over a local process bridge, configure `npx mcp-remote https://mcp.globalping.dev/sse`.
 
 ---
 
