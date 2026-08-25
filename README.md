@@ -14,204 +14,214 @@
   </a>
 </p>
 
-
 ## What is Globalping?
 
 [Globalping](https://globalping.io) is a free, public API that provides access to a globally distributed network of probes for monitoring, debugging, and benchmarking internet infrastructure. With Globalping, you can run network tests (ping, traceroute, DNS, MTR, HTTP) from thousands of locations worldwide.
 
-
 ## What is the Globalping MCP Server?
 
-The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models like OpenAI's GPT and Anthropic's Claude to interact with Globalping's network measurement capabilities through natural language.
+The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models and IDE assistants to interact with Globalping's network measurement capabilities through natural language.
 
-It also supports two authentication methods: OAuth and API token authentication. Both methods offer a secure way to interact with our API and provide higher rate limits associated with your account.
-
+The server supports standard **OAuth 2.0 authentication** as well as **API token authentication** for automated workflows.
 ### Key Features
 
-- 🌐 **Global Network Access**: Run measurements from thousands of probes worldwide
-- 🤖 **AI-Friendly Interface**: Any LLM will easily parse the data and run new measurements as needed
-- 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
-- 🔍 **Smart Context Handling**: Provides detailed parameter descriptions for AI clients to intelligently select measurement types and options
-- 🔄 **Comparative Analysis**: Allows to compare network performance between different targets
-- 🔑 **Authentication Support**: Use OAuth or API token with your Globalping account for higher rate limits
+* 🌐 **Global Network Access**: Run measurements from thousands of probes worldwide
+* 🤖 **AI-Friendly Interface**: Any LLM will easily parse the data and run new measurements as needed
+* 📊 **Comprehensive Measurements**: Support for ping, traceroute, DNS, MTR, and HTTP tests
+* 🔍 **Smart Context Handling**: Detailed parameter descriptions and semantic tool annotations for intelligent agent routing
+* 🔄 **Comparative Analysis**: Compare network latency and routing between different targets and geographic locations
+* 🔑 **Authentication Support**: Use OAuth or an API token with your Globalping account for higher rate limits
 
+---
 
 ## Installation
 
-The remote MCP server is available under these endpoints:
-- Streamable HTTP transport: `https://mcp.globalping.dev/mcp`
-- SSE transport: `https://mcp.globalping.dev/sse`
+The primary endpoint for all modern MCP integrations is:
 
-You can integrate our Globalping MCP server with various AI tools that support the Model Context Protocol. 
+`https://mcp.globalping.dev/mcp` Streamable HTTP
 
-Here are instructions for the top 3 most popular tools:
+### ChatGPT & Codex
 
-#### Gemini CLI
+Connect Globalping as a remote MCP server in ChatGPT and Codex:
 
-To add the Globalping MCP server to Gemini CLI:
+#### ChatGPT (Web & Desktop)
 
-1. Ensure you have the [Gemini CLI](https://github.com/google/gemini-cli) installed.
-2. Run the following command:
+1. In ChatGPT, go to **Settings** → **Security and login** and enable **Developer mode** (or **Settings** → **Features** → **MCP Servers** in ChatGPT Desktop).
+2. Add a new custom connector / MCP server with the endpoint:
+```text
+https://mcp.globalping.dev/mcp
+```
+
+
+3. Authenticate via OAuth when prompted.
+
+#### OpenAI Codex
+
+Add the remote server using the Codex CLI:
+
+```bash
+codex mcp add globalping --url https://mcp.globalping.dev/mcp
+```
+
+*Or add to `~/.codex/config.toml` directly:*
+
+```toml
+[mcp_servers.globalping]
+url = "https://mcp.globalping.dev/mcp"
+```
+
+### Claude (Web, Desktop)
+
+Claude supports remote Streamable HTTP MCP connectors natively without requiring local `mcp-remote` bridges:
+
+1. In Claude, navigate to **Settings** → **Connectors** (or **Organization settings** → **Connectors** for Team/Enterprise accounts).
+2. Click **+ Add custom connector**.
+3. Fill in the connector details:
+* **Name**: `Globalping`
+* **URL**: `https://mcp.globalping.dev/mcp`
+
+#### Claude Code
+
+Run the following command in your terminal:
+
+```bash
+claude mcp add --transport http globalping https://mcp.globalping.dev/mcp
+```
+
+To make Globalping available across all projects on your machine (global user scope) instead of just the current project directory:
+
+```bash
+claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mcp
+```
+
+*Run `claude mcp login globalping --no-browser` if working over SSH or in a headless terminal to complete the authorization URL exchange manually.*
+
+
+### Cursor
+
+Add Globalping to Cursor in one click:
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=Globalping&config=eyJ1cmwiOiJodHRwczovL21jcC5nbG9iYWxwaW5nLmRldi9tY3AifQ%3D%3D)
+
+*Or configure manually in **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:*
+
+* **Type**: `SSE / HTTP`
+* **Name**: `globalping`
+* **URL**: `https://mcp.globalping.dev/mcp`
+
+### Gemini CLI
+
+Globalping is indexed in the official **[Gemini CLI Extensions Gallery](https://geminicli.com/extensions/?name=jsdelivrglobalping-mcp-server)**.
+
+Install via the Gemini extension manager:
 
 ```bash
 gemini extensions install https://github.com/jsdelivr/globalping-mcp-server
 ```
 
-This will automatically configure the server with OAuth authentication enabled. You will be prompted to log in when you first use the extension.
+*(Add `--auto-update` to keep the extension automatically updated).*
 
-**Note:** If you prefer to use a Globalping API token (for higher rate limits or automation), you can manually add the server with the Authorization header instead of using the extension installer:
+### VS Code & GitHub Copilot
 
-```bash
-gemini mcp add globalping https://mcp.globalping.dev/mcp --header "Authorization: Bearer YOUR_TOKEN"
-```
+* **Command Palette**: Run `MCP: Add Server` and enter `https://mcp.globalping.dev/mcp`.
 
-#### Claude Desktop App
+### Generic MCP Clients
 
-Add to your Claude Desktop configuration file (located at `%APPDATA%\Claude\config.json` on Windows or `~/Library/Application Support/Claude/config.json` on macOS):
-
-> [!note]
-> Claude Desktop natively supports only stdio transport for local MCP servers.
-> For remote MCP servers, use the `mcp-remote` bridge.
+For any client supporting the standard Streamable HTTP MCP transport, add:
 
 ```json
 {
-    "mcpServers": {
-        "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/sse"
-            ]
-        }
+  "mcpServers": {
+    "globalping": {
+      "url": "https://mcp.globalping.dev/mcp"
     }
+  }
 }
 ```
-#### Anthropic Claude API (via Console)
 
-When creating a Claude Assistant in the Anthropic Console:
+> **Legacy Clients (SSE / stdio fallback):** If your client strictly requires SSE over a local process bridge, configure `npx mcp-remote https://mcp.globalping.dev/sse`.
 
-1. Go to [console.anthropic.com](https://console.anthropic.com/)
-2. Navigate to the Assistants section
-3. Create a new Assistant or edit an existing one
-4. In the Tools section, select "Add custom tool"
-5. Enter the following details:
-   - Tool Name: `Globalping`
-   - Description: `Run network tests from locations worldwide`
-   - Tool URL: `https://mcp.globalping.dev/mcp` (Streamable HTTP transport) or `https://mcp.globalping.dev/sse` (SSE transport)
+---
 
-#### Cursor
-
-To add the Globalping MCP server to Cursor:
-
-1. Open Cursor settings
-2. Navigate to the Tools & MCP tab
-3. Click on "+ New MCP server"
-4. This opens the `mcp.json` config file, where you will need to add:
-
-Streamable HTTP transport:
-```json
-{
-    "mcpServers": {
-        "globalping": {
-            "url": "https://mcp.globalping.dev/mcp"
-        }
-    }
-}
-```
-Legacy SSE transport:
-```json
-{
-    "mcpServers": {
-        "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/sse"
-            ]
-        }
-    }
-}
-```
-5. Save and restart Cursor
 ## Authentication
 
-The Globalping MCP server supports two authentication methods:
-- **OAuth Authentication**: Automatically handled by the server for secure access
-- **API Token Authentication**: Manual token configuration via Authorization header
+Globalping MCP supports two authentication modes:
 
-Both methods provide higher rate limits and priority access to the probe network.
+* **OAuth 2.0**: Handled automatically in interactive clients during connection.
+* **API Token**: Useful for headless scripts, CI/CD pipelines, or programmatic API clients.
 
-### Using Globalping API Token
+### Using a Globalping API Token
 
-The server automatically detects when an API token is provided in the Authorization header and uses it for authentication instead of OAuth.
+1. Go to [dash.globalping.io](https://dash.globalping.io) and generate an API token under **Tokens**.
+2. Pass the token via standard HTTP headers:
 
-#### Getting Your API Token
-
-1. Visit [dash.globalping.io](https://dash.globalping.io)
-2. Sign in to your account
-3. Navigate to Tokens to generate a new API token
-
-#### Configuration with Authentication
-
-Streamable HTTP transport:
 ```json
 {
-    "mcpServers": {
-        "globalping": {
-            "url": "https://mcp.globalping.dev/mcp",
-            "headers": {
-                "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
-            }
-        }
+  "mcpServers": {
+    "globalping": {
+      "url": "https://mcp.globalping.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_GLOBALPING_API_TOKEN"
+      }
     }
-}
-```
-Legacy SSE transport:
-```json
-{
-    "mcpServers": {
-        "globalping": {
-            "command": "npx",
-            "args": [
-                "mcp-remote",
-                "https://mcp.globalping.dev/sse",
-                "--header",
-                "Authorization: Bearer YOUR_GLOBALPING_API_TOKEN"
-            ]
-        }
-    }
+  }
 }
 ```
 
-## Connecting AI Assistants
+---
 
-You can use our MCP server with any MCP-compatible AI assistant, including:
+## Programmatic Integration (Anthropic Messages API)
 
-- Claude Desktop
-- Anthropic Assistants
-- Cursor
-- Windsurf
-- Any custom implementation of the MCP protocol
+To use Globalping directly with Anthropic's Messages API (MCP Connector), pass the remote server definition in your request payload:
 
-See your tool's MCP documentation for details on connecting clients to this server.
+```json
+{
+  "model": "claude-3-7-sonnet-latest",
+  "max_tokens": 1024,
+  "mcp_servers": [
+    {
+      "type": "url",
+      "name": "globalping",
+      "url": "https://mcp.globalping.dev/mcp"
+    }
+  ],
+  "tools": [
+    {
+      "type": "mcp_toolset",
+      "mcp_server_name": "globalping"
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Run a traceroute to 1.1.1.1 from Frankfurt and Tokyo."
+    }
+  ]
+}
+```
 
+---
 
 ## Available Tools
 
-- `ping` - Perform a ping test to a target
-- `traceroute` - Perform a traceroute test to a target
-- `dns` - Perform a DNS lookup for a domain
-- `mtr` - Perform an MTR (My Traceroute) test to a target
-- `http` - Perform an HTTP request to a URL
-- `locations` - List all available Globalping probe locations
-- `limits` - Show your current rate limits for the Globalping API
-- `getMeasurement` - Retrieve a previously run measurement by ID
-- `compareLocations` - Guide on how to run comparison measurements
-- `help` - Show a help message with documentation on available tools
+| Tool | Description |
+| --- | --- |
+| `ping` | Perform ICMP/packet ping tests to a destination |
+| `traceroute` | Trace network routing hops to a target |
+| `dns` | Resolve DNS queries using specific resolvers and record types |
+| `mtr` | Run combined ping and traceroute tests (My Traceroute) |
+| `http` | Execute HTTP/HTTPS requests from probes worldwide |
+| `locations` | List available Globalping probe regions and filters |
+| `limits` | Display current API quota and usage limits |
+| `getMeasurement` | Retrieve results of a historical measurement by ID |
+| `compareLocations` | Helper guide to compare multi-region performance metrics |
+| `help` | Tool reference and syntax documentation |
+
+---
 
 ## Usage Examples
 
-Once connected to an AI model through a compatible MCP client, you can interact with Globalping using natural language:
+Once connected, run network diagnostics using natural language:
 
 ```
 Ping google.com from 3 locations in Europe
@@ -233,44 +243,47 @@ Is jsdelivr.com reachable from China? Test with both ping and HTTP
 What's the average response time for cloudflare.com across different continents?
 ```
 
+---
 
 ## Location Specification
 
-Locations can be specified using the "magic" field, which supports various formats:
+Locations can be specified using the location's `magic` parameter:
 
-- Continent codes: "EU", "NA", "AS", etc.
-- Country codes: "US", "DE", "JP", etc.
-- City names: "London", "Tokyo", "New York", etc.
-- Network names: "Cloudflare", "Google", etc.
-- ASN numbers: "AS13335", "AS15169", etc.
-- Cloud provider regions: "aws-us-east-1", "gcp-us-central1", etc.
+* **Continents**: `EU`, `NA`, `AS`, `AF`, `OC`, `SA`
+* **Country codes**: `US`, `DE`, `JP`, `PL`, `BR`
+* **Cities**: `London`, `Tokyo`, `New York`, `Warsaw`
+* **Networks & ASNs**: `Cloudflare`, `Google`, `AS13335`, `AS15169`
+* **Cloud regions**: `aws-us-east-1`, `gcp-us-central1`
+* **Combinations**: `London+UK`, `Cloudflare+US`, `AWS+Frankfurt`
 
-You can also combine these with a plus sign for more specific targeting: "London+UK", "Cloudflare+US", etc.
-
+---
 
 ## Development
 
-The codebase is organized into modules:
+```
+src/
+├── index.ts        # Main entry point & MCP agent definition
+├── app.ts          # OAuth web routes
+├── api/            # Globalping API client
+├── auth/           # Authentication helpers
+├── config/         # Configuration & constants
+├── lib/            # Utilities
+├── mcp/            # MCP tool definitions & handlers
+├── types/          # TypeScript interfaces
+└── ui/             # OAuth HTML templates
+```
 
-- `src/index.ts` - Main entry point and MCP agent definition
-- `src/app.ts` - OAuth web routes
-- `src/api` - Globalping API client
-- `src/auth` - Authentication utilities
-- `src/config` - Configuration and constants
-- `src/lib` - Utility functions
-- `src/mcp` - MCP tool handlers
-- `src/types` - TypeScript type definitions
-- `src/ui` - HTML templates
+### Credentials & Secrets
 
+Store OAuth credentials:
 
-### Add Globalping credentials
+```bash
+npx wrangler secret put GLOBALPING_CLIENT_ID
+```
 
-Add Globalping OAuth credentials:
+### KV Storage Setup
 
-- `npx wrangler secret put GLOBALPING_CLIENT_ID`
+For Cloudflare Workers OAuth state management:
 
-### KV storage
-Used for `OAuthProvider` docs https://github.com/cloudflare/workers-oauth-provider
-- create a KV namespace and copy ID
-- binding for it must be `OAUTH_KV`
-- configure `kv_namespaces` in the `wrangler.jsonc` file
+1. Create a KV namespace: `npx wrangler kv:namespace create OAUTH_KV`
+2. Configure `OAUTH_KV` inside `wrangler.jsonc`.
