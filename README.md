@@ -50,7 +50,6 @@ Connect Globalping as a remote MCP server in ChatGPT and Codex:
 2. Add a new custom connector / MCP server with the endpoint:
 ```text
 https://mcp.globalping.dev/mcp
-
 ```
 
 
@@ -62,7 +61,6 @@ Add the remote server using the Codex CLI:
 
 ```bash
 codex mcp add globalping --url https://mcp.globalping.dev/mcp
-
 ```
 
 *Or add to `~/.codex/config.toml` directly:*
@@ -70,7 +68,6 @@ codex mcp add globalping --url https://mcp.globalping.dev/mcp
 ```toml
 [mcp_servers.globalping]
 url = "https://mcp.globalping.dev/mcp"
-
 ```
 
 ### Claude (Web, Desktop)
@@ -89,14 +86,12 @@ Run the following command in your terminal:
 
 ```bash
 claude mcp add --transport http globalping https://mcp.globalping.dev/mcp
-
 ```
 
 To make Globalping available across all projects on your machine (global user scope) instead of just the current project directory:
 
 ```bash
 claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mcp
-
 ```
 
 *Run `claude mcp login globalping --no-browser` if working over SSH or in a headless terminal to complete the authorization URL exchange manually.*
@@ -104,11 +99,7 @@ claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mc
 
 ### Cursor
 
-Add Globalping to Cursor in one click:
-
-[![Add to Cursor](https://img.shields.io/badge/Add%20to%20Cursor-MCP-blue?logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=Globalping&config=eyJ1cmwiOiJodHRwczovL21jcC5nbG9iYWxwaW5nLmRldi9tY3AifQ%3D%3D)
-
-*Or configure manually in **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:*
+Add Globalping to Cursor by going to **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:
 
 * **Type**: `SSE / HTTP`
 * **Name**: `globalping`
@@ -122,7 +113,6 @@ Install via the Gemini extension manager:
 
 ```bash
 gemini extensions install https://github.com/jsdelivr/globalping-mcp-server
-
 ```
 
 *(Add `--auto-update` to keep the extension automatically updated).*
@@ -143,7 +133,6 @@ For any client supporting the standard Streamable HTTP MCP transport, add:
     }
   }
 }
-
 ```
 
 > **Legacy Clients (SSE / stdio fallback):** If your client strictly requires SSE over a local process bridge, configure `npx mcp-remote https://mcp.globalping.dev/sse`.
@@ -173,7 +162,6 @@ Globalping MCP supports two authentication modes:
     }
   }
 }
-
 ```
 
 ---
@@ -206,7 +194,6 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
     }
   ]
 }
-
 ```
 
 ---
@@ -234,27 +221,22 @@ Once connected, run network diagnostics using natural language:
 
 ```
 Ping google.com from 3 locations in Europe
-
 ```
 
 ```
 Run a traceroute to github.com from Japan and compare with traceroute from the US
-
 ```
 
 ```
 Check the DNS resolution of example.com using Google DNS (8.8.8.8)
-
 ```
 
 ```
 Is jsdelivr.com reachable from China? Test with both ping and HTTP
-
 ```
 
 ```
 What's the average response time for cloudflare.com across different continents?
-
 ```
 
 ---
@@ -285,7 +267,6 @@ src/
 ├── mcp/            # MCP tool definitions & handlers
 ├── types/          # TypeScript interfaces
 └── ui/             # OAuth HTML templates
-
 ```
 
 ### Credentials & Secrets
@@ -294,7 +275,6 @@ Store OAuth credentials:
 
 ```bash
 npx wrangler secret put GLOBALPING_CLIENT_ID
-
 ```
 
 ### KV Storage Setup
