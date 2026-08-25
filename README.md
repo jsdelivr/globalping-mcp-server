@@ -100,7 +100,7 @@ claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mc
 
 ```
 
-*(Add `--no-browser` if working over SSH or in a headless terminal to complete the authorization URL exchange manually).*
+*Run `claude mcp login globalping --no-browser` if working over SSH or in a headless terminal to complete the authorization URL exchange manually.*
 
 
 ### Cursor
@@ -186,6 +186,7 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 ```json
 {
   "model": "claude-3-7-sonnet-latest",
+  "max_tokens": 1024,
   "mcp_servers": [
     {
       "type": "url",
