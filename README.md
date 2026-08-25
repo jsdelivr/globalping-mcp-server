@@ -99,7 +99,11 @@ claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mc
 
 ### Cursor
 
-Add Globalping to Cursor by going to **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:
+Add Globalping to Cursor in one click:
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=Globalping&config=eyJ1cmwiOiJodHRwczovL21jcC5nbG9iYWxwaW5nLmRldi9tY3AifQ%3D%3D)
+
+*Or configure manually in **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:*
 
 * **Type**: `SSE / HTTP`
 * **Name**: `globalping`
