@@ -22,8 +22,7 @@
 
 The Globalping MCP Server implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI models and IDE assistants to interact with Globalping's network measurement capabilities through natural language.
 
-The server supports standard **OAuth 2.0 authentication** as well as **API token authentication** for automated workflows and higher rate limits.
-
+The server supports standard **OAuth 2.0 authentication** as well as **API token authentication** for automated workflows.
 ### Key Features
 
 * 🌐 **Global Network Access**: Run measurements from thousands of probes worldwide
