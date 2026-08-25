@@ -74,21 +74,40 @@ url = "https://mcp.globalping.dev/mcp"
 
 ```
 
-### Claude (Web, Desktop, Mobile, Claude Code)
+### Claude (Web, Desktop)
 
 Claude supports remote Streamable HTTP MCP connectors natively without requiring local `mcp-remote` bridges:
 
-1. In Claude, navigate to **Customize** → **Connectors** (or **Organization settings** → **Connectors** for Team/Enterprise accounts).
+1. In Claude, navigate to **Settings** → **Connectors** (or **Organization settings** → **Connectors** for Team/Enterprise accounts).
 2. Click **+ Add custom connector**.
 3. Fill in the connector details:
 * **Name**: `Globalping`
 * **URL**: `https://mcp.globalping.dev/mcp`
 
+#### Claude Code
+
+Run the following command in your terminal:
+
+```bash
+claude mcp add --transport http globalping https://mcp.globalping.dev/mcp
+
+```
+
+To make Globalping available across all projects on your machine (global user scope) instead of just the current project directory:
+
+```bash
+claude mcp add -s user --transport http globalping https://mcp.globalping.dev/mcp
+
+```
+
+*(Add `--no-browser` if working over SSH or in a headless terminal to complete the authorization URL exchange manually).*
 
 
 ### Cursor
 
 Add Globalping to Cursor in one click:
+
+[![Add to Cursor](https://img.shields.io/badge/Add%20to%20Cursor-MCP-blue?logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=Globalping&config=eyJ1cmwiOiJodHRwczovL21jcC5nbG9iYWxwaW5nLmRldi9tY3AifQ%3D%3D)
 
 *Or configure manually in **Settings** → **Features** → **MCP Servers** → **Add New MCP Server**:*
 
@@ -166,12 +185,18 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 
 ```json
 {
-  "model": "claude-3-7-sonnet-20250219",
-  "max_tokens": 1024,
+  "model": "claude-3-7-sonnet-latest",
   "mcp_servers": [
     {
+      "type": "url",
       "name": "globalping",
       "url": "https://mcp.globalping.dev/mcp"
+    }
+  ],
+  "tools": [
+    {
+      "type": "mcp_toolset",
+      "mcp_server_name": "globalping"
     }
   ],
   "messages": [
@@ -236,7 +261,7 @@ What's the average response time for cloudflare.com across different continents?
 
 ## Location Specification
 
-Locations can be specified using the `magic` parameter:
+Locations can be specified using the location's `magic` parameter:
 
 * **Continents**: `EU`, `NA`, `AS`, `AF`, `OC`, `SA`
 * **Country codes**: `US`, `DE`, `JP`, `PL`, `BR`
