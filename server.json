@@ -11,11 +11,11 @@
 	"remotes": [
 		{
 			"type": "sse",
-			"url": "https://mcp.globalping.io/sse"
+			"url": "https://mcp.globalping.dev/sse"
 		},
 		{
 			"type": "streamable-http",
-			"url": "https://mcp.globalping.io/mcp"
+			"url": "https://mcp.globalping.dev/mcp"
 		}
 	]
 }
