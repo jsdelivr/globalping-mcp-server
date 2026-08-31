@@ -17,6 +17,7 @@ const GLOBALPING_REPOSITORY_URL = "https://github.com/jsdelivr/globalping-mcp-se
 
 interface Env extends GlobalpingEnv {
 	OAUTH_PROVIDER: OAuthHelpers;
+	OPENAI_APPS_CHALLENGE?: string;
 }
 
 const app = new Hono<{
@@ -47,6 +48,15 @@ async function getUserData(accessToken: string): Promise<any> {
 // Root route - redirect to repository
 app.get("/", async (_c) => {
 	return Response.redirect(GLOBALPING_REPOSITORY_URL);
+});
+
+app.get("/.well-known/openai-apps-challenge", (c) => {
+	const token = c.env.OPENAI_APPS_CHALLENGE;
+	if (!token) {
+		return c.notFound();
+	}
+
+	return c.text(token);
 });
 
 // Serve Gemini extension manifest

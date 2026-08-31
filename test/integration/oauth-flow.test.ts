@@ -10,6 +10,7 @@ import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 // Extend ProvidedEnv type to include OAUTH_KV
 declare module "cloudflare:test" {
 	interface ProvidedEnv {
+		OPENAI_APPS_CHALLENGE: string;
 		OAUTH_KV: {
 			put: (
 				key: string,
@@ -130,6 +131,24 @@ describe("OAuth Routes Integration", () => {
 			expect(response.headers.get("Location")).toBe(
 				"https://github.com/jsdelivr/globalping-mcp-server",
 			);
+		});
+	});
+
+	describe("OpenAI domain verification", () => {
+		it("returns the configured challenge token as plain text", async () => {
+			const response = await SELF.fetch(
+				"http://localhost/.well-known/openai-apps-challenge",
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
+			);
+
+			expect(response.status).toBe(200);
+			expect(response.headers.get("Content-Type")).toContain("text/plain");
+			expect(await response.text()).toBe("openai-test-verification-token");
 		});
 	});
 
