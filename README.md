@@ -216,7 +216,7 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 | `getMeasurement` | Retrieve results of a historical measurement by ID |
 | `compareLocations` | Helper guide to compare multi-region performance metrics |
 | `help` | Tool reference and syntax documentation |
-| `authStatus` | Check the current MCP authentication status and method |
+| `authStatus` | Check the current MCP authentication status |
 
 ---
 
@@ -271,7 +271,7 @@ Locations can be specified using the location's `magic` parameter:
 
 * Remove and reconnect the integration to start a fresh OAuth flow.
 * For API-token authentication, generate a current token in the [Globalping dashboard](https://dash.globalping.io) and send it as `Authorization: Bearer YOUR_GLOBALPING_API_TOKEN`.
-* Once connected, use the `authStatus` tool to verify the active authentication method and the `limits` tool to check the available quota.
+* Once connected, use the `authStatus` tool to verify that authentication is active and the `limits` tool to check the available quota.
 
 ### Get help or report a problem
 
