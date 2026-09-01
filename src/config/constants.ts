@@ -135,9 +135,10 @@ export const CORS_CONFIG = {
 };
 
 /**
- * MCPcat configuration for analytics and telemetry
+ * AgentCat configuration for analytics and telemetry
  */
-export const MCPCAT_CONFIG = {
-	ENABLED: true, // Set to false to disable MCPcat in dev environments
+export const AGENTCAT_CONFIG = {
+	ENABLED: true, // Set to false to disable AgentCat in dev environments
+	// Preserve the existing deployed secret name during the package migration.
 	PROJECT_ID_ENV_VAR: "MCPCAT_PROJECT_ID",
 } as const;

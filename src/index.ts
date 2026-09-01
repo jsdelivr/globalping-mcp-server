@@ -1,15 +1,14 @@
-import { McpAgent } from "agents/mcp";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import { isAPITokenRequest, isValidAPIToken } from "./auth";
-import app from "./app";
-import { MCP_CONFIG, OAUTH_CONFIG, MCPCAT_CONFIG } from "./config";
-import type { GlobalpingEnv, Props, State } from "./types";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import * as agentcat from "agentcat";
+import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import app from "./app";
+import { isAPITokenRequest, isValidAPIToken, sanitizeToken } from "./auth";
+import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
+import { getCorsOptionsForRequest, validateHost, validateOrigin } from "./lib";
 import { registerGlobalpingTools } from "./mcp";
-import { sanitizeToken } from "./auth";
-import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
-import * as mcpcat from "mcpcat";
+import type { GlobalpingEnv, Props, State } from "./types";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer(
@@ -53,22 +52,22 @@ Key guidelines:
 	async init() {
 		console.log("Initializing Globalping MCP...");
 
-		// Initialize MCPcat tracking if project ID is configured
-		if (this.env.MCPCAT_PROJECT_ID && MCPCAT_CONFIG.ENABLED) {
+		// Initialize AgentCat tracking if project ID is configured
+		if (this.env.MCPCAT_PROJECT_ID && AGENTCAT_CONFIG.ENABLED) {
 			try {
-				mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+				agentcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
 					// Identify users with generic labels
 					identify: async () => {
 						return this.getUserIdentification();
 					},
 				});
 
-				console.log("✓ MCPcat tracking initialized");
+				console.log("✓ AgentCat tracking initialized");
 			} catch (error) {
-				console.warn("⚠ MCPcat tracking initialization failed (non-fatal):", error);
+				console.warn("⚠ AgentCat tracking initialization failed (non-fatal):", error);
 			}
 		} else {
-			console.log("✗ MCPcat tracking disabled (no project ID or disabled in config)");
+			console.log("✗ AgentCat tracking disabled (no project ID or disabled in config)");
 		}
 
 		// Register all the Globalping tools
@@ -385,7 +384,7 @@ For more information, visit: https://www.globalping.io
 	}
 
 	/**
-	 * Returns generic user identification for MCPcat analytics
+	 * Returns generic user identification for AgentCat analytics
 	 * Does not expose PII - uses generic labels only
 	 */
 	private getUserIdentification(): {
