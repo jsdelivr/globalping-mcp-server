@@ -355,30 +355,6 @@ For more information, visit: https://www.globalping.io
 		return this.state.oAuth;
 	}
 
-	async removeOAuthData(): Promise<void> {
-		try {
-			if (!this.props) return;
-
-			// Find and remove grants by userId
-			const responseGrant = await this.env.OAUTH_KV.list({
-				prefix: `grant:${this.props.userName}`,
-			});
-			for (const { name } of responseGrant.keys) {
-				await this.env.OAUTH_KV.delete(name);
-			}
-
-			// Find and remove tokens
-			const responseToken = await this.env.OAUTH_KV.list({
-				prefix: `token:${this.props.userName}`,
-			});
-			for (const { name } of responseToken.keys) {
-				await this.env.OAUTH_KV.delete(name);
-			}
-		} catch (error) {
-			console.error("Error removing OAuth data:", error);
-		}
-	}
-
 	getToken(): string | undefined {
 		// Return the access token from the props
 		return this.props?.accessToken;
@@ -397,7 +373,7 @@ For more information, visit: https://www.globalping.io
 		const hasAPIToken = !this.props?.isOAuth;
 
 		// Check API token first (most specific) to prevent misclassification
-		// as OAuth when API token flow sets isAuthenticated and userName
+		// as OAuth when API token flow sets isAuthenticated
 		if (hasAPIToken) {
 			return {
 				userId: "api_token_user",
@@ -408,7 +384,7 @@ For more information, visit: https://www.globalping.io
 			};
 		}
 
-		if (isAuth && this.props?.userName) {
+		if (isAuth && this.props?.isOAuth) {
 			return {
 				userId: "oauth_user",
 				userName: "OAuth User",
@@ -559,7 +535,6 @@ async function handleAPITokenRequest(
 		accessToken: `Bearer ${token}`,
 		refreshToken: "",
 		state: "",
-		userName: "API Token User",
 		clientId: "",
 		isAuthenticated: true,
 		isOAuth: false,
