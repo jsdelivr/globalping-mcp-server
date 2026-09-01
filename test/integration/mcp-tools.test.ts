@@ -496,6 +496,7 @@ describe("MCP Tools Integration", () => {
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
 			expect(data.result.content[0].text).toContain("rateLimit");
+			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
