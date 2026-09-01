@@ -56,6 +56,7 @@ Key guidelines:
 		if (this.env.MCPCAT_PROJECT_ID && AGENTCAT_CONFIG.ENABLED) {
 			try {
 				agentcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+					enableToolCallContext: false,
 					// Identify users with generic labels
 					identify: async () => {
 						return this.getUserIdentification();
