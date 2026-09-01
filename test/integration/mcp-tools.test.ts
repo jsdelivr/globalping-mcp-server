@@ -157,7 +157,7 @@ const createMockGlobalpingAPI = () => {
 
 // Helper to create MCP requests with proper headers
 const makeMCPRequest = async (mcpRequest: any, token?: string, sessionId?: string) => {
-	return await SELF.fetch("http://localhost/mcp", {
+	return await SELF.fetch("https://localhost/mcp", {
 		method: "POST",
 		headers: {
 			Host: "localhost",

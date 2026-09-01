@@ -13,6 +13,9 @@
 		}
 	],
 	"compatibility_date": "2025-03-10",
+	"secrets": {
+		"required": ["GLOBALPING_CLIENT_ID"]
+	},
 	"durable_objects": {
 		"bindings": [
 			{

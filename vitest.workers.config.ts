@@ -1,33 +1,39 @@
-import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
+import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { defineConfig } from "vitest/config";
 
-export default defineWorkersConfig({
+const testClientId = "test-client-id";
+process.env.GLOBALPING_CLIENT_ID ??= testClientId;
+
+export default defineConfig({
+	plugins: [
+		cloudflareTest({
+			wrangler: { configPath: "./wrangler.jsonc" },
+			main: "./src/index.ts",
+			miniflare: {
+				compatibilityDate: "2025-03-10",
+				compatibilityFlags: ["nodejs_compat_v2"],
+				kvNamespaces: ["OAUTH_KV"],
+				bindings: {
+					GLOBALPING_CLIENT_ID: testClientId,
+					OPENAI_APPS_CHALLENGE: "openai-test-verification-token",
+					// Disable MCPcat during tests - it adds a required 'context' parameter to all tools for agents to understand their use-cases
+					MCPCAT_PROJECT_ID: "",
+				},
+			},
+		}),
+	],
 	test: {
 		globals: true,
 		include: ["test/integration/**/*.test.ts"],
+		coverage: {
+			provider: "istanbul",
+		},
 		deps: {
 			optimizer: {
 				ssr: {
 					enabled: true,
 					include: ["globalping", "ajv"],
 				},
-			},
-		},
-		poolOptions: {
-			workers: {
-				wrangler: { configPath: "./wrangler.jsonc" },
-				main: "./src/index.ts",
-				miniflare: {
-					compatibilityDate: "2025-03-10",
-					compatibilityFlags: ["nodejs_compat_v2"],
-					kvNamespaces: ["OAUTH_KV"],
-					bindings: {
-						GLOBALPING_CLIENT_ID: "test-client-id",
-						OPENAI_APPS_CHALLENGE: "openai-test-verification-token",
-						// Disable MCPcat during tests - it adds a required 'context' parameter to all tools for agents to understand their use-cases
-						MCPCAT_PROJECT_ID: "",
-					},
-				},
-				isolatedStorage: false,
 			},
 		},
 	},

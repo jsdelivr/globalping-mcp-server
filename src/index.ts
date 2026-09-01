@@ -609,6 +609,7 @@ export default {
 			resourceMetadata: {
 				resource: `${new URL(req.url).origin}/mcp`,
 				authorization_servers: [new URL(req.url).origin],
+				scopes_supported: OAUTH_CONFIG.SCOPES,
 			},
 		}).fetch(req, env, ctx);
 	},

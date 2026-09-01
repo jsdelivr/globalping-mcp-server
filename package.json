@@ -2,6 +2,7 @@
 	"name": "globalping-mcp-server",
 	"version": "1.1.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
@@ -18,24 +19,25 @@
 		"coverage:integration": "vitest run --config vitest.workers.config.ts --coverage"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@cloudflare/vitest-pool-workers": "^0.10.9",
-		"@types/node": "^24.10.1",
-		"@vitest/coverage-v8": "^3.2.4",
-		"happy-dom": "^20.0.10",
-		"marked": "^17.0.0",
+		"@biomejs/biome": "^2.5.11",
+		"@cloudflare/vitest-pool-workers": "^0.22.0",
+		"@types/node": "^24.13.3",
+		"@vitest/coverage-istanbul": "^4.1.11",
+		"@vitest/coverage-v8": "^4.1.11",
+		"happy-dom": "^20.12.0",
+		"marked": "^18.0.11",
 		"patch-package": "^8.0.1",
 		"typescript": "^5.9.3",
-		"vitest": "^3.2.4",
-		"wrangler": "^4.73.0"
+		"vitest": "^4.1.11",
+		"wrangler": "^4.127.1"
 	},
 	"dependencies": {
-		"@cloudflare/workers-oauth-provider": "^0.7.2",
-		"@modelcontextprotocol/sdk": "^1.20.2",
-		"agents": "^0.7.6",
+		"@cloudflare/workers-oauth-provider": "^0.10.3",
+		"@modelcontextprotocol/sdk": "1.30.0",
+		"agents": "^0.22.0",
 		"globalping": "^0.2.0",
-		"hono": "^4.10.6",
-		"mcpcat": "^0.1.9-beta.5",
-		"zod": "^3.25.76"
+		"hono": "^4.13.5",
+		"mcpcat": "^0.1.17",
+		"zod": "^4.5.4"
 	}
 }
