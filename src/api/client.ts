@@ -54,17 +54,22 @@ export async function createMeasurement(
  * @param agent The GlobalpingMCP instance
  * @param measurementId The measurement ID to poll for
  * @param token API token for authenticated requests
+ * @param signal Optional cancellation signal for polling
  * @returns The complete measurement response
  */
 export async function pollMeasurementResult(
 	agent: GlobalpingMCP,
 	measurementId: string,
 	token: string,
+	signal?: AbortSignal,
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
 	const globalping = new Globalping({ auth: token });
-	const result = await globalping.awaitMeasurement(measurementId);
+	const result = await globalping.awaitMeasurement(
+		measurementId,
+		signal ? { signal } : undefined,
+	);
 
 	if (!result.ok) {
 		// Handle authentication errors using library's static method
@@ -84,12 +89,14 @@ export async function pollMeasurementResult(
  * @param agent The GlobalpingMCP instance
  * @param options The measurement options
  * @param token API token for authenticated requests
+ * @param signal Optional cancellation signal for polling
  * @returns The complete measurement results
  */
 export async function runMeasurement(
 	agent: GlobalpingMCP,
 	options: MeasurementOptions,
 	token: string,
+	signal?: AbortSignal,
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
@@ -106,7 +113,7 @@ export async function runMeasurement(
 	}
 
 	const result = await createMeasurement(agent, options as TypedMeasurementRequest, token);
-	return await pollMeasurementResult(agent, result.id, token);
+	return await pollMeasurementResult(agent, result.id, token, signal);
 }
 
 /**

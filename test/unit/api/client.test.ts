@@ -231,6 +231,44 @@ describe("runMeasurement", () => {
 		expect(result).toEqual(awaitResult.data);
 	});
 
+	it("should forward the abort signal while awaiting the measurement", async () => {
+		const agent = createMockAgent();
+		const options: MeasurementOptions = {
+			type: "ping",
+			target: "google.com",
+		};
+		const token = "test-token-123";
+		const signal = new AbortController().signal;
+
+		const createMeasurementMock = vi.fn().mockResolvedValue({
+			ok: true,
+			data: { id: "measurement-123", probesCount: 3 },
+		});
+		const awaitMeasurementMock = vi.fn().mockResolvedValue({
+			ok: true,
+			data: {
+				id: "measurement-123",
+				type: "ping",
+				status: "finished",
+				createdAt: "2024-01-01T00:00:00Z",
+				updatedAt: "2024-01-01T00:00:10Z",
+				target: "google.com",
+				probesCount: 3,
+				results: [],
+			},
+		});
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
+
+		await runMeasurement(agent as any, options, token, signal);
+
+		expect(awaitMeasurementMock).toHaveBeenCalledWith("measurement-123", { signal });
+	});
+
 	it("should set default limit if not specified", async () => {
 		const agent = createMockAgent();
 		const options: MeasurementOptions = {

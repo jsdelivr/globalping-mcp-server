@@ -35,7 +35,7 @@
 		"@cloudflare/workers-oauth-provider": "^0.10.3",
 		"@modelcontextprotocol/sdk": "1.30.0",
 		"agents": "^0.22.0",
-		"globalping": "^0.2.0",
+		"globalping": "^0.4.0",
 		"hono": "^4.13.5",
 		"mcpcat": "^0.1.17",
 		"zod": "^4.5.4"

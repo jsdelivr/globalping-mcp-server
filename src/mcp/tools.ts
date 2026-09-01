@@ -74,7 +74,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, packets }) => {
+		async ({ target, locations, limit, packets }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -99,6 +99,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				// Cache the measurement
@@ -181,7 +182,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, protocol, port }) => {
+		async ({ target, locations, limit, protocol, port }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -207,6 +208,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -311,7 +313,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, queryType, resolver, trace }) => {
+		async ({ target, locations, limit, queryType, resolver, trace }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -340,6 +342,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -425,7 +428,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, protocol, port, packets }) => {
+		async ({ target, locations, limit, protocol, port, packets }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -452,6 +455,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -547,7 +551,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, method, protocol, path, query, port }) => {
+		async ({ target, locations, limit, method, protocol, path, query, port }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -580,6 +584,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
