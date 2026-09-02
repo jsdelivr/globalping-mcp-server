@@ -571,6 +571,8 @@ export default {
 			return handleAPITokenRequest(GlobalpingMCP, req, env, ctx);
 		}
 
+		const requestUrl = new URL(req.url);
+
 		// Otherwise, use OAuth provider
 		return new OAuthProvider({
 			apiRoute: OAUTH_CONFIG.API_ROUTES,
@@ -581,11 +583,15 @@ export default {
 			tokenEndpoint: OAUTH_CONFIG.ENDPOINTS.TOKEN,
 			clientRegistrationEndpoint: OAUTH_CONFIG.ENDPOINTS.REGISTER,
 			scopesSupported: OAUTH_CONFIG.SCOPES,
-			resourceMetadata: {
-				resource: `${new URL(req.url).origin}/mcp`,
-				authorization_servers: [new URL(req.url).origin],
-				scopes_supported: OAUTH_CONFIG.SCOPES,
-			},
+			...(requestUrl.protocol === "https:"
+				? {
+						resourceMetadata: {
+							resource: `${requestUrl.origin}/mcp`,
+							authorization_servers: [requestUrl.origin],
+							scopes_supported: OAUTH_CONFIG.SCOPES,
+						},
+					}
+				: {}),
 		}).fetch(req, env, ctx);
 	},
 };

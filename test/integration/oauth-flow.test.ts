@@ -132,6 +132,21 @@ describe("OAuth Routes Integration", () => {
 				"https://github.com/jsdelivr/globalping-mcp-server",
 			);
 		});
+
+		it("supports plain HTTP during local development", async () => {
+			const response = await SELF.fetch("http://localhost/", {
+				method: "GET",
+				headers: {
+					Host: "localhost",
+				},
+				redirect: "manual",
+			});
+
+			expect(response.status).toBe(302);
+			expect(response.headers.get("Location")).toBe(
+				"https://github.com/jsdelivr/globalping-mcp-server",
+			);
+		});
 	});
 
 	describe("OpenAI domain verification", () => {
