@@ -41,7 +41,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			description:
 				"Measure network latency, packet loss, and reachability to a target (domain or IP) from globally distributed probes. Use this tool to check if a server is online, debug connection issues, or assess global performance. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
-				readOnlyHint: true,
+				readOnlyHint: false,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			inputSchema: {
 				target: z
@@ -139,7 +141,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			description:
 				"Trace the network path to a target (domain or IP) from global locations. Use this tool to identify where packets are being dropped, analyze routing paths, or pinpoint latency sources in the network. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
-				readOnlyHint: true,
+				readOnlyHint: false,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			inputSchema: {
 				target: z
@@ -244,7 +248,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			description:
 				"Resolve DNS records (A, AAAA, MX, etc.) for a domain from global locations. Use this tool to verify DNS propagation, troubleshoot resolution failures, or check if users in different regions are seeing the correct records. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
-				readOnlyHint: true,
+				readOnlyHint: false,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			inputSchema: {
 				target: z
@@ -375,7 +381,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			description:
 				"Run an MTR (My Traceroute) diagnostic, which combines Ping and Traceroute. Use this tool to analyze packet loss and latency trends at every hop in the network path over time, helpful for spotting intermittent issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
-				readOnlyHint: true,
+				readOnlyHint: false,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			inputSchema: {
 				target: z
@@ -485,7 +493,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			description:
 				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
-				readOnlyHint: true,
+				readOnlyHint: false,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			inputSchema: {
 				target: z
@@ -612,6 +622,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simply provide the location you need to the tools above, the field is smart and will auto select the right probes.",
 			annotations: {
 				readOnlyHint: true,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			outputSchema: {
 				totalProbes: z.number(),
@@ -708,6 +720,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				"Check current API rate limits and remaining credits. Use this tool to monitor your usage quota and verify if you can perform additional measurements.",
 			annotations: {
 				readOnlyHint: true,
+				destructiveHint: false,
+				openWorldHint: true,
 			},
 			outputSchema: {
 				authenticated: z.boolean(),

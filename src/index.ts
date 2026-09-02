@@ -86,6 +86,8 @@ Key guidelines:
 					"Retrieve the full details of a past measurement using its ID. Use this tool to access raw JSON data, individual probe results, or cached measurements when the initial summary is insufficient.",
 				annotations: {
 					readOnlyHint: true,
+					destructiveHint: false,
+					openWorldHint: false,
 				},
 				inputSchema: {
 					id: z
@@ -133,6 +135,8 @@ Key guidelines:
 					"Get a guide on how to run comparison tests using the exact same probes as a previous measurement. Use this tool when you need to benchmark different targets from the same vantage points.",
 				annotations: {
 					readOnlyHint: true,
+					destructiveHint: false,
+					openWorldHint: false,
 				},
 				outputSchema: {
 					guide: z.string(),
@@ -192,6 +196,8 @@ This approach allows for direct side-by-side comparisons of different targets us
 					"Get a comprehensive guide to the Globalping MCP server. Use this tool to learn about available tools, understand location formatting (magic fields), or see example usage patterns.",
 				annotations: {
 					readOnlyHint: true,
+					destructiveHint: false,
+					openWorldHint: false,
 				},
 				outputSchema: {
 					helpText: z.string(),
@@ -294,6 +300,8 @@ For more information, visit: https://www.globalping.io
 					"Check the current authentication status. Use this tool to verify if the user is logged in and has a valid token for executing measurements.",
 				annotations: {
 					readOnlyHint: true,
+					destructiveHint: false,
+					openWorldHint: false,
 				},
 				outputSchema: {
 					authenticated: z.boolean(),
