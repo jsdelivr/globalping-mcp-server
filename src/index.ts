@@ -57,6 +57,7 @@ Key guidelines:
 			try {
 				agentcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
 					enableToolCallContext: false,
+					resolveSessionId: () => this.getSessionId(),
 					// Identify users with generic labels
 					identify: async () => {
 						return this.getUserIdentification();
