@@ -16,7 +16,7 @@ export default defineConfig({
 				bindings: {
 					GLOBALPING_CLIENT_ID: testClientId,
 					OPENAI_APPS_CHALLENGE: "openai-test-verification-token",
-					// Disable AgentCat during tests - it adds required tracking parameters to tool schemas
+					// Disable AgentCat during tests to avoid sending telemetry.
 					MCPCAT_PROJECT_ID: "",
 				},
 			},
