@@ -6,6 +6,10 @@
 	"placement": {
 		"mode": "smart"
 	},
+	"dev": {
+		"host": "localhost:8787",
+		"port": 8787
+	},
 	"routes": [
 		{
 			"pattern": "mcp.globalping.dev",
