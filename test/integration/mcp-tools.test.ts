@@ -6,6 +6,8 @@
  */
 import { SELF } from "cloudflare:test";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { exerciseLegacySSE } from "./sse";
+import { exerciseStreamableHTTP } from "./streamable-http";
 
 // Mock Globalping API responses
 const createMockGlobalpingAPI = () => {
@@ -275,6 +277,14 @@ describe("MCP Tools Integration", () => {
 			},
 			body: JSON.stringify(notifyRequest),
 		});
+	});
+
+	it("supports the legacy SSE transport with an API token", async () => {
+		await exerciseLegacySSE(`Bearer ${validToken}`);
+	});
+
+	it("supports the /streamable-http alias with an API token", async () => {
+		await exerciseStreamableHTTP("/streamable-http", validToken);
 	});
 
 	afterEach(async () => {

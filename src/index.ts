@@ -466,7 +466,7 @@ async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: Execution
 	}
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
-		return GlobalpingMCP.serve(MCP_CONFIG.ROUTES.MCP, {
+		return GlobalpingMCP.serve(pathname, {
 			binding: MCP_CONFIG.BINDING_NAME,
 			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
@@ -552,7 +552,7 @@ async function handleAPITokenRequest(
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
 		return agent
-			.serve(MCP_CONFIG.ROUTES.MCP, {
+			.serve(pathname, {
 				binding: MCP_CONFIG.BINDING_NAME,
 				corsOptions: getCorsOptionsForRequest(req),
 			})
@@ -567,12 +567,20 @@ async function handleAPITokenRequest(
  */
 export default {
 	fetch: async (req: Request, env: GlobalpingEnv, ctx: ExecutionContext) => {
+		const requestUrl = new URL(req.url);
+		const isLoopback =
+			requestUrl.hostname === "localhost" ||
+			requestUrl.hostname === "127.0.0.1" ||
+			requestUrl.hostname === "[::1]";
+
+		if (requestUrl.protocol !== "https:" && !isLoopback) {
+			return new Response("HTTPS required", { status: 403 });
+		}
+
 		// Check if this is an API token request
 		if (await isAPITokenRequest(req)) {
 			return handleAPITokenRequest(GlobalpingMCP, req, env, ctx);
 		}
-
-		const requestUrl = new URL(req.url);
 
 		// Otherwise, use OAuth provider
 		return new OAuthProvider({
@@ -584,15 +592,12 @@ export default {
 			tokenEndpoint: OAUTH_CONFIG.ENDPOINTS.TOKEN,
 			clientRegistrationEndpoint: OAUTH_CONFIG.ENDPOINTS.REGISTER,
 			scopesSupported: OAUTH_CONFIG.SCOPES,
-			...(requestUrl.protocol === "https:"
-				? {
-						resourceMetadata: {
-							resource: `${requestUrl.origin}/mcp`,
-							authorization_servers: [requestUrl.origin],
-							scopes_supported: OAUTH_CONFIG.SCOPES,
-						},
-					}
-				: {}),
+			resourceMetadata: {
+				...(requestUrl.protocol === "https:"
+					? { authorization_servers: [requestUrl.origin] }
+					: {}),
+				scopes_supported: OAUTH_CONFIG.SCOPES,
+			},
 		}).fetch(req, env, ctx);
 	},
 };
