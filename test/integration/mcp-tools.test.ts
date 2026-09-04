@@ -320,6 +320,9 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
 			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain(
+				"Probe 1: New York, US, NA, Test Network (AS12345)",
+			);
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
@@ -505,8 +508,16 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("Free Tests Limit");
-			expect(data.result.content[0].text).toContain("Credits Remaining");
+			expect(data.result.content[0].text).toBe(`Authentication: token
+
+Creating measurements:
+ - 1000 tests per hour
+ - 200 consumed, 800 remaining
+ - resets in 1 hour
+
+Credits:
+ - 5000 credits remaining (may be used to create measurements above the hourly limits)
+`);
 			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
