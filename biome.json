@@ -1,10 +1,8 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.6.2/schema.json",
-	"organizeImports": {
-		"enabled": true
-	},
+	"$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"files": {
-		"ignore": ["worker-configuration.d.ts"]
+		"includes": ["**", "!**/worker-configuration.d.ts"]
 	},
 	"vcs": {
 		"enabled": true,
@@ -14,12 +12,12 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noDebugger": "off",
-				"noConsoleLog": "off",
-				"noConfusingVoidType": "off"
+				"noConfusingVoidType": "off",
+				"noConsole": { "level": "off", "options": { "allow": ["log"] } }
 			},
 			"style": {
 				"noNonNullAssertion": "off"
@@ -30,5 +28,17 @@
 		"enabled": true,
 		"indentWidth": 4,
 		"lineWidth": 100
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["test/unit/api/client.test.ts"],
+			"linter": {
+				"rules": {
+					"complexity": {
+						"useArrowFunction": "off"
+					}
+				}
+			}
+		}
+	]
 }

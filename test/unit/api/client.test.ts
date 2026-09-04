@@ -40,12 +40,11 @@ describe("createMeasurement", () => {
 		};
 
 		const createMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+			} as any;
+		});
 
 		const result = await createMeasurement(agent as any, options, token);
 
@@ -79,12 +78,11 @@ describe("createMeasurement", () => {
 		};
 
 		const createMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+			} as any;
+		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValue(false);
 
 		await expect(createMeasurement(agent as any, options, token)).rejects.toThrow(
@@ -107,12 +105,11 @@ describe("createMeasurement", () => {
 		};
 
 		const createMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+			} as any;
+		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValueOnce(true);
 
 		await expect(createMeasurement(agent as any, options, token)).rejects.toThrow();
@@ -145,12 +142,11 @@ describe("pollMeasurementResult", () => {
 		};
 
 		const awaitMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 
 		const result = await pollMeasurementResult(agent as any, measurementId, token);
 
@@ -177,12 +173,11 @@ describe("pollMeasurementResult", () => {
 		};
 
 		const awaitMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValueOnce(true);
 
 		await expect(pollMeasurementResult(agent as any, measurementId, token)).rejects.toThrow();
@@ -224,13 +219,12 @@ describe("runMeasurement", () => {
 
 		const createMeasurementMock = vi.fn().mockResolvedValue(createResult);
 		const awaitMeasurementMock = vi.fn().mockResolvedValue(awaitResult);
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 
 		const result = await runMeasurement(agent as any, options, token);
 
@@ -264,13 +258,12 @@ describe("runMeasurement", () => {
 			},
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 
 		await runMeasurement(agent as any, options, token);
 
@@ -306,13 +299,12 @@ describe("runMeasurement", () => {
 			},
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 
 		await runMeasurement(agent as any, options, token);
 
@@ -348,13 +340,12 @@ describe("runMeasurement", () => {
 			},
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					createMeasurement: createMeasurementMock,
-					awaitMeasurement: awaitMeasurementMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: awaitMeasurementMock,
+			} as any;
+		});
 
 		await runMeasurement(agent as any, options, token);
 
@@ -387,12 +378,11 @@ describe("getLocations", () => {
 			data: mockLocations,
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					listProbes: listProbesMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				listProbes: listProbesMock,
+			} as any;
+		});
 
 		const result = await getLocations(agent as any, token);
 
@@ -415,12 +405,11 @@ describe("getLocations", () => {
 			response: { status: 500 },
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					listProbes: listProbesMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				listProbes: listProbesMock,
+			} as any;
+		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValue(false);
 
 		await expect(getLocations(agent as any, token)).rejects.toThrow();
@@ -449,12 +438,11 @@ describe("getRateLimits", () => {
 			data: mockLimits,
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					getLimits: getLimitsMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				getLimits: getLimitsMock,
+			} as any;
+		});
 
 		const result = await getRateLimits(agent as any, token);
 
@@ -477,12 +465,11 @@ describe("getRateLimits", () => {
 			response: { status: 500 },
 		});
 
-		vi.mocked(Globalping).mockImplementation(
-			() =>
-				({
-					getLimits: getLimitsMock,
-				}) as any,
-		);
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				getLimits: getLimitsMock,
+			} as any;
+		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValue(false);
 
 		await expect(getRateLimits(agent as any, token)).rejects.toThrow();

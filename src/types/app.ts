@@ -2,7 +2,6 @@ export type Props = {
 	accessToken: string;
 	refreshToken: string;
 	state: string;
-	userName: string;
 	clientId: string;
 	isAuthenticated: boolean;
 	isOAuth: boolean;

@@ -78,16 +78,3 @@ export async function isAPITokenRequest(req: Request): Promise<boolean> {
 
 	return isValidAPIToken(token);
 }
-
-/**
- * Get a masked version of the token for logging
- * @param token The token to mask
- * @returns Masked token string
- */
-export function maskToken(token: string): string {
-	const tokenValue = extractTokenValue(token);
-	if (tokenValue.length < 15) {
-		return "***";
-	}
-	return `${tokenValue.substring(7, 15)}...`;
-}

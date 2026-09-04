@@ -6,6 +6,8 @@
  */
 import { SELF, env } from "cloudflare:test";
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { exerciseLegacySSE } from "./sse";
+import { exerciseStreamableHTTP } from "./streamable-http";
 
 // Extend ProvidedEnv type to include OAUTH_KV
 declare module "cloudflare:test" {
@@ -101,6 +103,104 @@ const createMockOAuthAPI = () => {
 	return { mockFetch, originalFetch, waitForIdle };
 };
 
+const clientRedirectUri = "http://localhost:3000/callback";
+const pkceVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+const pkceChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
+const registerPublicClient = async () => {
+	const response = await SELF.fetch("https://localhost/register", {
+		method: "POST",
+		headers: {
+			Host: "localhost",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			client_name: "OAuth compatibility test client",
+			redirect_uris: [clientRedirectUri],
+			grant_types: ["authorization_code", "refresh_token"],
+			response_types: ["code"],
+			token_endpoint_auth_method: "none",
+		}),
+	});
+
+	expect(response.status).toBe(201);
+	const client = (await response.json()) as { client_id: string };
+	return client.client_id;
+};
+
+const authorizeClient = async (clientId: string, resource?: string) => {
+	const authorizationUrl = new URL("https://localhost/authorize");
+	authorizationUrl.searchParams.set("client_id", clientId);
+	authorizationUrl.searchParams.set("redirect_uri", clientRedirectUri);
+	authorizationUrl.searchParams.set("response_type", "code");
+	authorizationUrl.searchParams.set("scope", "measurements");
+	authorizationUrl.searchParams.set("state", "client-state");
+	authorizationUrl.searchParams.set("code_challenge", pkceChallenge);
+	authorizationUrl.searchParams.set("code_challenge_method", "S256");
+	if (resource) {
+		authorizationUrl.searchParams.set("resource", resource);
+	}
+
+	const authorizationResponse = await SELF.fetch(authorizationUrl, {
+		method: "GET",
+		headers: { Host: "localhost" },
+		redirect: "manual",
+	});
+
+	expect(authorizationResponse.status).toBe(302);
+	const providerRedirect = new URL(authorizationResponse.headers.get("Location") as string);
+	const providerState = providerRedirect.searchParams.get("state");
+	expect(providerState).toBeTruthy();
+
+	const callbackResponse = await SELF.fetch(
+		`https://localhost/auth/callback?code=globalping-code&state=${providerState}`,
+		{
+			method: "GET",
+			headers: { Host: "localhost" },
+			redirect: "manual",
+		},
+	);
+
+	expect(callbackResponse.status).toBe(302);
+	const clientRedirect = new URL(callbackResponse.headers.get("Location") as string);
+	const code = clientRedirect.searchParams.get("code");
+	expect(code).toBeTruthy();
+	return code as string;
+};
+
+const requestToken = async (
+	clientId: string,
+	grant: { code: string } | { refreshToken: string },
+	resource?: string,
+) => {
+	const body = new URLSearchParams({
+		client_id: clientId,
+		...("code" in grant
+			? {
+					grant_type: "authorization_code",
+					code: grant.code,
+					redirect_uri: clientRedirectUri,
+					code_verifier: pkceVerifier,
+				}
+			: {
+					grant_type: "refresh_token",
+					refresh_token: grant.refreshToken,
+				}),
+	});
+	if (resource) {
+		body.set("resource", resource);
+	}
+
+	return SELF.fetch("https://localhost/token", {
+		method: "POST",
+		headers: {
+			Host: "localhost",
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+		body,
+	});
+};
+
 describe("OAuth Routes Integration", () => {
 	let mockAPI: ReturnType<typeof createMockOAuthAPI>;
 
@@ -117,6 +217,34 @@ describe("OAuth Routes Integration", () => {
 		}
 	});
 
+	it("supports the legacy SSE transport with an OAuth access token", async () => {
+		const clientId = await registerPublicClient();
+		const code = await authorizeClient(clientId, "https://localhost/sse");
+		const tokenResponse = await requestToken(
+			clientId,
+			{ code },
+			"https://localhost/sse",
+		);
+		expect(tokenResponse.status).toBe(200);
+		const tokens = (await tokenResponse.json()) as { access_token: string };
+
+		await exerciseLegacySSE(`Bearer ${tokens.access_token}`);
+	});
+
+	it.each(["/mcp", "/streamable-http"] as const)(
+		"completes the %s handshake with a path-bound OAuth token",
+		async (path) => {
+			const resource = `https://localhost${path}`;
+			const clientId = await registerPublicClient();
+			const code = await authorizeClient(clientId, resource);
+			const tokenResponse = await requestToken(clientId, { code }, resource);
+			expect(tokenResponse.status).toBe(200);
+			const tokens = (await tokenResponse.json()) as { access_token: string };
+
+			await exerciseStreamableHTTP(path, tokens.access_token);
+		},
+	);
+
 	describe("Root Route", () => {
 		it("should redirect to GitHub repository", async () => {
 			const response = await SELF.fetch("http://localhost/", {
@@ -132,12 +260,24 @@ describe("OAuth Routes Integration", () => {
 				"https://github.com/jsdelivr/globalping-mcp-server",
 			);
 		});
+		it("rejects API tokens sent over plain HTTP to production hosts", async () => {
+			const response = await SELF.fetch("http://mcp.globalping.dev/mcp", {
+				method: "POST",
+				headers: {
+					Host: "mcp.globalping.dev",
+					Authorization: "Bearer abcdef1234567890ABCDEF1234567890",
+				},
+			});
+
+			expect(response.status).toBe(403);
+			expect(await response.text()).toBe("HTTPS required");
+		});
 	});
 
 	describe("OpenAI domain verification", () => {
 		it("returns the configured challenge token as plain text", async () => {
 			const response = await SELF.fetch(
-				"http://localhost/.well-known/openai-apps-challenge",
+				"https://localhost/.well-known/openai-apps-challenge",
 				{
 					method: "GET",
 					headers: {
@@ -152,9 +292,38 @@ describe("OAuth Routes Integration", () => {
 		});
 	});
 
+	describe("OAuth Metadata", () => {
+		it.each([
+			["https", "/mcp"],
+			["https", "/sse"],
+			["https", "/streamable-http"],
+			["http", "/mcp"],
+			["http", "/sse"],
+			["http", "/streamable-http"],
+		])("derives the resource from the %s %s metadata path", async (protocol, path) => {
+			const response = await SELF.fetch(
+				`${protocol}://localhost/.well-known/oauth-protected-resource${path}`,
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
+				},
+			);
+
+			expect(response.status).toBe(200);
+			expect(await response.json()).toMatchObject({
+				resource: `${protocol}://localhost${path}`,
+				authorization_servers: [`${protocol}://localhost`],
+				scopes_supported: ["measurements"],
+			});
+		},
+		);
+	});
+
 	describe("Authorization Endpoint", () => {
 		it("should validate and reject missing OAuth request parameters", async () => {
-			const response = await SELF.fetch("http://localhost/authorize", {
+			const response = await SELF.fetch("https://localhost/authorize", {
 				method: "GET",
 				headers: {
 					Host: "localhost",
@@ -180,7 +349,7 @@ describe("OAuth Routes Integration", () => {
 			);
 
 			const response = await SELF.fetch(
-				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test`,
+				`https://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test`,
 				{
 					method: "GET",
 					headers: { Host: "localhost" },
@@ -205,7 +374,7 @@ describe("OAuth Routes Integration", () => {
 			);
 
 			const response = await SELF.fetch(
-				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123&code_challenge_method=plain`,
+				`https://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123&code_challenge_method=plain`,
 				{
 					method: "GET",
 					headers: { Host: "localhost" },
@@ -214,7 +383,7 @@ describe("OAuth Routes Integration", () => {
 
 			expect(response.status).toBe(200);
 			const html = await response.text();
-			expect(html).toContain("Only S256 code challenge method is supported");
+			expect(html).toContain("The plain PKCE method is not allowed. Use S256 instead.");
 		});
 
 		it("should reject authorization request with code_challenge but no code_challenge_method", async () => {
@@ -230,7 +399,7 @@ describe("OAuth Routes Integration", () => {
 			);
 
 			const response = await SELF.fetch(
-				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123`,
+				`https://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=abc123`,
 				{
 					method: "GET",
 					headers: { Host: "localhost" },
@@ -239,7 +408,7 @@ describe("OAuth Routes Integration", () => {
 
 			expect(response.status).toBe(200);
 			const html = await response.text();
-			expect(html).toContain("Only S256 code challenge method is supported");
+			expect(html).toContain("The plain PKCE method is not allowed. Use S256 instead.");
 		});
 
 		it("should accept authorization request with valid S256 PKCE", async () => {
@@ -255,7 +424,7 @@ describe("OAuth Routes Integration", () => {
 			);
 
 			const response = await SELF.fetch(
-				`http://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256`,
+				`https://localhost/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(clientRedirectUri)}&response_type=code&scope=measurements&state=test&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256`,
 				{
 					method: "GET",
 					headers: { Host: "localhost" },
@@ -272,7 +441,7 @@ describe("OAuth Routes Integration", () => {
 
 		it("should reject invalid redirect URI", async () => {
 			const response = await SELF.fetch(
-				"http://localhost/authorize?client_id=test&redirect_uri=https://evil.com&response_type=code&state=test",
+				"https://localhost/authorize?client_id=test&redirect_uri=https://evil.com&response_type=code&state=test",
 				{
 					method: "GET",
 					headers: {
@@ -287,9 +456,55 @@ describe("OAuth Routes Integration", () => {
 		});
 	});
 
+	describe("OAuth resource compatibility", () => {
+		it("keeps an existing unbound grant unbound through token exchange and refresh", async () => {
+			const clientId = await registerPublicClient();
+			const code = await authorizeClient(clientId);
+			const tokenResponse = await requestToken(clientId, { code });
+
+			expect(tokenResponse.status).toBe(200);
+			const tokens = (await tokenResponse.json()) as {
+				refresh_token: string;
+				resource?: string;
+			};
+			expect(tokens.resource).toBeUndefined();
+
+			const refreshResponse = await requestToken(clientId, {
+				refreshToken: tokens.refresh_token,
+			});
+			expect(refreshResponse.status).toBe(200);
+			expect(await refreshResponse.json()).not.toHaveProperty("resource");
+		});
+
+		it.each(["/mcp", "/sse", "/streamable-http"])(
+			"preserves a %s path-bound grant through token exchange and refresh",
+			async (path) => {
+				const resource = `https://localhost${path}`;
+				const clientId = await registerPublicClient();
+				const code = await authorizeClient(clientId, resource);
+				const tokenResponse = await requestToken(clientId, { code }, resource);
+
+				expect(tokenResponse.status).toBe(200);
+				const tokens = (await tokenResponse.json()) as {
+					refresh_token: string;
+					resource?: string;
+				};
+				expect(tokens.resource).toBe(resource);
+
+				const refreshResponse = await requestToken(
+					clientId,
+					{ refreshToken: tokens.refresh_token },
+					resource,
+				);
+				expect(refreshResponse.status).toBe(200);
+				expect(await refreshResponse.json()).toMatchObject({ resource });
+			},
+		);
+	});
+
 	describe("OAuth Callback - Error Paths", () => {
 		it("should handle missing code and state parameters", async () => {
-			const response = await SELF.fetch("http://localhost/auth/callback", {
+			const response = await SELF.fetch("https://localhost/auth/callback", {
 				method: "GET",
 				headers: {
 					Host: "localhost",
@@ -303,7 +518,7 @@ describe("OAuth Routes Integration", () => {
 
 		it("should handle expired or invalid state", async () => {
 			const response = await SELF.fetch(
-				"http://localhost/auth/callback?code=test-code&state=invalid-state-xyz",
+				"https://localhost/auth/callback?code=test-code&state=invalid-state-xyz",
 				{
 					method: "GET",
 					headers: {
@@ -319,7 +534,7 @@ describe("OAuth Routes Integration", () => {
 
 		it("should handle OAuth provider errors", async () => {
 			const response = await SELF.fetch(
-				"http://localhost/auth/callback?error=access_denied&error_description=User+denied+access",
+				"https://localhost/auth/callback?error=access_denied&error_description=User+denied+access",
 				{
 					method: "GET",
 					headers: {
@@ -347,7 +562,7 @@ describe("OAuth Routes Integration", () => {
 
 			for (const { error, description } of errorTypes) {
 				const response = await SELF.fetch(
-					`http://localhost/auth/callback?error=${error}&error_description=${encodeURIComponent(description)}`,
+					`https://localhost/auth/callback?error=${error}&error_description=${encodeURIComponent(description)}`,
 					{
 						method: "GET",
 						headers: {
@@ -384,17 +599,18 @@ describe("OAuth Routes Integration", () => {
 
 			// Store state data in KV that the callback will retrieve
 			const stateData = {
-				redirectUri: "http://localhost/auth/callback",
+				redirectUri: "https://localhost/auth/callback",
 				clientRedirectUri: clientRedirectUri,
 				codeVerifier: "test-verifier-123",
 				codeChallenge: "test-challenge-456",
 				clientId: clientId,
 				state: testState,
 				oauthReqInfo: {
+					responseType: "code",
 					clientId: clientId,
 					redirectUri: clientRedirectUri,
 					state: "client-state-789",
-					scope: "measurements",
+					scope: ["measurements"],
 				},
 				createdAt: Date.now(),
 			};
@@ -405,7 +621,7 @@ describe("OAuth Routes Integration", () => {
 
 			// Now call the callback with valid code and state
 			const response = await SELF.fetch(
-				`http://localhost/auth/callback?code=${testCode}&state=${testState}`,
+				`https://localhost/auth/callback?code=${testCode}&state=${testState}`,
 				{
 					method: "GET",
 					headers: {
@@ -472,17 +688,18 @@ describe("OAuth Routes Integration", () => {
 
 			const testState = "test-token-error-state";
 			const stateData = {
-				redirectUri: "http://localhost/auth/callback",
+				redirectUri: "https://localhost/auth/callback",
 				clientRedirectUri: "http://localhost:3000/callback",
 				codeVerifier: "test-verifier",
 				codeChallenge: "test-challenge",
 				clientId: "test-client",
 				state: testState,
 				oauthReqInfo: {
+					responseType: "code",
 					clientId: "test-client",
 					redirectUri: "http://localhost:3000/callback",
 					state: "client-state",
-					scope: "measurements",
+					scope: ["measurements"],
 				},
 				createdAt: Date.now(),
 			};
@@ -492,7 +709,7 @@ describe("OAuth Routes Integration", () => {
 			});
 
 			const response = await SELF.fetch(
-				`http://localhost/auth/callback?code=test-code&state=${testState}`,
+				`https://localhost/auth/callback?code=test-code&state=${testState}`,
 				{
 					method: "GET",
 					headers: {
@@ -549,17 +766,18 @@ describe("OAuth Routes Integration", () => {
 
 			const testState = "test-userdata-error-state";
 			const stateData = {
-				redirectUri: "http://localhost/auth/callback",
+				redirectUri: "https://localhost/auth/callback",
 				clientRedirectUri: "http://localhost:3000/callback",
 				codeVerifier: "test-verifier",
 				codeChallenge: "test-challenge",
 				clientId: "test-client",
 				state: testState,
 				oauthReqInfo: {
+					responseType: "code",
 					clientId: "test-client",
 					redirectUri: "http://localhost:3000/callback",
 					state: "client-state",
-					scope: "measurements",
+					scope: ["measurements"],
 				},
 				createdAt: Date.now(),
 			};
@@ -569,7 +787,7 @@ describe("OAuth Routes Integration", () => {
 			});
 
 			const response = await SELF.fetch(
-				`http://localhost/auth/callback?code=test-code&state=${testState}`,
+				`https://localhost/auth/callback?code=test-code&state=${testState}`,
 				{
 					method: "GET",
 					headers: {
@@ -586,7 +804,7 @@ describe("OAuth Routes Integration", () => {
 
 	describe("Error Response Format", () => {
 		it("should return HTML error pages with proper structure", async () => {
-			const response = await SELF.fetch("http://localhost/auth/callback", {
+			const response = await SELF.fetch("https://localhost/auth/callback", {
 				method: "GET",
 				headers: {
 					Host: "localhost",
@@ -604,12 +822,15 @@ describe("OAuth Routes Integration", () => {
 		});
 
 		it("should include error message in response body", async () => {
-			const response = await SELF.fetch("http://localhost/auth/callback?error=custom_error", {
-				method: "GET",
-				headers: {
-					Host: "localhost",
+			const response = await SELF.fetch(
+				"https://localhost/auth/callback?error=custom_error",
+				{
+					method: "GET",
+					headers: {
+						Host: "localhost",
+					},
 				},
-			});
+			);
 
 			const html = await response.text();
 			expect(html).toContain("custom_error");

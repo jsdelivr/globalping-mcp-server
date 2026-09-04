@@ -6,6 +6,8 @@
  */
 import { SELF } from "cloudflare:test";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { exerciseLegacySSE } from "./sse";
+import { exerciseStreamableHTTP } from "./streamable-http";
 
 // Mock Globalping API responses
 const createMockGlobalpingAPI = () => {
@@ -157,7 +159,7 @@ const createMockGlobalpingAPI = () => {
 
 // Helper to create MCP requests with proper headers
 const makeMCPRequest = async (mcpRequest: any, token?: string, sessionId?: string) => {
-	return await SELF.fetch("http://localhost/mcp", {
+	return await SELF.fetch("https://localhost/mcp", {
 		method: "POST",
 		headers: {
 			Host: "localhost",
@@ -275,6 +277,14 @@ describe("MCP Tools Integration", () => {
 			},
 			body: JSON.stringify(notifyRequest),
 		});
+	});
+
+	it("supports the legacy SSE transport with an API token", async () => {
+		await exerciseLegacySSE(`Bearer ${validToken}`);
+	});
+
+	it("supports the /streamable-http alias with an API token", async () => {
+		await exerciseStreamableHTTP("/streamable-http", validToken);
 	});
 
 	afterEach(async () => {
@@ -496,6 +506,7 @@ describe("MCP Tools Integration", () => {
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
 			expect(data.result.content[0].text).toContain("rateLimit");
+			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);

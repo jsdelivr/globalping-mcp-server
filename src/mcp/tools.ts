@@ -2,11 +2,10 @@
  * Globalping MCP Tools Registration
  */
 import { z } from "zod";
-import { runMeasurement, getLocations, getRateLimits } from "../api";
-import { parseLocations, formatMeasurementSummary } from "./helpers";
+import { getLocations, getRateLimits, runMeasurement } from "../api";
 import type { GlobalpingMCP } from "../index";
-import { maskToken } from "../auth";
 import { isPublicTarget } from "../lib";
+import { formatMeasurementSummary, parseLocations } from "./helpers";
 
 /**
  * Helper to wrap tool execution with error handling
@@ -74,7 +73,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, packets }) => {
+		async ({ target, locations, limit, packets }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -99,6 +98,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				// Cache the measurement
@@ -181,7 +181,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, protocol, port }) => {
+		async ({ target, locations, limit, protocol, port }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -207,6 +207,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -311,7 +312,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, queryType, resolver, trace }) => {
+		async ({ target, locations, limit, queryType, resolver, trace }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -340,6 +341,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -425,7 +427,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, protocol, port, packets }) => {
+		async ({ target, locations, limit, protocol, port, packets }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -452,6 +454,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -547,7 +550,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				results: z.array(z.any()),
 			},
 		},
-		async ({ target, locations, limit, method, protocol, path, query, port }) => {
+		async ({ target, locations, limit, method, protocol, path, query, port }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -580,6 +583,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						},
 					},
 					token,
+					signal,
 				);
 
 				agent.state.measurements[result.id] = result;
@@ -747,13 +751,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 				// Add authentication status to the output
 				textOutput += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
-
-				// Only show first few characters of token for security if present
-				if (token) {
-					textOutput += `Token: ${maskToken(token)}\n`;
-				} else {
-					textOutput += "Token: None\n";
-				}
 
 				// Add the raw API response to the output
 				textOutput += `\nAPI Response:\n${JSON.stringify(limits, null, 2)}\n\n`;

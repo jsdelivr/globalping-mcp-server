@@ -288,7 +288,6 @@ app.get("/auth/callback", async (c) => {
 				refreshToken: tokenData.refresh_token,
 				clientId: oauthReqInfo.clientId,
 				state,
-				userName: userData.username,
 				isAuthenticated: true,
 				isOAuth: true,
 			},

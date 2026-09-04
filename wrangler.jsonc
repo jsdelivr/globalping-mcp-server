@@ -6,6 +6,10 @@
 	"placement": {
 		"mode": "smart"
 	},
+	"dev": {
+		"host": "localhost:8787",
+		"port": 8787
+	},
 	"routes": [
 		{
 			"pattern": "mcp.globalping.dev",
@@ -13,6 +17,9 @@
 		}
 	],
 	"compatibility_date": "2025-03-10",
+	"secrets": {
+		"required": ["GLOBALPING_CLIENT_ID"]
+	},
 	"durable_objects": {
 		"bindings": [
 			{

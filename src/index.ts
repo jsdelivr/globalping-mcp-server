@@ -1,15 +1,14 @@
-import { McpAgent } from "agents/mcp";
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
-import { isAPITokenRequest, isValidAPIToken } from "./auth";
-import app from "./app";
-import { MCP_CONFIG, OAUTH_CONFIG, MCPCAT_CONFIG } from "./config";
-import type { GlobalpingEnv, Props, State } from "./types";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import * as agentcat from "agentcat";
+import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import app from "./app";
+import { isAPITokenRequest, isValidAPIToken, sanitizeToken } from "./auth";
+import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
+import { getCorsOptionsForRequest, validateHost, validateOrigin } from "./lib";
 import { registerGlobalpingTools } from "./mcp";
-import { sanitizeToken } from "./auth";
-import { validateOrigin, validateHost, getCorsOptionsForRequest } from "./lib";
-import * as mcpcat from "mcpcat";
+import type { GlobalpingEnv, Props, State } from "./types";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer(
@@ -53,22 +52,24 @@ Key guidelines:
 	async init() {
 		console.log("Initializing Globalping MCP...");
 
-		// Initialize MCPcat tracking if project ID is configured
-		if (this.env.MCPCAT_PROJECT_ID && MCPCAT_CONFIG.ENABLED) {
+		// Initialize AgentCat tracking if project ID is configured
+		if (this.env.MCPCAT_PROJECT_ID && AGENTCAT_CONFIG.ENABLED) {
 			try {
-				mcpcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+				agentcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
+					enableToolCallContext: false,
+					resolveSessionId: () => this.getSessionId(),
 					// Identify users with generic labels
 					identify: async () => {
 						return this.getUserIdentification();
 					},
 				});
 
-				console.log("✓ MCPcat tracking initialized");
+				console.log("✓ AgentCat tracking initialized");
 			} catch (error) {
-				console.warn("⚠ MCPcat tracking initialization failed (non-fatal):", error);
+				console.warn("⚠ AgentCat tracking initialization failed (non-fatal):", error);
 			}
 		} else {
-			console.log("✗ MCPcat tracking disabled (no project ID or disabled in config)");
+			console.log("✗ AgentCat tracking disabled (no project ID or disabled in config)");
 		}
 
 		// Register all the Globalping tools
@@ -355,37 +356,13 @@ For more information, visit: https://www.globalping.io
 		return this.state.oAuth;
 	}
 
-	async removeOAuthData(): Promise<void> {
-		try {
-			if (!this.props) return;
-
-			// Find and remove grants by userId
-			const responseGrant = await this.env.OAUTH_KV.list({
-				prefix: `grant:${this.props.userName}`,
-			});
-			for (const { name } of responseGrant.keys) {
-				await this.env.OAUTH_KV.delete(name);
-			}
-
-			// Find and remove tokens
-			const responseToken = await this.env.OAUTH_KV.list({
-				prefix: `token:${this.props.userName}`,
-			});
-			for (const { name } of responseToken.keys) {
-				await this.env.OAUTH_KV.delete(name);
-			}
-		} catch (error) {
-			console.error("Error removing OAuth data:", error);
-		}
-	}
-
 	getToken(): string | undefined {
 		// Return the access token from the props
 		return this.props?.accessToken;
 	}
 
 	/**
-	 * Returns generic user identification for MCPcat analytics
+	 * Returns generic user identification for AgentCat analytics
 	 * Does not expose PII - uses generic labels only
 	 */
 	private getUserIdentification(): {
@@ -397,7 +374,7 @@ For more information, visit: https://www.globalping.io
 		const hasAPIToken = !this.props?.isOAuth;
 
 		// Check API token first (most specific) to prevent misclassification
-		// as OAuth when API token flow sets isAuthenticated and userName
+		// as OAuth when API token flow sets isAuthenticated
 		if (hasAPIToken) {
 			return {
 				userId: "api_token_user",
@@ -408,7 +385,7 @@ For more information, visit: https://www.globalping.io
 			};
 		}
 
-		if (isAuth && this.props?.userName) {
+		if (isAuth && this.props?.isOAuth) {
 			return {
 				userId: "oauth_user",
 				userName: "OAuth User",
@@ -489,7 +466,7 @@ async function handleMcpRequest(req: Request, env: GlobalpingEnv, ctx: Execution
 	}
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
-		return GlobalpingMCP.serve(MCP_CONFIG.ROUTES.MCP, {
+		return GlobalpingMCP.serve(pathname, {
 			binding: MCP_CONFIG.BINDING_NAME,
 			corsOptions: getCorsOptionsForRequest(req),
 		}).fetch(req, env, ctx);
@@ -559,7 +536,6 @@ async function handleAPITokenRequest(
 		accessToken: `Bearer ${token}`,
 		refreshToken: "",
 		state: "",
-		userName: "API Token User",
 		clientId: "",
 		isAuthenticated: true,
 		isOAuth: false,
@@ -576,7 +552,7 @@ async function handleAPITokenRequest(
 
 	if (pathname === MCP_CONFIG.ROUTES.MCP || pathname === MCP_CONFIG.ROUTES.STREAMABLE_HTTP) {
 		return agent
-			.serve(MCP_CONFIG.ROUTES.MCP, {
+			.serve(pathname, {
 				binding: MCP_CONFIG.BINDING_NAME,
 				corsOptions: getCorsOptionsForRequest(req),
 			})
@@ -591,6 +567,16 @@ async function handleAPITokenRequest(
  */
 export default {
 	fetch: async (req: Request, env: GlobalpingEnv, ctx: ExecutionContext) => {
+		const requestUrl = new URL(req.url);
+		const isLoopback =
+			requestUrl.hostname === "localhost" ||
+			requestUrl.hostname === "127.0.0.1" ||
+			requestUrl.hostname === "[::1]";
+
+		if (requestUrl.protocol !== "https:" && !isLoopback) {
+			return new Response("HTTPS required", { status: 403 });
+		}
+
 		// Check if this is an API token request
 		if (await isAPITokenRequest(req)) {
 			return handleAPITokenRequest(GlobalpingMCP, req, env, ctx);
@@ -607,8 +593,10 @@ export default {
 			clientRegistrationEndpoint: OAUTH_CONFIG.ENDPOINTS.REGISTER,
 			scopesSupported: OAUTH_CONFIG.SCOPES,
 			resourceMetadata: {
-				resource: `${new URL(req.url).origin}/mcp`,
-				authorization_servers: [new URL(req.url).origin],
+				...(requestUrl.protocol === "https:"
+					? { authorization_servers: [requestUrl.origin] }
+					: {}),
+				scopes_supported: OAUTH_CONFIG.SCOPES,
 			},
 		}).fetch(req, env, ctx);
 	},

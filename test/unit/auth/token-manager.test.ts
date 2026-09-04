@@ -1,14 +1,13 @@
 /**
  * Tests for auth/token-manager.ts
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-	sanitizeToken,
 	extractTokenValue,
+	isAPITokenRequest,
 	isOAuthToken,
 	isValidAPIToken,
-	isAPITokenRequest,
-	maskToken,
+	sanitizeToken,
 } from "../../../src/auth/token-manager";
 
 describe("sanitizeToken", () => {
@@ -176,50 +175,6 @@ describe("isAPITokenRequest", () => {
 			const req = new Request("https://example.com", testCase);
 			expect(await isAPITokenRequest(req)).toBe(false);
 		}
-	});
-});
-
-describe("maskToken", () => {
-	it("should mask a long token by showing middle characters", () => {
-		const token = "abcdef1234567890ABCDEF1234567890";
-		const result = maskToken(token);
-		expect(result).toBe("23456789...");
-	});
-
-	it("should mask a token with Bearer prefix", () => {
-		const token = "Bearer abcdef1234567890ABCDEF1234567890";
-		const result = maskToken(token);
-		expect(result).toBe("23456789...");
-	});
-
-	it("should return *** for short tokens", () => {
-		const token = "short";
-		const result = maskToken(token);
-		expect(result).toBe("***");
-	});
-
-	it("should return *** for empty token", () => {
-		const token = "";
-		const result = maskToken(token);
-		expect(result).toBe("***");
-	});
-
-	it("should mask exactly 15 character token", () => {
-		const token = "123456789012345";
-		const result = maskToken(token);
-		expect(result).toBe("89012345...");
-	});
-
-	it("should mask 14 character token as ***", () => {
-		const token = "12345678901234";
-		const result = maskToken(token);
-		expect(result).toBe("***");
-	});
-
-	it("should mask OAuth token", () => {
-		const token = "part1:part2:part3withsomemorechars";
-		const result = maskToken(token);
-		expect(result).toBe("art2:par...");
 	});
 });
 
