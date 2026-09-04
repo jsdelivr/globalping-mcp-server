@@ -721,7 +721,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Check Rate Limits",
 			description:
-				"Check current API rate limits and remaining credits. Use this tool to monitor your usage quota and verify if you can perform additional measurements.",
+				"Check the current free hourly test allowance and remaining credits. The rateLimit fields describe only the free allowance, not a hard cap: authenticated users with credits can run additional tests after it is exhausted by spending one credit per test.",
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -729,16 +729,29 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 			outputSchema: {
 				authenticated: z.boolean(),
-				rateLimit: z.object({
-					type: z.string(),
-					limit: z.number(),
-					remaining: z.number(),
-					reset: z.number(),
-				}),
+				rateLimit: z
+					.object({
+						type: z
+							.string()
+							.describe("Scope of the free test allowance, such as account or IP."),
+						limit: z
+							.number()
+							.describe("Total free tests available in the current window."),
+						remaining: z
+							.number()
+							.describe("Free tests remaining in the current window."),
+						reset: z.number().describe("Seconds until the free test allowance resets."),
+					})
+					.describe("The free hourly test allowance."),
 				credits: z
 					.object({
-						remaining: z.number(),
+						remaining: z
+							.number()
+							.describe(
+								"Number of remaining credits. One credit pays for one additional test.",
+							),
 					})
+					.describe("Credits available after the free allowance is exhausted.")
 					.optional(),
 			},
 		},
@@ -747,7 +760,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				const token = getToken();
 				const limits = await getRateLimits(agent, token);
 
-				let textOutput = "Globalping Rate Limits:\n\n";
+				let textOutput = "Globalping Usage Limits:\n\n";
 
 				// Add authentication status to the output
 				textOutput += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
@@ -758,10 +771,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				// Format parsed data
 				const rateLimit = limits.rateLimit.measurements.create;
 
-				textOutput += `Type: ${rateLimit.type}\n`;
-				textOutput += `Limit: ${rateLimit.limit} measurements\n`;
-				textOutput += `Remaining: ${rateLimit.remaining} measurements\n`;
-				textOutput += `Reset: in ${rateLimit.reset} seconds\n\n`;
+				textOutput += `Free Allowance Type: ${rateLimit.type}\n`;
+				textOutput += `Free Tests Limit: ${rateLimit.limit}\n`;
+				textOutput += `Free Tests Remaining: ${rateLimit.remaining}\n`;
+				textOutput += `Free Allowance Reset: in ${rateLimit.reset} seconds\n\n`;
 
 				if (limits.credits) {
 					textOutput += `Credits Remaining: ${limits.credits.remaining}\n`;

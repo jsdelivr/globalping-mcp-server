@@ -212,7 +212,7 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 | `mtr` | Run combined ping and traceroute tests (My Traceroute) |
 | `http` | Execute HTTP/HTTPS requests from probes worldwide |
 | `locations` | List available Globalping probe regions and filters |
-| `limits` | Display current API quota and usage limits |
+| `limits` | Display the current free hourly test allowance and additional credits |
 | `getMeasurement` | Retrieve results of a historical measurement by ID |
 | `compareLocations` | Helper guide to compare multi-region performance metrics |
 | `help` | Tool reference and syntax documentation |
@@ -271,7 +271,7 @@ Locations can be specified using the location's `magic` parameter:
 
 * Remove and reconnect the integration to start a fresh OAuth flow.
 * For API-token authentication, generate a current token in the [Globalping dashboard](https://dash.globalping.io) and send it as `Authorization: Bearer YOUR_GLOBALPING_API_TOKEN`.
-* Once connected, use the `authStatus` tool to verify that authentication is active and the `limits` tool to check the available quota.
+* Once connected, use the `authStatus` tool to verify that authentication is active and the `limits` tool to check the free hourly test allowance and available credits. The displayed rate limit covers free tests only; authenticated users with credits can continue above it by spending one credit per additional test.
 
 ### Get help or report a problem
 

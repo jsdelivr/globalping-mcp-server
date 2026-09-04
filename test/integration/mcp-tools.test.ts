@@ -505,7 +505,8 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("rateLimit");
+			expect(data.result.content[0].text).toContain("Free Tests Limit");
+			expect(data.result.content[0].text).toContain("Credits Remaining");
 			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
