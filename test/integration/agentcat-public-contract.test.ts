@@ -1,4 +1,4 @@
-import { SELF, env } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 declare global {
@@ -28,16 +28,19 @@ describe("AgentCat public MCP contract", () => {
 	let originalFetch: typeof globalThis.fetch;
 	let originalProjectId: string | undefined;
 	let telemetryFetch: ReturnType<typeof vi.fn>;
+	let telemetryPayloads: any[];
 
 	beforeEach(() => {
 		originalFetch = globalThis.fetch;
 		originalProjectId = env.MCPCAT_PROJECT_ID;
 		env.MCPCAT_PROJECT_ID = "agentcat-public-contract-test";
+		telemetryPayloads = [];
 		telemetryFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
 			const url = new URL(
 				typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
 			);
 			if (url.hostname.endsWith("agentcat.com")) {
+				telemetryPayloads.push(JSON.parse(String(init?.body)));
 				return new Response("{}", {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
@@ -51,6 +54,85 @@ describe("AgentCat public MCP contract", () => {
 	afterEach(() => {
 		env.MCPCAT_PROJECT_ID = originalProjectId;
 		globalThis.fetch = originalFetch;
+	});
+
+	it("redacts only incoming MCP Authorization headers before AgentCat sends telemetry", async () => {
+		const send = async (message: unknown, sessionId?: string) => {
+			const response = await SELF.fetch("http://localhost/mcp", {
+				method: "POST",
+				headers: {
+					Host: "localhost",
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+					Accept: "application/json, text/event-stream",
+					...(sessionId && { "Mcp-Session-Id": sessionId }),
+				},
+				body: JSON.stringify(message),
+			});
+			expect([200, 202]).toContain(response.status);
+			return response;
+		};
+
+		const initializeResponse = await send({
+			jsonrpc: "2.0",
+			id: 1,
+			method: "initialize",
+			params: {
+				protocolVersion: "2024-11-05",
+				capabilities: {},
+				clientInfo: { name: "agentcat-redaction-test", version: "1.0.0" },
+			},
+		});
+		const sessionId = initializeResponse.headers.get("Mcp-Session-Id");
+		expect(sessionId).toBeTruthy();
+
+		await send({ jsonrpc: "2.0", method: "notifications/initialized" }, sessionId!);
+		await send(
+			{
+				jsonrpc: "2.0",
+				id: 2,
+				method: "tools/call",
+				params: { name: "compareLocations", arguments: {} },
+			},
+			sessionId!,
+		);
+		await send(
+			{
+				jsonrpc: "2.0",
+				id: 3,
+				method: "tools/call",
+				params: {
+					name: "http",
+					arguments: {
+						target: "localhost",
+						headers: {
+							"Set-Cookie": "measurement-cookie-secret",
+							"X-Access-Token": "measurement-token-secret",
+							"X-Client-Id": "measurement-client-id",
+						},
+					},
+				},
+			},
+			sessionId!,
+		);
+
+		await vi.waitFor(() => expect(telemetryPayloads).toHaveLength(2));
+
+		const measurementEvent = telemetryPayloads.find(
+			(payload) => payload.resourceName === "http",
+		);
+		const metadataEvent = telemetryPayloads.find(
+			(payload) => payload.resourceName === "compareLocations",
+		);
+		expect(metadataEvent.parameters.extra.requestInfo.headers.authorization).toBe("[REDACTED]");
+		expect(measurementEvent.parameters.request.params.arguments).toMatchObject({
+			target: "localhost",
+			headers: {
+				"Set-Cookie": "measurement-cookie-secret",
+				"X-Access-Token": "measurement-token-secret",
+				"X-Client-Id": "measurement-client-id",
+			},
+		});
 	});
 
 	it("does not expose disabled AgentCat context or session fields", async () => {

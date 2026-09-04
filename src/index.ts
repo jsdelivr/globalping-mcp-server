@@ -6,7 +6,7 @@ import { z } from "zod";
 import app from "./app";
 import { isAPITokenRequest, isValidAPIToken, sanitizeToken } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
-import { getCorsOptionsForRequest, validateHost, validateOrigin } from "./lib";
+import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOrigin } from "./lib";
 import { registerGlobalpingTools } from "./mcp";
 import type { GlobalpingEnv, Props, State } from "./types";
 
@@ -57,6 +57,7 @@ Key guidelines:
 			try {
 				agentcat.track(this.server, this.env.MCPCAT_PROJECT_ID, {
 					enableToolCallContext: false,
+					redactEvent: redactAgentCatEvent,
 					resolveSessionId: () => this.getSessionId(),
 					// Identify users with generic labels
 					identify: async () => {
