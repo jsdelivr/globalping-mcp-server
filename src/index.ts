@@ -259,9 +259,9 @@ Available Tools:
    No parameters required
    Returns a list of probe locations grouped by continent and country
 
-7. limits - Show your current rate limits for the Globalping API
+7. limits - Show your current free test allowance and credits for the Globalping API
    No parameters required
-   Returns rate limit information for the Globalping API
+   The rate limit is the free hourly allowance, not a hard cap: authenticated users with credits can run additional tests by spending one credit per test
 
 8. getMeasurement - Retrieve a previously run measurement by ID
    Parameters:
