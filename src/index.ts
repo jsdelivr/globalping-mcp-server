@@ -34,7 +34,8 @@ Key guidelines:
 - If a user asks for 'latency' or 'reachability', use 'ping'.
 - If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
 - If a user asks about 'website availability', use 'http'.
-- If a user asks about 'dns propagation', use 'dns'.`,
+- If a user asks about 'dns propagation', use 'dns'.
+- Only when a user asks to view, open, or share a measurement, present its results URL as https://globalping.io?measurement=<measurement-id>.`,
 		},
 	);
 
@@ -180,7 +181,7 @@ This ensures the exact same probes are used for both measurements, allowing for 
    Result: Same 3 probes from New York, London, and Tokyo are used
 
 This approach allows for direct side-by-side comparisons of different targets using the exact same network vantage points.
-`;
+`.trim();
 
 				return {
 					content: [{ type: "text", text: helpText }],
@@ -284,7 +285,7 @@ When specifying locations, use the magic field format in an array. Examples:
 - Previous measurement IDs (for comparison): ["01HT4DGF5ZS7B2M93QP5ZTS3DN"]
 
 For more information, visit: https://www.globalping.io
-`;
+`.trim();
 
 				return {
 					content: [{ type: "text", text: helpText }],
@@ -312,17 +313,12 @@ For more information, visit: https://www.globalping.io
 				},
 			},
 			async () => {
-				let status = "Not authenticated";
-				let message =
-					"You are not authenticated with Globalping. Use the /login route to authenticate.";
-
-				if (this.props?.isAuthenticated) {
-					status = "Authenticated";
-					message = "You are authenticated with Globalping.";
-				}
+				const authenticated = !!this.props?.isAuthenticated;
+				const status = authenticated ? "Authenticated" : "Not authenticated";
+				const message = authenticated ? "Logged in." : "Not logged in.";
 
 				const output = {
-					authenticated: !!this.props?.isAuthenticated,
+					authenticated,
 					status,
 					message,
 				};
@@ -331,7 +327,7 @@ For more information, visit: https://www.globalping.io
 					content: [
 						{
 							type: "text",
-							text: `Authentication Status: ${status}\n\n${message}`,
+							text: message,
 						},
 					],
 					structuredContent: output,

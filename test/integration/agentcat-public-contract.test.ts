@@ -196,6 +196,8 @@ describe("AgentCat public MCP contract", () => {
 		);
 		const callMessage = await parseResponse(callResponse);
 		expect(callMessage.result.structuredContent).toHaveProperty("guide");
+		expect(callMessage.result.content[0].text).not.toMatch(/^\n/);
+		expect(callMessage.result.content[0].text).not.toMatch(/\n$/);
 		expect(callMessage.result.content[0].text).not.toMatch(/^\[session_id /);
 		expect(propertyKeys(callMessage.result)).not.toEqual(
 			expect.arrayContaining(["context", "session_id", "agent_id", "mcp_session"]),

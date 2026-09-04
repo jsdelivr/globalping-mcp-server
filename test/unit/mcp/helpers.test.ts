@@ -337,7 +337,10 @@ describe("formatMeasurementSummary", () => {
 				{
 					probe: {
 						city: "New York",
+						state: "NY",
 						country: "US",
+						continent: "NA",
+						network: "Verizon",
 						asn: 12345,
 					},
 					result: {
@@ -361,7 +364,7 @@ describe("formatMeasurementSummary", () => {
 		expect(summary).toContain("Status: finished");
 		expect(summary).toContain("Probes: 2");
 		expect(summary).toContain("Ping Results:");
-		expect(summary).toContain("New York, US (12345)");
+		expect(summary).toContain("Probe 1: New York (NY), US, NA, Verizon (AS12345)");
 	});
 
 	it("should format traceroute measurement summary", () => {
@@ -402,7 +405,7 @@ describe("formatMeasurementSummary", () => {
 		expect(summary).toContain("Measurement ID: trace-id-456");
 		expect(summary).toContain("Type: traceroute");
 		expect(summary).toContain("Traceroute Results:");
-		expect(summary).toContain("London, GB (67890)");
+		expect(summary).toContain("Probe 1: London, GB (AS67890)");
 		expect(summary).toContain("router1.example.com");
 		expect(summary).toContain("10.0.0.1");
 	});
@@ -444,7 +447,7 @@ describe("formatMeasurementSummary", () => {
 		const summary = formatMeasurementSummary(measurement);
 
 		expect(summary).toContain("DNS Results:");
-		expect(summary).toContain("Tokyo, JP (11111)");
+		expect(summary).toContain("Probe 1: Tokyo, JP (AS11111)");
 		expect(summary).toContain("8.8.8.8");
 		expect(summary).toContain("93.184.216.34");
 	});
@@ -474,6 +477,14 @@ describe("formatMeasurementSummary", () => {
 									avg: 2.5,
 								},
 							},
+							{
+								resolvedHostname: null,
+								resolvedAddress: null,
+								stats: {
+									loss: 100,
+									avg: null,
+								},
+							},
 						],
 					},
 				},
@@ -483,8 +494,9 @@ describe("formatMeasurementSummary", () => {
 		const summary = formatMeasurementSummary(measurement);
 
 		expect(summary).toContain("MTR Results:");
-		expect(summary).toContain("Berlin, DE (22222)");
+		expect(summary).toContain("Probe 1: Berlin, DE (AS22222)");
 		expect(summary).toContain("gateway.example.com");
+		expect(summary).toContain("Loss: 100.00% | RTT: N/A");
 	});
 
 	it("should format HTTP measurement summary", () => {
@@ -503,6 +515,7 @@ describe("formatMeasurementSummary", () => {
 					},
 					result: {
 						status: "finished",
+						resolvedAddress: "203.0.113.10",
 						statusCode: 200,
 						statusCodeName: "OK",
 						timings: {
@@ -526,8 +539,9 @@ describe("formatMeasurementSummary", () => {
 		const summary = formatMeasurementSummary(measurement);
 
 		expect(summary).toContain("HTTP Results:");
-		expect(summary).toContain("Sydney, AU (33333)");
+		expect(summary).toContain("Probe 1: Sydney, AU (AS33333)");
 		expect(summary).toContain("HTTP Status: 200 OK");
+		expect(summary).toContain("Resolved IP: 203.0.113.10");
 		expect(summary).toContain("Timings:");
 		expect(summary).toContain("TLS:");
 		expect(summary).toContain("TLSv1.3");
@@ -556,7 +570,7 @@ describe("formatMeasurementSummary", () => {
 
 		const summary = formatMeasurementSummary(measurement);
 
-		expect(summary).toContain("Paris, FR (44444)");
+		expect(summary).toContain("Probe 1: Paris, FR (AS44444)");
 		expect(summary).toContain("Status: failed");
 	});
 

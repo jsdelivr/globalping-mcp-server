@@ -85,6 +85,26 @@ export function calculateAverages(results: any) {
 	return summary;
 }
 
+function formatProbeLocation(probe: any): string {
+	let location = probe.city;
+
+	if (probe.state) {
+		location += ` (${probe.state})`;
+	}
+
+	for (const part of [probe.country, probe.continent, probe.network]) {
+		if (part) {
+			location += `, ${part}`;
+		}
+	}
+
+	if (probe.asn !== undefined && probe.asn !== null) {
+		location += ` (AS${probe.asn})`;
+	}
+
+	return location;
+}
+
 /**
  * Format a measurement response into a user-friendly summary
  * @param measurement The measurement response
@@ -128,7 +148,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const probe = result.probe;
 				const testResult = result.result;
 
-				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
+				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 
 				if (testResult.status === "finished" && testResult.stats) {
 					summary += `  Status: ${testResult.status}\n`;
@@ -156,7 +176,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const probe = result.probe;
 				const testResult = result.result;
 
-				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
+				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 				summary += `  Status: ${testResult.status}\n`;
 
 				if (testResult.status === "finished" && testResult.hops) {
@@ -180,7 +200,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const probe = result.probe;
 				const testResult = result.result;
 
-				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
+				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 				summary += `  Status: ${testResult.status}\n`;
 
 				if (testResult.status === "finished") {
@@ -227,14 +247,23 @@ export function formatMeasurementSummary(measurement: any): string {
 				const probe = result.probe;
 				const testResult = result.result;
 
-				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
+				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 				summary += `  Status: ${testResult.status}\n`;
 
 				if (testResult.status === "finished" && testResult.hops) {
 					testResult.hops.forEach((hop: any, hopIndex: number) => {
 						const hostname = hop.resolvedHostname || hop.resolvedAddress || "Unknown";
+						const loss =
+							typeof hop.stats?.loss === "number"
+								? `${hop.stats.loss.toFixed(2)}%`
+								: "N/A";
+						const averageRtt =
+							typeof hop.stats?.avg === "number"
+								? `${hop.stats.avg.toFixed(2)} ms`
+								: "N/A";
+
 						summary += `  ${hopIndex + 1}. ${hostname}\n`;
-						summary += `     Loss: ${hop.stats.loss.toFixed(2)}% | RTT: ${hop.stats.avg.toFixed(2)} ms\n`;
+						summary += `     Loss: ${loss} | RTT: ${averageRtt}\n`;
 					});
 				}
 
@@ -249,11 +278,15 @@ export function formatMeasurementSummary(measurement: any): string {
 				const probe = result.probe;
 				const testResult = result.result;
 
-				summary += `Probe ${index + 1}: ${probe.city}, ${probe.country} (${probe.asn})\n`;
+				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 				summary += `  Status: ${testResult.status}\n`;
 
 				if (testResult.status === "finished") {
 					summary += `  HTTP Status: ${testResult.statusCode} ${testResult.statusCodeName}\n`;
+
+					if (testResult.resolvedAddress) {
+						summary += `  Resolved IP: ${testResult.resolvedAddress}\n`;
+					}
 
 					if (testResult.timings) {
 						summary += "  Timings:\n";

@@ -760,24 +760,34 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				const token = getToken();
 				const limits = await getRateLimits(agent, token);
 
-				let textOutput = "Globalping Usage Limits:\n\n";
-
-				// Add authentication status to the output
-				textOutput += `Authentication Status: ${agent.getIsAuthenticated() ? "Authenticated" : "Unauthenticated"}\n`;
-
-				// Add the raw API response to the output
-				textOutput += `\nAPI Response:\n${JSON.stringify(limits, null, 2)}\n\n`;
-
-				// Format parsed data
 				const rateLimit = limits.rateLimit.measurements.create;
+				const pluralize = (count: number, singular: string) =>
+					`${count} ${singular}${count === 1 ? "" : "s"}`;
+				const resetUnits = [
+					{ threshold: 60, divisor: 1, unit: "second" },
+					{ threshold: 3600, divisor: 60, unit: "minute" },
+					{ threshold: 86400, divisor: 3600, unit: "hour" },
+					{ threshold: Number.POSITIVE_INFINITY, divisor: 86400, unit: "day" },
+				];
+				const resetUnit = resetUnits.find(({ threshold }) => rateLimit.reset < threshold)!;
+				const reset = pluralize(
+					Math.round(rateLimit.reset / resetUnit.divisor),
+					resetUnit.unit,
+				);
+				const consumed = rateLimit.limit - rateLimit.remaining;
 
-				textOutput += `Free Allowance Type: ${rateLimit.type}\n`;
-				textOutput += `Free Tests Limit: ${rateLimit.limit}\n`;
-				textOutput += `Free Tests Remaining: ${rateLimit.remaining}\n`;
-				textOutput += `Free Allowance Reset: in ${rateLimit.reset} seconds\n\n`;
+				let textOutput = `Authentication: ${agent.getIsAuthenticated() ? "token" : "IP address"}\n\n`;
+				textOutput += "Creating measurements:\n";
+				textOutput += ` - ${pluralize(rateLimit.limit, "test")} per hour\n`;
+				textOutput += ` - ${consumed} consumed, ${rateLimit.remaining} remaining\n`;
+
+				if (rateLimit.reset > 0) {
+					textOutput += ` - resets in ${reset}\n`;
+				}
 
 				if (limits.credits) {
-					textOutput += `Credits Remaining: ${limits.credits.remaining}\n`;
+					textOutput += "\nCredits:\n";
+					textOutput += ` - ${pluralize(limits.credits.remaining, "credit")} remaining (may be used to create measurements above the hourly limits)\n`;
 				}
 
 				const output = {
