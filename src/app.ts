@@ -3,6 +3,7 @@
  */
 import { Hono } from "hono";
 import { html } from "hono/html";
+import { introspectToken } from "./auth";
 import { layout, manualRedirectPage } from "./ui";
 import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
@@ -12,7 +13,6 @@ import geminiExtension from "../gemini-extension.json";
 // Globalping OAuth configuration
 const GLOBALPING_AUTH_URL = "https://auth.globalping.io/oauth/authorize";
 const GLOBALPING_TOKEN_URL = "https://auth.globalping.io/oauth/token";
-const GLOBALPING_USERDATA_URL = "https://auth.globalping.io/oauth/token/introspect";
 const GLOBALPING_REPOSITORY_URL = "https://github.com/jsdelivr/globalping-mcp-server";
 
 interface Env extends GlobalpingEnv {
@@ -23,27 +23,6 @@ interface Env extends GlobalpingEnv {
 const app = new Hono<{
 	Bindings: Env;
 }>();
-
-/**
- * Get user data from Globalping OAuth
- * @param accessToken The access token
- * @returns User data or null
- */
-async function getUserData(accessToken: string): Promise<any> {
-	const params = new URLSearchParams();
-	params.append("token", accessToken);
-
-	const userInfoResponse = await fetch(GLOBALPING_USERDATA_URL, {
-		method: "POST",
-		body: params,
-	});
-
-	if (userInfoResponse.ok) {
-		return await userInfoResponse.json();
-	}
-
-	return null;
-}
 
 // Root route - redirect to repository
 app.get("/", async (_c) => {
@@ -265,8 +244,8 @@ app.get("/auth/callback", async (c) => {
 		tokenData.created_at = Math.floor(Date.now() / 1000);
 
 		// Get user data
-		const userData = await getUserData(tokenData.access_token);
-		if (!userData) {
+		const userData = await introspectToken(tokenData.access_token);
+		if (!userData?.username) {
 			return c.html(
 				layout(
 					await html`<h1>Authentication error</h1><p>Failed to get user data.</p>`,
