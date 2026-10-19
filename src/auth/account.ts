@@ -3,7 +3,7 @@ const GLOBALPING_INTROSPECTION_URL = "https://auth.globalping.io/oauth/token/int
 export type TokenIntrospection = {
 	active: boolean;
 	username?: string;
-	organization?: string | null;
+	organization?: string;
 };
 
 /**

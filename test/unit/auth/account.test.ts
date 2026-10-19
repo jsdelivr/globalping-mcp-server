@@ -6,7 +6,7 @@ import { getAccountName, introspectToken } from "../../../src/auth/account";
 
 describe("getAccountName", () => {
 	it("should name the user of a personal token", () => {
-		expect(getAccountName({ active: true, username: "john", organization: null })).toBe("john");
+		expect(getAccountName({ active: true, username: "john" })).toBe("john");
 	});
 
 	it("should name the org of an org token and the user it acts through", () => {
