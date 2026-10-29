@@ -2,23 +2,7 @@
  * Tests for auth/account.ts
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getAccountName, introspectToken } from "../../../src/auth/account";
-
-describe("getAccountName", () => {
-	it("should name the user of a personal token", () => {
-		expect(getAccountName({ active: true, username: "john" })).toBe("john");
-	});
-
-	it("should name the org of an org token and the user it acts through", () => {
-		expect(getAccountName({ active: true, username: "john", organization: "john-org" })).toBe(
-			"john-org (via john)",
-		);
-	});
-
-	it("should return undefined for a token without a user", () => {
-		expect(getAccountName({ active: true })).toBeUndefined();
-	});
-});
+import { introspectToken } from "../../../src/auth/account";
 
 describe("introspectToken", () => {
 	afterEach(() => {

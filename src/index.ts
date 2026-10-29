@@ -4,13 +4,7 @@ import * as agentcat from "agentcat";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
 import app from "./app";
-import {
-	getAccountName,
-	introspectToken,
-	isAPITokenRequest,
-	isValidAPIToken,
-	sanitizeToken,
-} from "./auth";
+import { isAPITokenRequest, isValidAPIToken, sanitizeToken } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
 import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOrigin } from "./lib";
 import { registerGlobalpingTools } from "./mcp";
@@ -321,7 +315,7 @@ For more information, visit: https://www.globalping.io
 			async () => {
 				const authenticated = !!this.props?.isAuthenticated;
 				const status = authenticated ? "Authenticated" : "Not authenticated";
-				const message = authenticated ? await this.getLoggedInMessage() : "Not logged in.";
+				const message = authenticated ? "Logged in." : "Not logged in.";
 
 				const output = {
 					authenticated,
@@ -362,17 +356,6 @@ For more information, visit: https://www.globalping.io
 	getToken(): string | undefined {
 		// Return the access token from the props
 		return this.props?.accessToken;
-	}
-
-	/**
-	 * Names the account the current token acts for, falling back to a plain message when it can't be resolved
-	 */
-	private async getLoggedInMessage(): Promise<string> {
-		const token = sanitizeToken(this.props?.accessToken);
-		const introspection = await introspectToken(token).catch(() => null);
-		const accountName = introspection && getAccountName(introspection);
-
-		return accountName ? `Logged in as ${accountName}.` : "Logged in.";
 	}
 
 	/**

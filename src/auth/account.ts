@@ -26,16 +26,3 @@ export async function introspectToken(token: string): Promise<TokenIntrospection
 
 	return (await response.json()) as TokenIntrospection;
 }
-
-/**
- * Name the account a token acts for, and for an org token also the user it acts through
- * @param introspection The token introspection
- * @returns The account name, or undefined if the token has no user
- */
-export function getAccountName({ username, organization }: TokenIntrospection): string | undefined {
-	if (!username) {
-		return undefined;
-	}
-
-	return organization ? `${organization} (via ${username})` : username;
-}
