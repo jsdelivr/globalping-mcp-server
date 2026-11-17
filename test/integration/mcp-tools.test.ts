@@ -35,6 +35,59 @@ const createMockGlobalpingAPI = () => {
 							probesCount: 3,
 						}),
 						{
+							status: 202,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+				if (urlString.endsWith("/v1/measurements/missing-measurement")) {
+					return new Response(
+						JSON.stringify({
+							error: {
+								type: "not_found",
+								message: "Couldn't find the requested measurement.",
+							},
+							links: {
+								documentation:
+									"https://globalping.io/docs/api.globalping.io#get-/v1/measurements/-id-",
+							},
+						}),
+						{
+							status: 404,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+				if (urlString.endsWith("/v1/measurements/running-measurement")) {
+					return new Response(
+						JSON.stringify({
+							id: "running-measurement",
+							type: "ping",
+							status: "in-progress",
+							createdAt: "2024-01-01T00:00:00Z",
+							updatedAt: "2024-01-01T00:00:01Z",
+							target: "google.com",
+							probesCount: 1,
+							results: [
+								{
+									probe: {
+										continent: "NA",
+										region: "Northern America",
+										country: "US",
+										state: "NY",
+										city: "New York",
+										asn: 12345,
+										network: "Test Network",
+										latitude: 40.7128,
+										longitude: -74.006,
+										tags: [],
+										resolvers: [],
+									},
+									result: { status: "in-progress", rawOutput: "" },
+								},
+							],
+						}),
+						{
 							status: 200,
 							headers: { "Content-Type": "application/json" },
 						},
@@ -461,6 +514,87 @@ describe("MCP Tools Integration", () => {
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe("Get Measurement Tool", () => {
+		const callGetMeasurement = async (id: string) => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: { name: "getMeasurement", arguments: { id } },
+				},
+				validToken,
+				sessionId,
+			);
+			expect(response.status).toBe(200);
+			return await getMCPResponse(response);
+		};
+
+		it("should get a measurement that was not created in this session", async () => {
+			const data = await callGetMeasurement("mock-measurement-123");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement).toMatchObject({
+				id: "mock-measurement-123",
+				status: "finished",
+				probesCount: 3,
+			});
+			expect(data.result.structuredContent.measurement.results).toHaveLength(1);
+			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+		});
+
+		it("should use the session cache for a measurement created in this session", async () => {
+			await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: { name: "ping", arguments: { target: "google.com" } },
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+
+			const data = await callGetMeasurement("mock-measurement-123");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement.id).toBe("mock-measurement-123");
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+
+		it("should return an in-progress measurement with a note", async () => {
+			const data = await callGetMeasurement("running-measurement");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement.status).toBe("in-progress");
+			expect(data.result.content[0].text).toContain("Measurement is still in progress");
+		});
+
+		it("should return a tool error when the measurement is not found", async () => {
+			const data = await callGetMeasurement("missing-measurement");
+
+			expect(data.error).toBeUndefined();
+			expect(data.result.isError).toBe(true);
+			expect(data.result.content[0].text).toContain(
+				"Failed to get measurement: Globalping API error (404)",
+			);
+		});
+
+		it("should declare an output schema that allows measurement fields", async () => {
+			const response = await makeMCPRequest(
+				{ jsonrpc: "2.0", id: 1, method: "tools/list" },
+				validToken,
+				sessionId,
+			);
+			const data = await getMCPResponse(response);
+			const tool = data.result.tools.find((t: any) => t.name === "getMeasurement");
+
+			expect(tool.outputSchema.properties.measurement.additionalProperties).not.toBe(false);
 		});
 	});
 

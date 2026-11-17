@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Globalping } from "globalping";
 import {
 	createMeasurement,
+	getMeasurement,
 	pollMeasurementResult,
 	runMeasurement,
 	getLocations,
@@ -73,7 +74,13 @@ describe("createMeasurement", () => {
 
 		const mockResult = {
 			ok: false as const,
-			data: { error: { type: "validation_error", message: "Invalid target" } },
+			data: {
+				error: {
+					type: "validation_error",
+					message: "Parameter validation failed.",
+					params: { target: '"target" does not match any of the allowed types' },
+				},
+			},
 			response: { status: 400 },
 		};
 
@@ -100,7 +107,7 @@ describe("createMeasurement", () => {
 
 		const mockResult = {
 			ok: false as const,
-			data: { error: { type: "unauthorized", message: "Invalid token" } },
+			data: { error: { type: "unauthorized", message: "Unauthorized." } },
 			response: { status: 401 },
 		};
 
@@ -168,7 +175,7 @@ describe("pollMeasurementResult", () => {
 
 		const mockResult = {
 			ok: false as const,
-			data: { error: { type: "unauthorized" } },
+			data: { error: { type: "unauthorized", message: "Unauthorized." } },
 			response: { status: 401 },
 		};
 
@@ -185,9 +192,133 @@ describe("pollMeasurementResult", () => {
 	});
 });
 
+describe("getMeasurement", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("should return an in-progress measurement without waiting", async () => {
+		const agent = createMockAgent();
+		const data = {
+			id: "measurement-123",
+			type: "ping",
+			status: "in-progress",
+			createdAt: "2024-01-01T00:00:00Z",
+			updatedAt: "2024-01-01T00:00:01Z",
+			target: "google.com",
+			probesCount: 1,
+			results: [{ result: { status: "in-progress", rawOutput: "" } }],
+		};
+
+		const getMeasurementMock = vi.fn().mockResolvedValue({ ok: true as const, data });
+		vi.mocked(Globalping).mockImplementation(function () {
+			return { getMeasurement: getMeasurementMock } as any;
+		});
+
+		const result = await getMeasurement(agent as any, "measurement-123", "test-token-123");
+
+		expect(result).toEqual(data);
+		expect(getMeasurementMock).toHaveBeenCalledWith("measurement-123");
+	});
+
+	it("should throw error when no token provided", async () => {
+		const agent = createMockAgent();
+
+		await expect(getMeasurement(agent as any, "id", "")).rejects.toThrow("No token provided");
+	});
+
+	it("should handle auth error", async () => {
+		const agent = createMockAgent();
+
+		const getMeasurementMock = vi.fn().mockResolvedValue({
+			ok: false as const,
+			data: { error: { type: "unauthorized", message: "Unauthorized." } },
+			response: { status: 401 },
+		});
+		vi.mocked(Globalping).mockImplementation(function () {
+			return { getMeasurement: getMeasurementMock } as any;
+		});
+		vi.mocked(Globalping.isHttpStatus).mockReturnValueOnce(true);
+
+		await expect(getMeasurement(agent as any, "id", "invalid-token")).rejects.toThrow(
+			"Globalping API error (401)",
+		);
+		expect(agent.setIsAuthenticated).toHaveBeenCalledWith(false);
+	});
+});
+
 describe("runMeasurement", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	it("should add the measurement ID to the error when waiting fails", async () => {
+		const agent = createMockAgent();
+
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: vi.fn().mockResolvedValue({
+					ok: true as const,
+					data: { id: "measurement-123", probesCount: 3 },
+				}),
+				awaitMeasurement: vi.fn().mockRejectedValue(new Error("Network failure.")),
+			} as any;
+		});
+
+		await expect(
+			runMeasurement(agent as any, { type: "ping", target: "google.com" }, "test-token-123"),
+		).rejects.toThrow("Network failure.\nMeasurement ID: measurement-123");
+	});
+
+	it("should not repeat the measurement ID when the error already has it", async () => {
+		const agent = createMockAgent();
+		const message = "Timed out waiting for measurement measurement-123 to finish.";
+
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: vi.fn().mockResolvedValue({
+					ok: true as const,
+					data: { id: "measurement-123", probesCount: 3 },
+				}),
+				awaitMeasurement: vi.fn().mockRejectedValue(new Error(message)),
+			} as any;
+		});
+
+		const error = await runMeasurement(
+			agent as any,
+			{ type: "ping", target: "google.com" },
+			"test-token-123",
+		).catch((e) => e);
+
+		expect(error.message).toBe(message);
+	});
+
+	it("should not change the error when the request is cancelled", async () => {
+		const agent = createMockAgent();
+		const controller = new AbortController();
+		const abortError = new Error("Aborted");
+
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: vi.fn().mockResolvedValue({
+					ok: true as const,
+					data: { id: "measurement-123", probesCount: 3 },
+				}),
+				awaitMeasurement: vi.fn().mockImplementation(async () => {
+					controller.abort();
+					throw abortError;
+				}),
+			} as any;
+		});
+
+		await expect(
+			runMeasurement(
+				agent as any,
+				{ type: "ping", target: "google.com" },
+				"test-token-123",
+				controller.signal,
+			),
+		).rejects.toBe(abortError);
 	});
 
 	it("should create and await measurement successfully", async () => {
@@ -401,7 +532,7 @@ describe("getLocations", () => {
 
 		const listProbesMock = vi.fn().mockResolvedValue({
 			ok: false as const,
-			data: { error: { type: "internal_error", message: "Server error" } },
+			data: { error: { type: "api_error", message: "Internal Server Error." } },
 			response: { status: 500 },
 		});
 
@@ -461,7 +592,7 @@ describe("getRateLimits", () => {
 
 		const getLimitsMock = vi.fn().mockResolvedValue({
 			ok: false as const,
-			data: { error: { type: "internal_error", message: "Server error" } },
+			data: { error: { type: "api_error", message: "Internal Server Error." } },
 			response: { status: 500 },
 		});
 
