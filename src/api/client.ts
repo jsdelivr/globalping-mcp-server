@@ -38,7 +38,7 @@ export async function createMeasurement(
 
 	if (!result.ok) {
 		// Handle authentication errors using library's static method
-		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+		if (Globalping.isHttpStatus(401, result)) {
 			agent.setIsAuthenticated(false);
 		}
 		throw new Error(
@@ -51,14 +51,12 @@ export async function createMeasurement(
 
 /**
  * Polls for a measurement result until it's complete or timeout occurs
- * @param agent The GlobalpingMCP instance
  * @param measurementId The measurement ID to poll for
  * @param token API token for authenticated requests
  * @param signal Optional cancellation signal for polling
  * @returns The complete measurement response
  */
 export async function pollMeasurementResult(
-	agent: GlobalpingMCP,
 	measurementId: string,
 	token: string,
 	signal?: AbortSignal,
@@ -72,10 +70,6 @@ export async function pollMeasurementResult(
 	);
 
 	if (!result.ok) {
-		// Handle authentication errors using library's static method
-		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
-			agent.setIsAuthenticated(false);
-		}
 		throw new Error(
 			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
 		);
@@ -115,7 +109,7 @@ export async function runMeasurement(
 	const result = await createMeasurement(agent, options as TypedMeasurementRequest, token);
 
 	try {
-		return await pollMeasurementResult(agent, result.id, token, signal);
+		return await pollMeasurementResult(result.id, token, signal);
 	} catch (error: any) {
 		if (signal?.aborted) {
 			throw error;
@@ -129,13 +123,11 @@ export async function runMeasurement(
 
 /**
  * Gets the current result and status of a measurement
- * @param agent The GlobalpingMCP instance
  * @param measurementId The measurement ID to get
  * @param token API token for authenticated requests
  * @returns The measurement response, which may still be in progress
  */
 export async function getMeasurement(
-	agent: GlobalpingMCP,
 	measurementId: string,
 	token: string,
 ): Promise<MeasurementResponse> {
@@ -145,10 +137,6 @@ export async function getMeasurement(
 	const result = await globalping.getMeasurement(measurementId);
 
 	if (!result.ok) {
-		// Handle authentication errors using library's static method
-		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
-			agent.setIsAuthenticated(false);
-		}
 		throw new Error(
 			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
 		);
@@ -159,11 +147,10 @@ export async function getMeasurement(
 
 /**
  * Gets the available locations from the Globalping API
- * @param agent The GlobalpingMCP instance
  * @param token API token for authenticated requests
  * @returns The list of available probes
  */
-export async function getLocations(agent: GlobalpingMCP, token: string): Promise<any> {
+export async function getLocations(token: string): Promise<any> {
 	validateToken(token);
 
 	console.log(`API Call: Calling ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.PROBES}`);
@@ -172,10 +159,6 @@ export async function getLocations(agent: GlobalpingMCP, token: string): Promise
 	const result = await globalping.listProbes();
 
 	if (!result.ok) {
-		// Handle authentication errors using library's static method
-		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
-			agent.setIsAuthenticated(false);
-		}
 		throw new Error(
 			`Globalping API error (${result.response.status}): ${JSON.stringify(result.data)}`,
 		);
@@ -200,7 +183,7 @@ export async function getRateLimits(agent: GlobalpingMCP, token: string): Promis
 
 	if (!result.ok) {
 		// Handle authentication errors using library's static method
-		if (Globalping.isHttpStatus(401, result) || Globalping.isHttpStatus(403, result)) {
+		if (Globalping.isHttpStatus(401, result)) {
 			agent.setIsAuthenticated(false);
 		}
 		throw new Error(

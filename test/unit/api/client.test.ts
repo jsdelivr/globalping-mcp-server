@@ -130,7 +130,6 @@ describe("pollMeasurementResult", () => {
 	});
 
 	it("should await measurement and return result", async () => {
-		const agent = createMockAgent();
 		const measurementId = "test-measurement-id";
 		const token = "test-token-123";
 
@@ -155,40 +154,13 @@ describe("pollMeasurementResult", () => {
 			} as any;
 		});
 
-		const result = await pollMeasurementResult(agent as any, measurementId, token);
+		const result = await pollMeasurementResult(measurementId, token);
 
 		expect(result).toEqual(mockResult.data);
 	});
 
 	it("should throw error when no token provided", async () => {
-		const agent = createMockAgent();
-
-		await expect(pollMeasurementResult(agent as any, "id", "")).rejects.toThrow(
-			"No token provided",
-		);
-	});
-
-	it("should handle auth error during polling", async () => {
-		const agent = createMockAgent();
-		const measurementId = "test-measurement-id";
-		const token = "invalid-token";
-
-		const mockResult = {
-			ok: false as const,
-			data: { error: { type: "unauthorized", message: "Unauthorized." } },
-			response: { status: 401 },
-		};
-
-		const awaitMeasurementMock = vi.fn().mockResolvedValue(mockResult);
-		vi.mocked(Globalping).mockImplementation(function () {
-			return {
-				awaitMeasurement: awaitMeasurementMock,
-			} as any;
-		});
-		vi.mocked(Globalping.isHttpStatus).mockReturnValueOnce(true);
-
-		await expect(pollMeasurementResult(agent as any, measurementId, token)).rejects.toThrow();
-		expect(agent.setIsAuthenticated).toHaveBeenCalledWith(false);
+		await expect(pollMeasurementResult("id", "")).rejects.toThrow("No token provided");
 	});
 });
 
@@ -198,7 +170,6 @@ describe("getMeasurement", () => {
 	});
 
 	it("should return an in-progress measurement without waiting", async () => {
-		const agent = createMockAgent();
 		const data = {
 			id: "measurement-123",
 			type: "ping",
@@ -215,35 +186,14 @@ describe("getMeasurement", () => {
 			return { getMeasurement: getMeasurementMock } as any;
 		});
 
-		const result = await getMeasurement(agent as any, "measurement-123", "test-token-123");
+		const result = await getMeasurement("measurement-123", "test-token-123");
 
 		expect(result).toEqual(data);
 		expect(getMeasurementMock).toHaveBeenCalledWith("measurement-123");
 	});
 
 	it("should throw error when no token provided", async () => {
-		const agent = createMockAgent();
-
-		await expect(getMeasurement(agent as any, "id", "")).rejects.toThrow("No token provided");
-	});
-
-	it("should handle auth error", async () => {
-		const agent = createMockAgent();
-
-		const getMeasurementMock = vi.fn().mockResolvedValue({
-			ok: false as const,
-			data: { error: { type: "unauthorized", message: "Unauthorized." } },
-			response: { status: 401 },
-		});
-		vi.mocked(Globalping).mockImplementation(function () {
-			return { getMeasurement: getMeasurementMock } as any;
-		});
-		vi.mocked(Globalping.isHttpStatus).mockReturnValueOnce(true);
-
-		await expect(getMeasurement(agent as any, "id", "invalid-token")).rejects.toThrow(
-			"Globalping API error (401)",
-		);
-		expect(agent.setIsAuthenticated).toHaveBeenCalledWith(false);
+		await expect(getMeasurement("id", "")).rejects.toThrow("No token provided");
 	});
 });
 
@@ -491,7 +441,6 @@ describe("getLocations", () => {
 	});
 
 	it("should fetch locations successfully", async () => {
-		const agent = createMockAgent();
 		const token = "test-token-123";
 
 		const mockLocations = [
@@ -515,19 +464,16 @@ describe("getLocations", () => {
 			} as any;
 		});
 
-		const result = await getLocations(agent as any, token);
+		const result = await getLocations(token);
 
 		expect(result).toEqual(mockLocations);
 	});
 
 	it("should throw error when no token provided", async () => {
-		const agent = createMockAgent();
-
-		await expect(getLocations(agent as any, "")).rejects.toThrow("No token provided");
+		await expect(getLocations("")).rejects.toThrow("No token provided");
 	});
 
 	it("should handle API error", async () => {
-		const agent = createMockAgent();
 		const token = "test-token-123";
 
 		const listProbesMock = vi.fn().mockResolvedValue({
@@ -543,7 +489,7 @@ describe("getLocations", () => {
 		});
 		vi.mocked(Globalping.isHttpStatus).mockReturnValue(false);
 
-		await expect(getLocations(agent as any, token)).rejects.toThrow();
+		await expect(getLocations(token)).rejects.toThrow();
 	});
 });
 

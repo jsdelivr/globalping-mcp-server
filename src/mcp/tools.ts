@@ -647,7 +647,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async () => {
 			return handleToolExecution(async () => {
 				const token = getToken();
-				const probes = await getLocations(agent, token);
+				const probes = await getLocations(token);
 
 				// Group probes by continent and country
 				const grouped: Record<string, Record<string, any[]>> = {};
@@ -833,6 +833,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			inputSchema: {
 				id: z
 					.string()
+					.trim()
+					.regex(/^[a-zA-Z0-9]+$/)
 					.describe("The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
 			},
 			outputSchema: {
@@ -852,22 +854,18 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			return handleToolExecution(async () => {
 				const measurement = Object.hasOwn(agent.state.measurements, id)
 					? agent.state.measurements[id]
-					: await getMeasurement(agent, id, getToken());
+					: await getMeasurement(id, getToken());
 
-				const note =
-					measurement.status === "in-progress"
-						? "Measurement is still in progress and the results are partial. Call getMeasurement again in a few seconds for the final results.\n\n"
-						: "";
+				const content = [{ type: "text", text: JSON.stringify(measurement, null, 2) }];
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: `${note}${JSON.stringify(measurement, null, 2)}`,
-						},
-					],
-					structuredContent: { measurement },
-				};
+				if (measurement.status === "in-progress") {
+					content.push({
+						type: "text",
+						text: "Measurement is still in progress. Call getMeasurement again in a few seconds for the final results.",
+					});
+				}
+
+				return { content, structuredContent: { measurement } };
 			}, "Failed to get measurement");
 		},
 	);
