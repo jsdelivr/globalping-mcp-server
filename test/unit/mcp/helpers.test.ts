@@ -3,9 +3,9 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-	parseLocations,
 	calculateAverages,
 	formatMeasurementSummary,
+	parseLocations,
 } from "../../../src/mcp/helpers";
 
 describe("parseLocations", () => {
@@ -326,310 +326,87 @@ describe("calculateAverages", () => {
 });
 
 describe("formatMeasurementSummary", () => {
-	it("should format ping measurement summary", () => {
-		const measurement = {
-			id: "test-id-123",
-			type: "ping",
-			target: "google.com",
-			status: "finished",
-			probesCount: 2,
-			results: [
-				{
-					probe: {
-						city: "New York",
-						state: "NY",
-						country: "US",
-						continent: "NA",
-						network: "Verizon",
-						asn: 12345,
-					},
-					result: {
-						status: "finished",
-						stats: {
-							min: 10,
-							avg: 15,
-							max: 20,
-							loss: 0,
-						},
-					},
-				},
-			],
-		};
-
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("Measurement ID: test-id-123");
-		expect(summary).toContain("Type: ping");
-		expect(summary).toContain("Target: google.com");
-		expect(summary).toContain("Status: finished");
-		expect(summary).toContain("Probes: 2");
-		expect(summary).toContain("Ping Results:");
-		expect(summary).toContain("Probe 1: New York (NY), US, NA, Verizon (AS12345)");
+	const probe = {
+		city: "New York",
+		state: "NY",
+		country: "US",
+		continent: "NA",
+		network: "Verizon",
+		asn: 12345,
+	};
+	const measurement = (type: string, result: any) => ({
+		id: "test-id-123",
+		type,
+		target: "google.com",
+		status: "finished",
+		probesCount: 1,
+		results: [{ probe, result }],
 	});
 
-	it("should format traceroute measurement summary", () => {
-		const measurement = {
-			id: "trace-id-456",
-			type: "traceroute",
-			target: "cloudflare.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "London",
-						country: "GB",
-						asn: 67890,
-					},
-					result: {
-						status: "finished",
-						hops: [
-							{
-								resolvedHostname: "router1.example.com",
-								resolvedAddress: "192.168.1.1",
-								timings: [{ rtt: 5 }],
-							},
-							{
-								resolvedHostname: null,
-								resolvedAddress: "10.0.0.1",
-								timings: [{ rtt: 10 }],
-							},
-						],
-					},
-				},
-			],
-		};
+	it("should print the header and the raw output of each probe", () => {
+		const summary = formatMeasurementSummary(
+			measurement("traceroute", {
+				status: "finished",
+				rawOutput: "traceroute to google.com",
+			}),
+		);
 
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("Measurement ID: trace-id-456");
-		expect(summary).toContain("Type: traceroute");
-		expect(summary).toContain("Traceroute Results:");
-		expect(summary).toContain("Probe 1: London, GB (AS67890)");
-		expect(summary).toContain("router1.example.com");
-		expect(summary).toContain("10.0.0.1");
+		expect(summary).toBe(
+			"Measurement ID: test-id-123\nType: traceroute\nTarget: google.com\nStatus: finished\nProbes: 1\n" +
+				"\nProbe 1: New York (NY), US, NA, Verizon (AS12345)\ntraceroute to google.com\n",
+		);
 	});
 
-	it("should format DNS measurement summary", () => {
-		const measurement = {
-			id: "dns-id-789",
-			type: "dns",
-			target: "example.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "Tokyo",
-						country: "JP",
-						asn: 11111,
-					},
-					result: {
-						status: "finished",
-						resolver: "8.8.8.8",
-						timings: { total: 50 },
-						statusCodeName: "NOERROR",
-						statusCode: 0,
-						answers: [
-							{
-								name: "example.com",
-								ttl: 3600,
-								class: "IN",
-								type: "A",
-								value: "93.184.216.34",
-							},
-						],
-					},
-				},
-			],
-		};
+	it("should add totals over all probes to ping results", () => {
+		const summary = formatMeasurementSummary(
+			measurement("ping", {
+				status: "finished",
+				rawOutput: "PING google.com",
+				stats: { min: 10, avg: 15, max: 20, total: 3, rcv: 3, drop: 0, loss: 0 },
+			}),
+		);
 
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("DNS Results:");
-		expect(summary).toContain("Probe 1: Tokyo, JP (AS11111)");
-		expect(summary).toContain("8.8.8.8");
-		expect(summary).toContain("93.184.216.34");
+		expect(summary).toContain(
+			"Probes: 1\n\n- Successful Probes: 1/1\n- Total Packets: 3\n- Received: 3\n- Dropped: 0\n" +
+				"- Average Loss: 0.00%\n- Min RTT: 10.00 ms\n- Avg RTT: 15.00 ms\n- Max RTT: 20.00 ms\n" +
+				"\nProbe 1:",
+		);
 	});
 
-	it("should format MTR measurement summary", () => {
-		const measurement = {
-			id: "mtr-id-101",
-			type: "mtr",
-			target: "github.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "Berlin",
-						country: "DE",
-						asn: 22222,
-					},
-					result: {
-						status: "finished",
-						hops: [
-							{
-								resolvedHostname: "gateway.example.com",
-								resolvedAddress: "192.168.1.1",
-								stats: {
-									loss: 0,
-									avg: 2.5,
-								},
-							},
-							{
-								resolvedHostname: null,
-								resolvedAddress: null,
-								stats: {
-									loss: 100,
-									avg: null,
-								},
-							},
-						],
-					},
-				},
-			],
-		};
+	it("should print the status of a probe that did not finish", () => {
+		const summary = formatMeasurementSummary(
+			measurement("ping", { status: "failed", rawOutput: "queryA ENOTFOUND google.com" }),
+		);
 
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("MTR Results:");
-		expect(summary).toContain("Probe 1: Berlin, DE (AS22222)");
-		expect(summary).toContain("gateway.example.com");
-		expect(summary).toContain("Loss: 100.00% | RTT: N/A");
+		expect(summary).toContain("Status: failed\nqueryA ENOTFOUND google.com\n");
 	});
 
-	it("should format HTTP measurement summary", () => {
-		const measurement = {
-			id: "http-id-202",
-			type: "http",
-			target: "api.example.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "Sydney",
-						country: "AU",
-						asn: 33333,
-					},
-					result: {
-						status: "finished",
-						resolvedAddress: "203.0.113.10",
-						statusCode: 200,
-						statusCodeName: "OK",
-						timings: {
-							total: 150,
-							dns: 10,
-							tcp: 20,
-							tls: 30,
-							firstByte: 50,
-							download: 40,
-						},
-						tls: {
-							protocol: "TLSv1.3",
-							cipherName: "TLS_AES_256_GCM_SHA384",
-							authorized: true,
-						},
-					},
-				},
-			],
-		};
+	it("should handle a probe without raw output", () => {
+		const summary = formatMeasurementSummary(measurement("ping", { status: "offline" }));
 
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("HTTP Results:");
-		expect(summary).toContain("Probe 1: Sydney, AU (AS33333)");
-		expect(summary).toContain("HTTP Status: 200 OK");
-		expect(summary).toContain("Resolved IP: 203.0.113.10");
-		expect(summary).toContain("Timings:");
-		expect(summary).toContain("TLS:");
-		expect(summary).toContain("TLSv1.3");
+		expect(summary).toMatch(/AS12345\)\nStatus: offline\n$/);
 	});
 
-	it("should handle failed probe results", () => {
-		const measurement = {
-			id: "test-id-fail",
-			type: "ping",
-			target: "google.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "Paris",
-						country: "FR",
-						asn: 44444,
-					},
-					result: {
-						status: "failed",
-					},
+	it("should add resolved IP, timings and TLS to HTTP results", () => {
+		const summary = formatMeasurementSummary(
+			measurement("http", {
+				status: "finished",
+				rawOutput: "HTTP/1.1 301",
+				resolvedAddress: "1.1.1.1",
+				timings: { total: 23, dns: null, tcp: 2, tls: 9, firstByte: 12, download: 0 },
+				tls: {
+					protocol: "TLSv1.3",
+					cipherName: "TLS_AES_256_GCM_SHA384",
+					authorized: false,
 				},
-			],
-		};
+			}),
+		);
 
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("Probe 1: Paris, FR (AS44444)");
-		expect(summary).toContain("Status: failed");
-	});
-
-	it("should handle unknown measurement type", () => {
-		const measurement = {
-			id: "unknown-id",
-			type: "unknown",
-			target: "example.com",
-			status: "finished",
-			probesCount: 0,
-			results: [],
-		};
-
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("Measurement ID: unknown-id");
-		expect(summary).toContain("Type: unknown");
-		expect(summary).toContain("Detailed results are available in the raw data");
-	});
-
-	it("should handle DNS trace results", () => {
-		const measurement = {
-			id: "dns-trace-id",
-			type: "dns",
-			target: "example.com",
-			status: "finished",
-			probesCount: 1,
-			results: [
-				{
-					probe: {
-						city: "Mumbai",
-						country: "IN",
-						asn: 55555,
-					},
-					result: {
-						status: "finished",
-						hops: [
-							{
-								resolver: "root-server",
-								timings: { total: 10 },
-								answers: [
-									{
-										name: "example.com",
-										ttl: 3600,
-										class: "IN",
-										type: "A",
-										value: "93.184.216.34",
-									},
-								],
-							},
-						],
-					},
-				},
-			],
-		};
-
-		const summary = formatMeasurementSummary(measurement);
-
-		expect(summary).toContain("DNS Results:");
-		expect(summary).toContain("Hop 1: root-server");
+		expect(summary).toContain(
+			"Resolved IP: 1.1.1.1\n" +
+				"Timings: total 23 ms, dns N/A, tcp 2 ms, tls 9 ms, firstByte 12 ms, download 0 ms\n" +
+				"TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, not valid\n" +
+				"HTTP/1.1 301\n",
+		);
 	});
 });

@@ -376,6 +376,10 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content[0].text).toContain(
 				"Probe 1: New York, US, NA, Test Network (AS12345)",
 			);
+			expect(data.result.content[0].text).toContain(
+				"PING google.com (142.250.185.46): 56 data bytes",
+			);
+			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
