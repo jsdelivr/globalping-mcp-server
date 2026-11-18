@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
-import { formatMeasurementSummary, parseLocations } from "./helpers";
+import { formatMeasurement, parseLocations } from "./helpers";
 
 /**
  * Helper to wrap tool execution with error handling
@@ -63,9 +63,15 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("Number of probes to use (default: 3, max: 100)"),
 				packets: z.number().optional().describe("Number of packets to send (default: 3)"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ target, locations, limit, packets }, { signal }) => {
+		async ({ target, locations, limit, packets, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -97,7 +103,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
+				return {
+					content: [{ type: "text", text: formatMeasurement(result, output) }],
+				};
 			}, "Ping test failed");
 		},
 	);
@@ -140,9 +148,15 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
 				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ target, locations, limit, protocol, port }, { signal }) => {
+		async ({ target, locations, limit, protocol, port, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -174,7 +188,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
+				return {
+					content: [{ type: "text", text: formatMeasurement(result, output) }],
+				};
 			}, "Traceroute test failed");
 		},
 	);
@@ -240,9 +256,15 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.boolean()
 					.optional()
 					.describe("Trace delegation path from root servers (default: false)"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ target, locations, limit, queryType, resolver, trace }, { signal }) => {
+		async ({ target, locations, limit, queryType, resolver, trace, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -277,7 +299,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
+				return {
+					content: [{ type: "text", text: formatMeasurement(result, output) }],
+				};
 			}, "DNS lookup failed");
 		},
 	);
@@ -324,9 +348,15 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.number()
 					.optional()
 					.describe("Number of packets to send to each hop (default: 3)"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ target, locations, limit, protocol, port, packets }, { signal }) => {
+		async ({ target, locations, limit, protocol, port, packets, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -359,7 +389,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
+				return {
+					content: [{ type: "text", text: formatMeasurement(result, output) }],
+				};
 			}, "MTR test failed");
 		},
 	);
@@ -416,9 +448,18 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.string()
 					.optional()
 					.describe("Query string (e.g., 'param=value&another=123')"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ target, locations, limit, method, protocol, path, query, port }, { signal }) => {
+		async (
+			{ target, locations, limit, method, protocol, path, query, port, output },
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -457,7 +498,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
+				return {
+					content: [{ type: "text", text: formatMeasurement(result, output) }],
+				};
 			}, "HTTP request failed");
 		},
 	);
@@ -681,15 +724,21 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.trim()
 					.regex(/^[a-zA-Z0-9]+$/)
 					.describe("The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
+				output: z
+					.enum(["summary", "full"])
+					.optional()
+					.describe(
+						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+					),
 			},
 		},
-		async ({ id }) => {
+		async ({ id, output }) => {
 			return handleToolExecution(async () => {
 				const measurement = Object.hasOwn(agent.state.measurements, id)
 					? agent.state.measurements[id]
 					: await getMeasurement(id, getToken());
 
-				const content = [{ type: "text", text: formatMeasurementSummary(measurement) }];
+				const content = [{ type: "text", text: formatMeasurement(measurement, output) }];
 
 				if (measurement.status === "in-progress") {
 					content.push({

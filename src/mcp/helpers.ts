@@ -105,6 +105,13 @@ function formatProbeLocation(probe: any): string {
 	return location;
 }
 
+// Above this length the default output is one line per probe.
+const MAX_FULL_OUTPUT_LENGTH = 30_000;
+
+function formatMs(value?: number | null): string {
+	return value == null ? "N/A" : `${value} ms`;
+}
+
 function formatPingTotals(results: any): string {
 	const pingStats = calculateAverages(results);
 	let text = `\n- Successful Probes: ${pingStats.successfulProbes}/${pingStats.probeCount}\n`;
@@ -138,10 +145,7 @@ function formatHttpDetails(result: any): string {
 
 	if (result.timings) {
 		const timings = ["total", "dns", "tcp", "tls", "firstByte", "download"]
-			.map((name) => {
-				const value = result.timings[name];
-				return `${name} ${value === null ? "N/A" : `${value} ms`}`;
-			})
+			.map((name) => `${name} ${formatMs(result.timings[name])}`)
 			.join(", ");
 		text += `Timings: ${timings}\n`;
 	}
@@ -153,37 +157,90 @@ function formatHttpDetails(result: any): string {
 	return text;
 }
 
-/**
- * Format a measurement response as text: a header and the raw output of each probe
- * @param measurement The measurement response
- * @returns Formatted text
- */
-export function formatMeasurementSummary(measurement: any): string {
-	let summary = `Measurement ID: ${measurement.id}\n`;
-	summary += `Type: ${measurement.type}\n`;
-	summary += `Target: ${measurement.target}\n`;
-	summary += `Status: ${measurement.status}\n`;
-	summary += `Probes: ${measurement.probesCount}\n`;
-
-	if (measurement.type === "ping") {
-		summary += formatPingTotals(measurement.results);
+function formatProbeSummary(type: string, result: any): string {
+	if (result.status !== "finished") {
+		const reason = result.rawOutput?.split("\n")[0];
+		return reason ? `${result.status}: ${reason}` : result.status;
 	}
 
+	switch (type) {
+		case "ping":
+			return `loss ${result.stats.loss}%, avg ${formatMs(result.stats.avg)}`;
+		case "traceroute":
+			return `${result.hops.length} hops, ${formatMs(result.hops.at(-1)?.timings[0]?.rtt)}`;
+		case "mtr": {
+			const stats = result.hops.at(-1)?.stats;
+			return `${result.hops.length} hops, loss ${stats?.loss}%, avg ${formatMs(stats?.avg)}`;
+		}
+		case "dns": {
+			// A trace has the final answers in its last hop.
+			const { answers, timings } = result.hops ? result.hops.at(-1) : result;
+			const values = answers.map((answer: any) => answer.value).join(", ");
+			return `${values || result.statusCodeName || "no answers"}, ${formatMs(timings.total)}`;
+		}
+		case "http":
+			return `${result.statusCode} ${result.statusCodeName}, ${formatMs(result.timings.total)}`;
+		default:
+			return result.status;
+	}
+}
+
+function formatFullResults(measurement: any): string {
+	let text = "";
+
 	measurement.results.forEach(({ probe, result }: any, index: number) => {
-		summary += `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
+		text += `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 
 		if (result.status !== "finished") {
-			summary += `Status: ${result.status}\n`;
+			text += `Status: ${result.status}\n`;
 		}
 
 		if (measurement.type === "http" && result.status === "finished") {
-			summary += formatHttpDetails(result);
+			text += formatHttpDetails(result);
 		}
 
 		if (result.rawOutput) {
-			summary += `${result.rawOutput}\n`;
+			text += `${result.rawOutput}\n`;
 		}
 	});
 
-	return summary;
+	return text;
+}
+
+/**
+ * Format a measurement response as text
+ * @param measurement The measurement response
+ * @param output "full" is the raw output of every probe, "summary" is one line per probe.
+ * The default is "full" when it is short enough, else "summary".
+ * @returns Formatted text
+ */
+export function formatMeasurement(measurement: any, output?: "summary" | "full"): string {
+	let header = `Measurement ID: ${measurement.id}\n`;
+	header += `Type: ${measurement.type}\n`;
+	header += `Target: ${measurement.target}\n`;
+	header += `Status: ${measurement.status}\n`;
+	header += `Probes: ${measurement.probesCount}\n`;
+
+	if (measurement.type === "ping") {
+		header += formatPingTotals(measurement.results);
+	}
+
+	let note = 'One line per probe. Use output "full" for the raw output of every probe.';
+
+	if (output !== "summary") {
+		const full = header + formatFullResults(measurement);
+
+		if (output === "full" || full.length <= MAX_FULL_OUTPUT_LENGTH) {
+			return full;
+		}
+
+		note = `The full output has ${full.length} characters, so this is one line per probe. Use output "full" to get it anyway.`;
+	}
+
+	const lines = measurement.results.map(
+		({ probe, result }: any, index: number) =>
+			`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement.type, result)}\n`,
+	);
+
+	return `${header}\n${lines.join("")}\n${note}\n`;
 }

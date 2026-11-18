@@ -385,6 +385,32 @@ describe("MCP Tools Integration", () => {
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 
+		it("should return one line per probe when output is summary", async () => {
+			const call = (name: string, args: object) =>
+				makeMCPRequest(
+					{
+						jsonrpc: "2.0",
+						id: 1,
+						method: "tools/call",
+						params: { name, arguments: args },
+					},
+					validToken,
+					sessionId,
+				).then(getMCPResponse);
+
+			const created = await call("ping", { target: "google.com", output: "summary" });
+			const fetched = await call("getMeasurement", {
+				id: "mockMeasurement123",
+				output: "summary",
+			});
+
+			expect(created.result.content[0].text).toContain(
+				"1: New York, US, NA, Test Network (AS12345) | loss 0%, avg 15.34 ms",
+			);
+			expect(created.result.content[0].text).not.toContain("PING google.com");
+			expect(fetched.result.content[0].text).toBe(created.result.content[0].text);
+		});
+
 		it("should use default values when parameters are missing", async () => {
 			const mcpRequest = {
 				jsonrpc: "2.0",
