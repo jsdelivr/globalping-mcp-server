@@ -31,8 +31,61 @@ const createMockGlobalpingAPI = () => {
 				if (method === "POST") {
 					return new Response(
 						JSON.stringify({
-							id: "mock-measurement-123",
+							id: "mockMeasurement123",
 							probesCount: 3,
+						}),
+						{
+							status: 202,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+				if (urlString.endsWith("/v1/measurements/missingMeasurement")) {
+					return new Response(
+						JSON.stringify({
+							error: {
+								type: "not_found",
+								message: "Couldn't find the requested measurement.",
+							},
+							links: {
+								documentation:
+									"https://globalping.io/docs/api.globalping.io#get-/v1/measurements/-id-",
+							},
+						}),
+						{
+							status: 404,
+							headers: { "Content-Type": "application/json" },
+						},
+					);
+				}
+				if (urlString.endsWith("/v1/measurements/runningMeasurement")) {
+					return new Response(
+						JSON.stringify({
+							id: "runningMeasurement",
+							type: "ping",
+							status: "in-progress",
+							createdAt: "2024-01-01T00:00:00Z",
+							updatedAt: "2024-01-01T00:00:01Z",
+							target: "google.com",
+							probesCount: 1,
+							results: [
+								{
+									probe: {
+										continent: "NA",
+										region: "Northern America",
+										country: "US",
+										state: "NY",
+										city: "New York",
+										asn: 12345,
+										network: "Test Network",
+										latitude: 40.7128,
+										longitude: -74.006,
+										tags: [],
+										resolvers: [],
+									},
+									result: { status: "in-progress", rawOutput: "" },
+								},
+							],
 						}),
 						{
 							status: 200,
@@ -43,7 +96,7 @@ const createMockGlobalpingAPI = () => {
 				if (urlString.match(/\/v1\/measurements\/[a-zA-Z0-9-]+$/)) {
 					return new Response(
 						JSON.stringify({
-							id: "mock-measurement-123",
+							id: "mockMeasurement123",
 							type: "ping",
 							status: "finished",
 							createdAt: "2024-01-01T00:00:00Z",
@@ -319,7 +372,7 @@ describe("MCP Tools Integration", () => {
 			expect(data.result).toBeDefined();
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 			expect(data.result.content[0].text).toContain(
 				"Probe 1: New York, US, NA, Test Network (AS12345)",
 			);
@@ -346,7 +399,7 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
@@ -376,7 +429,7 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
@@ -401,7 +454,7 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
@@ -429,7 +482,7 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
@@ -457,10 +510,106 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("mock-measurement-123");
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe("Get Measurement Tool", () => {
+		const callGetMeasurement = async (id: string) => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: { name: "getMeasurement", arguments: { id } },
+				},
+				validToken,
+				sessionId,
+			);
+			expect(response.status).toBe(200);
+			return await getMCPResponse(response);
+		};
+
+		it("should get a measurement that was not created in this session", async () => {
+			const data = await callGetMeasurement("mockMeasurement123");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement).toMatchObject({
+				id: "mockMeasurement123",
+				status: "finished",
+				probesCount: 3,
+			});
+			expect(data.result.structuredContent.measurement.results).toHaveLength(1);
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+		});
+
+		it("should use the session cache for a measurement created in this session", async () => {
+			await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: { name: "ping", arguments: { target: "google.com" } },
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+
+			const data = await callGetMeasurement("mockMeasurement123");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+
+		it("should return an in-progress measurement with a note", async () => {
+			const data = await callGetMeasurement("runningMeasurement");
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.structuredContent.measurement.status).toBe("in-progress");
+			expect(JSON.parse(data.result.content[0].text).status).toBe("in-progress");
+			expect(data.result.content[1].text).toContain("Measurement is still in progress");
+		});
+
+		it("should return a tool error when the measurement is not found", async () => {
+			const data = await callGetMeasurement("missingMeasurement");
+
+			expect(data.error).toBeUndefined();
+			expect(data.result.isError).toBe(true);
+			expect(data.result.content[0].text).toContain(
+				"Failed to get measurement: Globalping API error (404)",
+			);
+		});
+
+		it("should reject an ID that is not alphanumeric without calling the API", async () => {
+			const data = await callGetMeasurement("../spec.yaml");
+
+			expect(JSON.stringify(data)).toContain("Invalid");
+			expect(data.result?.structuredContent).toBeUndefined();
+			expect(mockAPI.mockFetch).not.toHaveBeenCalled();
+		});
+
+		it("should trim spaces around the ID", async () => {
+			const data = await callGetMeasurement(" mockMeasurement123 ");
+
+			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
+		});
+
+		it("should declare an output schema that allows measurement fields", async () => {
+			const response = await makeMCPRequest(
+				{ jsonrpc: "2.0", id: 1, method: "tools/list" },
+				validToken,
+				sessionId,
+			);
+			const data = await getMCPResponse(response);
+			const tool = data.result.tools.find((t: any) => t.name === "getMeasurement");
+
+			expect(tool.outputSchema.properties.measurement.additionalProperties).not.toBe(false);
 		});
 	});
 

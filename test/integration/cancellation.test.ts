@@ -15,7 +15,10 @@ describe("MCP request cancellation", () => {
 		globalThis.fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
 			const request = input instanceof Request ? input : new Request(input, init);
 			if (request.url === "https://api.globalping.io/v1/measurements" && request.method === "POST") {
-				return Response.json({ id: "cancelled-measurement", probesCount: 1 });
+				return Response.json(
+					{ id: "cancelled-measurement", probesCount: 1 },
+					{ status: 202 },
+				);
 			}
 			if (
 				request.url === "https://api.globalping.io/v1/measurements/cancelled-measurement" &&

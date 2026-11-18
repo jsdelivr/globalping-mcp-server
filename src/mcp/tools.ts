@@ -2,7 +2,7 @@
  * Globalping MCP Tools Registration
  */
 import { z } from "zod";
-import { getLocations, getRateLimits, runMeasurement } from "../api";
+import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
 import { formatMeasurementSummary, parseLocations } from "./helpers";
@@ -647,7 +647,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async () => {
 			return handleToolExecution(async () => {
 				const token = getToken();
-				const probes = await getLocations(agent, token);
+				const probes = await getLocations(token);
 
 				// Group probes by continent and country
 				const grouped: Record<string, Record<string, any[]>> = {};
@@ -815,6 +815,58 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					structuredContent: output,
 				};
 			}, "Failed to check rate limits");
+		},
+	);
+
+	// Tool to retrieve a measurement by ID
+	agent.server.registerTool(
+		"getMeasurement",
+		{
+			title: "Get Measurement",
+			description:
+				"Retrieve the full details of a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to access raw JSON data or individual probe results when the initial summary is insufficient.",
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				openWorldHint: true,
+			},
+			inputSchema: {
+				id: z
+					.string()
+					.trim()
+					.regex(/^[a-zA-Z0-9]+$/)
+					.describe("The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
+			},
+			outputSchema: {
+				measurement: z.looseObject({
+					id: z.string(),
+					type: z.string(),
+					status: z.string(),
+					createdAt: z.string(),
+					updatedAt: z.string(),
+					target: z.string(),
+					probesCount: z.number(),
+					results: z.array(z.any()),
+				}),
+			},
+		},
+		async ({ id }) => {
+			return handleToolExecution(async () => {
+				const measurement = Object.hasOwn(agent.state.measurements, id)
+					? agent.state.measurements[id]
+					: await getMeasurement(id, getToken());
+
+				const content = [{ type: "text", text: JSON.stringify(measurement, null, 2) }];
+
+				if (measurement.status === "in-progress") {
+					content.push({
+						type: "text",
+						text: "Measurement is still in progress. Call getMeasurement again in a few seconds for the final results.",
+					});
+				}
+
+				return { content, structuredContent: { measurement } };
+			}, "Failed to get measurement");
 		},
 	);
 }

@@ -213,7 +213,7 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 | `http` | Execute HTTP/HTTPS requests from probes worldwide |
 | `locations` | List available Globalping probe regions and filters |
 | `limits` | Display the current free hourly test allowance and additional credits |
-| `getMeasurement` | Retrieve results of a historical measurement by ID |
+| `getMeasurement` | Retrieve the current status and results of a measurement by ID |
 | `compareLocations` | Helper guide to compare multi-region performance metrics |
 | `help` | Tool reference and syntax documentation |
 | `authStatus` | Check the current MCP authentication status |
