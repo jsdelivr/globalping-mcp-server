@@ -541,13 +541,13 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("mockMeasurement123");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement).toMatchObject({
-				id: "mockMeasurement123",
-				status: "finished",
-				probesCount: 3,
-			});
-			expect(data.result.structuredContent.measurement.results).toHaveLength(1);
-			expect(data.result.content[0].text).toContain("mockMeasurement123");
+			expect(data.result.content[0].text).toContain(
+				"Measurement ID: mockMeasurement123\nType: ping\nTarget: google.com\nStatus: finished\nProbes: 3\n",
+			);
+			expect(data.result.content[0].text).toContain(
+				"PING google.com (142.250.185.46): 56 data bytes",
+			);
+			expect(data.result.structuredContent).toBeUndefined();
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
 		});
 
@@ -567,7 +567,7 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("mockMeasurement123");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
+			expect(data.result.content[0].text).toContain("Measurement ID: mockMeasurement123");
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 
@@ -575,8 +575,7 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("runningMeasurement");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement.status).toBe("in-progress");
-			expect(JSON.parse(data.result.content[0].text).status).toBe("in-progress");
+			expect(data.result.content[0].text).toContain("Status: in-progress");
 			expect(data.result.content[1].text).toContain("Measurement is still in progress");
 		});
 
@@ -601,19 +600,7 @@ describe("MCP Tools Integration", () => {
 		it("should trim spaces around the ID", async () => {
 			const data = await callGetMeasurement(" mockMeasurement123 ");
 
-			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
-		});
-
-		it("should declare an output schema that allows measurement fields", async () => {
-			const response = await makeMCPRequest(
-				{ jsonrpc: "2.0", id: 1, method: "tools/list" },
-				validToken,
-				sessionId,
-			);
-			const data = await getMCPResponse(response);
-			const tool = data.result.tools.find((t: any) => t.name === "getMeasurement");
-
-			expect(tool.outputSchema.properties.measurement.additionalProperties).not.toBe(false);
+			expect(data.result.content[0].text).toContain("Measurement ID: mockMeasurement123");
 		});
 	});
 

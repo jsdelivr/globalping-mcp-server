@@ -97,18 +97,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: formatMeasurementSummary(result),
-						},
-						{
-							type: "text",
-							text: `Full JSON with parsed fields is available by calling getMeasurement with ID: ${result.id}`,
-						},
-					],
-				};
+				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
 			}, "Ping test failed");
 		},
 	);
@@ -185,18 +174,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: formatMeasurementSummary(result),
-						},
-						{
-							type: "text",
-							text: `Full JSON with parsed fields is available by calling getMeasurement with ID: ${result.id}`,
-						},
-					],
-				};
+				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
 			}, "Traceroute test failed");
 		},
 	);
@@ -299,18 +277,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: formatMeasurementSummary(result),
-						},
-						{
-							type: "text",
-							text: `Full JSON with parsed fields is available by calling getMeasurement with ID: ${result.id}`,
-						},
-					],
-				};
+				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
 			}, "DNS lookup failed");
 		},
 	);
@@ -392,18 +359,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: formatMeasurementSummary(result),
-						},
-						{
-							type: "text",
-							text: `Full JSON with parsed fields is available by calling getMeasurement with ID: ${result.id}`,
-						},
-					],
-				};
+				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
 			}, "MTR test failed");
 		},
 	);
@@ -501,18 +457,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				agent.state.measurements[result.id] = result;
 				agent.state.lastMeasurementId = result.id;
 
-				return {
-					content: [
-						{
-							type: "text",
-							text: formatMeasurementSummary(result),
-						},
-						{
-							type: "text",
-							text: `Full JSON with parsed fields is available by calling getMeasurement with ID: ${result.id}`,
-						},
-					],
-				};
+				return { content: [{ type: "text", text: formatMeasurementSummary(result) }] };
 			}, "HTTP request failed");
 		},
 	);
@@ -724,7 +669,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "Get Measurement",
 			description:
-				"Retrieve the full details of a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to access raw JSON data or individual probe results when the initial summary is insufficient.",
+				"Retrieve a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to see a measurement again or to see a measurement created elsewhere.",
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -737,18 +682,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.regex(/^[a-zA-Z0-9]+$/)
 					.describe("The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
 			},
-			outputSchema: {
-				measurement: z.looseObject({
-					id: z.string(),
-					type: z.string(),
-					status: z.string(),
-					createdAt: z.string(),
-					updatedAt: z.string(),
-					target: z.string(),
-					probesCount: z.number(),
-					results: z.array(z.any()),
-				}),
-			},
 		},
 		async ({ id }) => {
 			return handleToolExecution(async () => {
@@ -756,7 +689,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					? agent.state.measurements[id]
 					: await getMeasurement(id, getToken());
 
-				const content = [{ type: "text", text: JSON.stringify(measurement, null, 2) }];
+				const content = [{ type: "text", text: formatMeasurementSummary(measurement) }];
 
 				if (measurement.status === "in-progress") {
 					content.push({
@@ -765,7 +698,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					});
 				}
 
-				return { content, structuredContent: { measurement } };
+				return { content };
 			}, "Failed to get measurement");
 		},
 	);
