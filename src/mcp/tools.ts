@@ -5,7 +5,8 @@ import { z } from "zod";
 import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
-import { formatMeasurement, parseLocations } from "./helpers";
+import { formatMeasurement } from "./format";
+import { parseLocations } from "./helpers";
 
 /**
  * Helper to wrap tool execution with error handling
