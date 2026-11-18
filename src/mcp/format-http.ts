@@ -19,7 +19,11 @@ export function formatHttpDetails(result: any): string {
 	}
 
 	if (result.tls) {
-		text += `TLS: ${result.tls.protocol}, ${result.tls.cipherName}, ${result.tls.authorized ? "valid" : "not valid"}\n`;
+		const { tls } = result;
+		const valid = tls.authorized ? "valid" : `not valid (${tls.error})`;
+		const issuer = [tls.issuer.O, tls.issuer.CN].filter(Boolean).join(" ");
+		text += `TLS: ${tls.protocol}, ${tls.cipherName}, ${valid}\n`;
+		text += `Certificate: ${tls.subject.CN}, issued by ${issuer}, ${tls.createdAt} to ${tls.expiresAt}\n`;
 	}
 
 	return text;

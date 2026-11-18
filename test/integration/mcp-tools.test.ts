@@ -568,7 +568,7 @@ describe("MCP Tools Integration", () => {
 
 			expect(data.result.isError).toBeUndefined();
 			expect(data.result.content[0].text).toContain(
-				"Measurement ID: mockMeasurement123\nType: ping\nTarget: google.com\nStatus: finished\nProbes: 3\n",
+				"Measurement ID: mockMeasurement123\nType: ping\nTarget: google.com\nStatus: finished\nCreated: 2024-01-01T00:00:00Z\nUpdated: 2024-01-01T00:00:10Z\nProbes: 3\n",
 			);
 			expect(data.result.content[0].text).toContain(
 				"PING google.com (142.250.185.46): 56 data bytes",

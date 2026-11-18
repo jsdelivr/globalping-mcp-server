@@ -36,6 +36,19 @@ function formatHeader(measurement: any): string {
 	header += `Type: ${measurement.type}\n`;
 	header += `Target: ${measurement.target}\n`;
 	header += `Status: ${measurement.status}\n`;
+	header += `Created: ${measurement.createdAt}\n`;
+	header += `Updated: ${measurement.updatedAt}\n`;
+
+	for (const [label, value] of [
+		["Locations", measurement.locations],
+		["Limit", measurement.limit],
+		["Options", measurement.measurementOptions],
+	]) {
+		if (value != null) {
+			header += `${label}: ${typeof value === "object" ? JSON.stringify(value) : value}\n`;
+		}
+	}
+
 	header += `Probes: ${measurement.probesCount}\n`;
 
 	if (measurement.type === "ping") {
@@ -55,7 +68,7 @@ function formatProbeFull(type: string, { probe, result }: any, index: number): s
 	let text = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 
 	if (result.status !== "finished") {
-		text += `Status: ${result.status}\n`;
+		text += `Status: ${formatProbeStatus(result)}\n`;
 	}
 
 	if (type === "http" && result.status === "finished") {
@@ -64,6 +77,10 @@ function formatProbeFull(type: string, { probe, result }: any, index: number): s
 
 	if (result.rawOutput) {
 		text += `${result.rawOutput}\n`;
+	}
+
+	if (result.truncated) {
+		text += "The response body is truncated.\n";
 	}
 
 	return text;
@@ -81,7 +98,7 @@ function formatSummary(measurement: any): string {
 function formatProbeSummary(type: string, result: any): string {
 	if (result.status !== "finished") {
 		const reason = result.rawOutput?.split("\n")[0];
-		return reason ? `${result.status}: ${reason}` : result.status;
+		return reason ? `${formatProbeStatus(result)}: ${reason}` : formatProbeStatus(result);
 	}
 
 	return summaryByType[type]?.(result) ?? result.status;
@@ -104,6 +121,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 	http: (result) =>
 		`${result.statusCode} ${result.statusCodeName}, ${formatMs(result.timings.total)}`,
 };
+
+function formatProbeStatus(result: any): string {
+	return result.failureSource ? `${result.status} (${result.failureSource})` : result.status;
+}
 
 function formatProbeLocation(probe: any): string {
 	let location = probe.city;

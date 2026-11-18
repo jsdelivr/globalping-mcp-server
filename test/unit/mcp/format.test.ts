@@ -7,6 +7,7 @@ import dns from "./fixtures/dns.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
 import http from "./fixtures/http.json";
+import httpIp from "./fixtures/http-ip.json";
 import mtr from "./fixtures/mtr.json";
 import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
@@ -26,6 +27,10 @@ describe("formatMeasurement", () => {
 			Type: ping
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:47.227Z
+			Updated: 2026-11-18T15:27:48.297Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			- Successful Probes: 2/2
@@ -65,6 +70,10 @@ describe("formatMeasurement", () => {
 			Type: traceroute
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:47.399Z
+			Updated: 2026-11-18T15:27:51.987Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
@@ -103,6 +112,10 @@ describe("formatMeasurement", () => {
 			Type: mtr
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:47.542Z
+			Updated: 2026-11-18T15:27:53.864Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
@@ -141,6 +154,10 @@ describe("formatMeasurement", () => {
 			Type: dns
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:47.693Z
+			Updated: 2026-11-18T15:27:48.049Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
@@ -201,12 +218,17 @@ describe("formatMeasurement", () => {
 			Type: http
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:48.383Z
+			Updated: 2026-11-18T15:27:48.676Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 172.217.22.110
 			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
 			HTTP/1.1 301
 			Location: https://www.google.com/
 			Content-Type: text/html; charset=UTF-8
@@ -225,6 +247,7 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.110.101
 			Timings: total 63 ms, dns 2 ms, tcp 6 ms, tls 21 ms, firstByte 34 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
 			HTTP/1.1 301
 			Location: https://www.google.com/
 			Content-Type: text/html; charset=UTF-8
@@ -241,12 +264,83 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should print a certificate that is not valid and a timing that is missing", () => {
+		expect(formatMeasurement(httpIp)).toMatchInlineSnapshot(`
+			Measurement ID: 2SSPVk28xkwXHDUC300321Wlu
+			Type: http
+			Target: 1.1.1.1
+			Status: finished
+			Created: 2026-11-18T16:18:37.347Z
+			Updated: 2026-11-18T16:18:37.401Z
+			Locations: [{"magic":"world"}]
+			Probes: 1
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 1.1.1.1
+			Timings: total 36 ms, dns N/A, tcp 7 ms, tls 12 ms, firstByte 17 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, not valid (ERR_TLS_CERT_ALTNAME_INVALID)
+			Certificate: cloudflare-dns.com, issued by SSL Corp SSL.com SSL Intermediate CA ECC R2, 2025-12-31T19:20:01.000Z to 2026-12-21T19:20:01.000Z
+			HTTP/1.1 301
+			Date: Wed, 18 Nov 2026 16:18:37 GMT
+			Connection: close
+			Location: https://one.one.one.one/
+			Server: cloudflare
+			CF-RAY: a5c84ac7a958dbe4-FRA
+		`);
+	});
+
+	it("should say that the response body is truncated", () => {
+		const truncated = {
+			...http,
+			probesCount: 1,
+			results: [
+				{ ...http.results[0], result: { ...http.results[0].result, truncated: true } },
+			],
+		};
+
+		expect(formatMeasurement(truncated)).toMatchInlineSnapshot(`
+			Measurement ID: 2P4xQQKCD6c75fZM200321Wl5
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-18T15:27:48.383Z
+			Updated: 2026-11-18T15:27:48.676Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Probes: 1
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 172.217.22.110
+			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Date: Wed, 18 Nov 2026 15:27:48 GMT
+			Expires: Fri, 18 Dec 2026 15:27:48 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+			The response body is truncated.
+		`);
+	});
+
 	it("should print the status of probes that did not finish", () => {
 		expect(formatMeasurement(pingFailed)).toMatchInlineSnapshot(`
 			Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
 			Type: ping
 			Target: nonexistent.google.com
 			Status: finished
+			Created: 2026-11-18T15:27:48.584Z
+			Updated: 2026-11-18T15:27:48.667Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 2
 
 			- Successful Probes: 0/2
@@ -256,11 +350,11 @@ describe("formatMeasurement", () => {
 			- Average Loss: 0.00%
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
-			Status: failed
+			Status: failed (target)
 			queryA ENOTFOUND nonexistent.google.com
 
 			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
-			Status: failed
+			Status: failed (target)
 			queryA ENOTFOUND nonexistent.google.com
 		`);
 	});
@@ -277,6 +371,10 @@ describe("formatMeasurement", () => {
 			Type: ping
 			Target: google.com
 			Status: finished
+			Created: 2026-11-18T15:27:47.227Z
+			Updated: 2026-11-18T15:27:48.297Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
 			Probes: 1
 
 			- Successful Probes: 0/1
@@ -297,6 +395,10 @@ describe("formatMeasurement", () => {
 				Type: ping
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.227Z
+				Updated: 2026-11-18T15:27:48.297Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				- Successful Probes: 2/2
@@ -321,6 +423,10 @@ describe("formatMeasurement", () => {
 				Type: traceroute
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.399Z
+				Updated: 2026-11-18T15:27:51.987Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, 2.983 ms
@@ -336,6 +442,10 @@ describe("formatMeasurement", () => {
 				Type: mtr
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.542Z
+				Updated: 2026-11-18T15:27:53.864Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, avg 5.3 ms
@@ -351,6 +461,10 @@ describe("formatMeasurement", () => {
 				Type: dns
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.693Z
+				Updated: 2026-11-18T15:27:48.049Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, 0 ms
@@ -366,6 +480,10 @@ describe("formatMeasurement", () => {
 				Type: dns
 				Target: nonexistent.google.com
 				Status: finished
+				Created: 2026-11-18T15:27:48.164Z
+				Updated: 2026-11-18T15:27:48.278Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, 15 ms
@@ -381,6 +499,11 @@ describe("formatMeasurement", () => {
 				Type: dns
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.951Z
+				Updated: 2026-11-18T15:27:48.197Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Options: {"trace":true}
 				Probes: 2
 
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, 15 ms
@@ -396,6 +519,10 @@ describe("formatMeasurement", () => {
 				Type: http
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:48.383Z
+				Updated: 2026-11-18T15:27:48.676Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, 208 ms
@@ -411,6 +538,10 @@ describe("formatMeasurement", () => {
 				Type: ping
 				Target: nonexistent.google.com
 				Status: finished
+				Created: 2026-11-18T15:27:48.584Z
+				Updated: 2026-11-18T15:27:48.667Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				- Successful Probes: 0/2
@@ -419,8 +550,8 @@ describe("formatMeasurement", () => {
 				- Dropped: 0
 				- Average Loss: 0.00%
 
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed: queryA ENOTFOUND nonexistent.google.com
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed: queryA ENOTFOUND nonexistent.google.com
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 
 				One line per probe. Use output "full" for the raw output of every probe.
 			`);
@@ -435,12 +566,16 @@ describe("formatMeasurement", () => {
 				})),
 			};
 
-			expect(formatMeasurement(long, "full")).toHaveLength(30216);
+			expect(formatMeasurement(long, "full")).toHaveLength(30324);
 			expect(formatMeasurement(long)).toMatchInlineSnapshot(`
 				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
 				Type: traceroute
 				Target: google.com
 				Status: finished
+				Created: 2026-11-18T15:27:47.399Z
+				Updated: 2026-11-18T15:27:51.987Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
 				Probes: 2
 
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, 2.983 ms
