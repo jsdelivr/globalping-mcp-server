@@ -414,9 +414,11 @@ describe("formatMeasurement", () => {
 				- Avg RTT: 4.33 ms
 				- Max RTT: 5.45 ms
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, avg 5.294 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -432,9 +434,11 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -450,9 +454,11 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, avg 5.3 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, avg 3.3 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -468,9 +474,11 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -486,9 +494,11 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, total 15 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, total 32 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -505,9 +515,11 @@ describe("formatMeasurement", () => {
 				Options: {"trace":true}
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -523,9 +535,11 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 208 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 63 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -548,9 +562,11 @@ describe("formatMeasurement", () => {
 				- Dropped: 0
 				- Average Loss: 0.00%
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -596,9 +612,11 @@ describe("formatMeasurement", () => {
 				- Dropped: 0
 				- Average Loss: 0.00%
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (internal): The measurement timed out.
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -636,9 +654,11 @@ describe("formatMeasurement", () => {
 				- Dropped: 0
 				- Average Loss: 0.00%
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | in-progress
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
 		});
 
@@ -663,10 +683,97 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
-				Results, one line per probe (use output "full" for the raw output of every probe):
+				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
 			`);
+		});
+	});
+
+	describe("probes", () => {
+		it("should print only the chosen probes with their numbers", () => {
+			expect(formatMeasurement(ping, undefined, [2])).toMatchInlineSnapshot(`
+				Measurement ID: 2FL0lrUmQXiWPHMDY00321Wl5
+				Type: ping
+				Target: google.com
+				Status: finished
+				Created: 2026-11-18T15:27:47.227Z
+				Updated: 2026-11-18T15:27:48.297Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Ping Results:
+				- Successful Probes: 2/2
+				- Total Packets: 6
+				- Received: 6
+				- Dropped: 0
+				- Average Loss: 0.00%
+				- Min RTT: 3.20 ms
+				- Avg RTT: 4.33 ms
+				- Max RTT: 5.45 ms
+
+				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+				PING google.com (173.194.221.102) 56(84) bytes of data.
+				64 bytes from google.com (173.194.221.102): icmp_seq=1 ttl=106 time=3.53 ms
+				64 bytes from google.com (173.194.221.102): icmp_seq=2 ttl=106 time=3.39 ms
+				64 bytes from google.com (173.194.221.102): icmp_seq=3 ttl=106 time=3.20 ms
+
+				--- google.com ping statistics ---
+				3 packets transmitted, 3 received, 0% packet loss, time 1002ms
+				rtt min/avg/max/mdev = 3.199/3.375/3.534/0.137 ms
+			`);
+		});
+
+		it("should summarize only the chosen probes", () => {
+			expect(formatMeasurement(ping, "summary", [2])).toMatchInlineSnapshot(`
+				Measurement ID: 2FL0lrUmQXiWPHMDY00321Wl5
+				Type: ping
+				Target: google.com
+				Status: finished
+				Created: 2026-11-18T15:27:47.227Z
+				Updated: 2026-11-18T15:27:48.297Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Ping Results:
+				- Successful Probes: 2/2
+				- Total Packets: 6
+				- Received: 6
+				- Dropped: 0
+				- Average Loss: 0.00%
+				- Min RTT: 3.20 ms
+				- Avg RTT: 4.33 ms
+				- Max RTT: 5.45 ms
+
+				Results, one line per probe:
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
+
+				For the raw output call getMeasurement with "probes", or use output "full".
+			`);
+		});
+
+		it("should not switch to summary when probes are given", () => {
+			const long = {
+				...traceroute,
+				results: traceroute.results.map(({ probe, result }) => ({
+					probe,
+					result: { ...result, rawOutput: "x".repeat(15_000) },
+				})),
+			};
+
+			expect(formatMeasurement(long, undefined, [1, 2])).toHaveLength(30324);
+		});
+
+		it("should throw for a probe number that does not exist", () => {
+			expect(() => formatMeasurement(ping, undefined, [1, 3])).toThrow(
+				new Error(
+					"Probe 3 does not exist. This measurement has probe numbers from 1 to 2.",
+				),
+			);
 		});
 	});
 });

@@ -12,23 +12,45 @@ const MAX_FULL_OUTPUT_LENGTH = 30_000;
  * Format a measurement response as text
  * @param measurement The measurement response
  * @param output "full" is the raw output of every probe, "summary" is one line per probe.
- * The default is "full" when it is short enough, else "summary".
+ * The default is "full" when it is short enough or when probes are given, else "summary".
+ * @param probes Numbers of the probes to print, the first probe is 1. The default is all probes.
  * @returns Formatted text
  */
-export function formatMeasurement(measurement: any, output?: "summary" | "full"): string {
+export function formatMeasurement(
+	measurement: any,
+	output?: "summary" | "full",
+	probes?: number[],
+): string {
+	checkProbesExist(measurement, probes);
+
 	const header = formatHeader(measurement);
 
 	if (output === "summary") {
-		return header + formatSummary(measurement);
+		return header + formatSummary(measurement, probes);
 	}
 
-	const full = header + formatFull(measurement);
+	const full = header + formatFull(measurement, probes);
 
-	if (output === "full" || full.length <= MAX_FULL_OUTPUT_LENGTH) {
+	if (output === "full" || probes || full.length <= MAX_FULL_OUTPUT_LENGTH) {
 		return full;
 	}
 
 	return header + formatSummary(measurement);
+}
+
+function checkProbesExist(measurement: any, probes?: number[]): void {
+	const probesCount = measurement.results.length;
+	const missingProbe = probes?.find((number) => number > probesCount);
+
+	if (missingProbe) {
+		throw new Error(
+			`Probe ${missingProbe} does not exist. This measurement has probe numbers from 1 to ${probesCount}.`,
+		);
+	}
+}
+
+function isSelected(index: number, probes?: number[]): boolean {
+	return !probes || probes.includes(index + 1);
 }
 
 function formatHeader(measurement: any): string {
@@ -58,9 +80,10 @@ function formatHeader(measurement: any): string {
 	return header;
 }
 
-function formatFull(measurement: any): string {
+function formatFull(measurement: any, probes?: number[]): string {
 	return measurement.results
 		.map((item: any, index: number) => formatProbeFull(measurement.type, item, index))
+		.filter((_text: string, index: number) => isSelected(index, probes))
 		.join("");
 }
 
@@ -86,13 +109,15 @@ function formatProbeFull(type: string, { probe, result }: any, index: number): s
 	return text;
 }
 
-function formatSummary(measurement: any): string {
-	const lines = measurement.results.map(
-		({ probe, result }: any, index: number) =>
-			`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement.type, result)}\n`,
-	);
+function formatSummary(measurement: any, probes?: number[]): string {
+	const lines = measurement.results
+		.map(
+			({ probe, result }: any, index: number) =>
+				`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement.type, result)}\n`,
+		)
+		.filter((_line: string, index: number) => isSelected(index, probes));
 
-	return `\nResults, one line per probe (use output "full" for the raw output of every probe):\n${lines.join("")}`;
+	return `\nResults, one line per probe:\n${lines.join("")}\nFor the raw output call getMeasurement with "probes", or use output "full".\n`;
 }
 
 function formatProbeSummary(type: string, result: any): string {

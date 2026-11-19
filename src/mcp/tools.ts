@@ -731,15 +731,24 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.describe(
 						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
 					),
+				probes: z
+					.array(z.number().int().min(1))
+					.min(1)
+					.optional()
+					.describe(
+						"Numbers of the probes to return, as shown in the output (the first probe is 1). Only these probes are returned, with their raw output unless output is 'summary'. Default: all probes.",
+					),
 			},
 		},
-		async ({ id, output }) => {
+		async ({ id, output, probes }) => {
 			return handleToolExecution(async () => {
 				const measurement = Object.hasOwn(agent.state.measurements, id)
 					? agent.state.measurements[id]
 					: await getMeasurement(id, getToken());
 
-				const content = [{ type: "text", text: formatMeasurement(measurement, output) }];
+				const content = [
+					{ type: "text", text: formatMeasurement(measurement, output, probes) },
+				];
 
 				if (measurement.status === "in-progress") {
 					content.push({

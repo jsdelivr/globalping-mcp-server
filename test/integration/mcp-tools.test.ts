@@ -605,6 +605,48 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content[1].text).toContain("Measurement is still in progress");
 		});
 
+		it("should return only the chosen probes", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: {
+						name: "getMeasurement",
+						arguments: { id: "mockMeasurement123", probes: [1] },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.content[0].text).toContain(
+				"Probe 1: New York, US, NA, Test Network (AS12345)",
+			);
+		});
+
+		it("should return a tool error for a probe number that does not exist", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: {
+						name: "getMeasurement",
+						arguments: { id: "mockMeasurement123", probes: [2] },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBe(true);
+			expect(data.result.content[0].text).toBe(
+				"Failed to get measurement: Probe 2 does not exist. This measurement has probe numbers from 1 to 1.",
+			);
+		});
+
 		it("should return a tool error when the measurement is not found", async () => {
 			const data = await callGetMeasurement("missingMeasurement");
 
