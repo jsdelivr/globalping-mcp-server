@@ -101,8 +101,10 @@ function formatProbeSummary(type: string, result: any): string {
 	}
 
 	if (result.status !== "finished") {
-		const reason = result.rawOutput?.split("\n")[0];
-		return reason ? `${formatProbeStatus(result)}: ${reason}` : formatProbeStatus(result);
+		const status = formatProbeStatus(result);
+		const output = result.rawOutput?.trim() ?? "";
+		const isOneLine = output !== "" && !output.includes("\n");
+		return isOneLine ? `${status}: ${output}` : status;
 	}
 
 	return summaryByType[type]?.(result) ?? result.status;

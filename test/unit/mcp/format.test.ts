@@ -557,6 +557,54 @@ describe("formatMeasurement", () => {
 			`);
 		});
 
+		it("should print the reason only when the raw output is one line", () => {
+			const measurement = {
+				...pingFailed,
+				results: [
+					{
+						probe: pingFailed.results[0].probe,
+						result: {
+							status: "failed",
+							failureSource: "target",
+							rawOutput:
+								"PING 8.8.8.9 (8.8.8.9) 56(84) bytes of data.\nno answer yet for icmp_seq=1\n\nThe measurement command timed out.",
+						},
+					},
+					{
+						probe: pingFailed.results[1].probe,
+						result: {
+							status: "failed",
+							failureSource: "internal",
+							rawOutput: "The measurement timed out.\n",
+						},
+					},
+				],
+			};
+
+			expect(formatMeasurement(measurement, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
+				Type: ping
+				Target: nonexistent.google.com
+				Status: finished
+				Created: 2026-11-18T15:27:48.584Z
+				Updated: 2026-11-18T15:27:48.667Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				- Successful Probes: 0/2
+				- Total Packets: 0
+				- Received: 0
+				- Dropped: 0
+				- Average Loss: 0.00%
+
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (internal): The measurement timed out.
+
+				One line per probe. Use output "full" for the raw output of every probe.
+			`);
+		});
+
 		it("should print only the status of a probe that is still running", () => {
 			const measurement = {
 				...pingFailed,
