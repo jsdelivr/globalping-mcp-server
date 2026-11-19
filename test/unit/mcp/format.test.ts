@@ -33,6 +33,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
+			Ping Results:
 			- Successful Probes: 2/2
 			- Total Packets: 6
 			- Received: 6
@@ -343,6 +344,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
+			Ping Results:
 			- Successful Probes: 0/2
 			- Total Packets: 0
 			- Received: 0
@@ -377,6 +379,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 1
 
+			Ping Results:
 			- Successful Probes: 0/1
 			- Total Packets: 0
 			- Received: 0
@@ -401,6 +404,7 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Ping Results:
 				- Successful Probes: 2/2
 				- Total Packets: 6
 				- Received: 6
@@ -410,10 +414,9 @@ describe("formatMeasurement", () => {
 				- Avg RTT: 4.33 ms
 				- Max RTT: 5.45 ms
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, avg 5.294 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -429,10 +432,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -448,10 +450,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, avg 5.3 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, avg 3.3 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -467,10 +468,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -486,10 +486,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, total 15 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, total 32 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -506,10 +505,9 @@ describe("formatMeasurement", () => {
 				Options: {"trace":true}
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -525,10 +523,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 208 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 63 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -544,16 +541,16 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Ping Results:
 				- Successful Probes: 0/2
 				- Total Packets: 0
 				- Received: 0
 				- Dropped: 0
 				- Average Loss: 0.00%
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -592,16 +589,16 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Ping Results:
 				- Successful Probes: 0/2
 				- Total Packets: 0
 				- Received: 0
 				- Dropped: 0
 				- Average Loss: 0.00%
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (internal): The measurement timed out.
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -632,16 +629,16 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Ping Results:
 				- Successful Probes: 0/2
 				- Total Packets: 0
 				- Received: 0
 				- Dropped: 0
 				- Average Loss: 0.00%
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | in-progress
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 
@@ -666,10 +663,9 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Probes: 2
 
+				Results, one line per probe (use output "full" for the raw output of every probe):
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
-
-				One line per probe. Use output "full" for the raw output of every probe.
 			`);
 		});
 	});

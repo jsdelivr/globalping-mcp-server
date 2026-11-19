@@ -92,7 +92,7 @@ function formatSummary(measurement: any): string {
 			`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement.type, result)}\n`,
 	);
 
-	return `\n${lines.join("")}\nOne line per probe. Use output "full" for the raw output of every probe.\n`;
+	return `\nResults, one line per probe (use output "full" for the raw output of every probe):\n${lines.join("")}`;
 }
 
 function formatProbeSummary(type: string, result: any): string {
