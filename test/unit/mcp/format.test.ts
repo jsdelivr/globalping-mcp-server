@@ -381,13 +381,7 @@ describe("formatMeasurement", () => {
 			HTTP/1.1 301
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
-
-			<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
-			<TITLE>301 Moved</TITLE></HEAD><BODY>
-			<H1>301 Moved</H1>
-			The document has moved
-			<A HREF="https://www.google.com/">here</A>.
-			</BODY></HTML>
+			Body: same as probe 1
 		`);
 	});
 
@@ -441,6 +435,73 @@ describe("formatMeasurement", () => {
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Status: failed (target)
 			Request timed out while establishing the TCP connection.
+		`);
+	});
+
+	it("should print every body that is different", () => {
+		const differentBodies = {
+			...httpGet,
+			results: [
+				httpGet.results[0],
+				{
+					probe: httpGet.results[1].probe,
+					result: { ...httpGet.results[1].result, rawBody: "Another body" },
+				},
+			],
+		};
+
+		expect(formatMeasurement(differentBodies, "full")).toMatchInlineSnapshot(`
+			Measurement ID: 2WkcEkbEvXsFfNaww00321X49
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-19T11:09:57.547Z
+			Updated: 2026-11-19T11:09:57.726Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Options: {"request":{"method":"GET"}}
+			Probes: 2
+
+			Headers same for all probes:
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 142.251.127.101
+			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Plus headers same for all probes (11), listed at the top.
+
+			<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+			<TITLE>301 Moved</TITLE></HEAD><BODY>
+			<H1>301 Moved</H1>
+			The document has moved
+			<A HREF="https://www.google.com/">here</A>.
+			</BODY></HTML>
+
+
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 173.194.73.113
+			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Plus headers same for all probes (11), listed at the top.
+
+			Another body
 		`);
 	});
 
@@ -919,6 +980,50 @@ describe("formatMeasurement", () => {
 				HTTP/1.1 301
 				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 				Plus headers same for all probes (11), listed at the top.
+			`);
+		});
+
+		it("should print the body of a chosen probe when the probe with the same body is not chosen", () => {
+			expect(formatMeasurement(httpGet, "full", [2])).toMatchInlineSnapshot(`
+				Measurement ID: 2WkcEkbEvXsFfNaww00321X49
+				Type: http
+				Target: google.com
+				Status: finished
+				Created: 2026-11-19T11:09:57.547Z
+				Updated: 2026-11-19T11:09:57.726Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Options: {"request":{"method":"GET"}}
+				Probes: 2
+
+				Headers same for all probes:
+				Location: https://www.google.com/
+				Content-Type: text/html; charset=UTF-8
+				Date: Thu, 19 Nov 2026 11:09:57 GMT
+				Expires: Sat, 19 Dec 2026 11:09:57 GMT
+				Cache-Control: public, max-age=2592000
+				Server: gws
+				Content-Length: 220
+				X-XSS-Protection: 0
+				X-Frame-Options: SAMEORIGIN
+				Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+				Connection: close
+
+				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+				Resolved IP: 173.194.73.113
+				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
+				TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+				Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+				HTTP/1.1 301
+				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+				Plus headers same for all probes (11), listed at the top.
+
+				<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+				<TITLE>301 Moved</TITLE></HEAD><BODY>
+				<H1>301 Moved</H1>
+				The document has moved
+				<A HREF="https://www.google.com/">here</A>.
+				</BODY></HTML>
 			`);
 		});
 

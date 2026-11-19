@@ -1,9 +1,14 @@
 /**
  * Formatting of measurement responses as text
  */
-import { findCommonHeaders, formatCommonHeaders, formatHttpResult } from "./format-http";
+import {
+	findCommonHeaders,
+	findSameBodyProbes,
+	formatCommonHeaders,
+	formatHttpResult,
+} from "./format-http";
 import { formatPingTotals } from "./format-ping";
-import { formatMs } from "./helpers";
+import { formatMs, isSelected } from "./helpers";
 
 // Above this length the default output is one line per probe.
 const MAX_FULL_OUTPUT_LENGTH = 30_000;
@@ -51,10 +56,6 @@ function checkProbesExist(measurement: any, probes?: number[]): void {
 	}
 }
 
-function isSelected(index: number, probes?: number[]): boolean {
-	return !probes || probes.includes(index + 1);
-}
-
 function formatHeader(measurement: any): string {
 	let header = `Measurement ID: ${measurement.id}\n`;
 	header += `Type: ${measurement.type}\n`;
@@ -92,7 +93,9 @@ function formatFull(measurement: any, level: "headers" | "full", probes?: number
 
 function formatHttpFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
 	const commonHeaders = findCommonHeaders(measurement.results);
-	const formatResult = (result: any) => formatHttpResult(result, level, commonHeaders);
+	const sameBodyProbes = findSameBodyProbes(measurement.results, probes);
+	const formatResult = (result: any, number: number) =>
+		formatHttpResult(result, level, commonHeaders, sameBodyProbes.get(number));
 
 	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
 }
@@ -100,7 +103,7 @@ function formatHttpFull(measurement: any, level: "headers" | "full", probes?: nu
 // A probe that did not finish has no result, only a status and what the tool printed so far.
 function formatProbesFull(
 	measurement: any,
-	formatResult: (result: any) => string,
+	formatResult: (result: any, number: number) => string,
 	probes?: number[],
 ): string {
 	return measurement.results
@@ -108,7 +111,7 @@ function formatProbesFull(
 			const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 
 			if (result.status === "finished") {
-				return title + formatResult(result);
+				return title + formatResult(result, index + 1);
 			}
 
 			return `${title}Status: ${formatProbeStatus(result)}\n${formatRawOutput(result)}`;

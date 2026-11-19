@@ -1,7 +1,7 @@
 /**
  * HTTP parts of the measurement text
  */
-import { formatMs } from "./helpers";
+import { formatMs, isSelected } from "./helpers";
 
 // Header lines that all finished probes have. One probe has nothing to share.
 export function findCommonHeaders(results: any): string[] {
@@ -24,10 +24,33 @@ export function formatCommonHeaders(commonHeaders: string[]): string {
 	return `\nHeaders same for all probes:\n${commonHeaders.join("\n")}\n`;
 }
 
+// For a probe that repeats the body of an earlier printed probe: the number of that earlier probe.
+export function findSameBodyProbes(results: any, probes?: number[]): Map<number, number> {
+	const firstProbeByBody = new Map<string, number>();
+	const sameBodyProbes = new Map<number, number>();
+
+	results.forEach(({ result }: any, index: number) => {
+		if (result.status !== "finished" || !result.rawBody || !isSelected(index, probes)) {
+			return;
+		}
+
+		const firstProbe = firstProbeByBody.get(result.rawBody);
+
+		if (firstProbe) {
+			sameBodyProbes.set(index + 1, firstProbe);
+		} else {
+			firstProbeByBody.set(result.rawBody, index + 1);
+		}
+	});
+
+	return sameBodyProbes;
+}
+
 export function formatHttpResult(
 	result: any,
 	level: "headers" | "full",
 	commonHeaders: string[],
+	sameBodyProbe?: number,
 ): string {
 	// The HTTP version is only in the first line of the raw output.
 	const statusLine = result.rawOutput.split("\n")[0];
@@ -41,6 +64,10 @@ export function formatHttpResult(
 
 	if (level === "headers") {
 		return text;
+	}
+
+	if (sameBodyProbe) {
+		return `${text}Body: same as probe ${sameBodyProbe}\n`;
 	}
 
 	if (result.rawBody) {
