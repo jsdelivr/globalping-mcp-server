@@ -113,7 +113,7 @@ function formatProbeSummary(type: string, result: any): string {
 const summaryByType: Record<string, (result: any) => string> = {
 	ping: (result) => `loss ${result.stats.loss}%, avg ${formatMs(result.stats.avg)}`,
 	traceroute: (result) =>
-		`${result.hops.length} hops, ${formatMs(result.hops.at(-1)?.timings[0]?.rtt)}`,
+		`${result.hops.length} hops, rtt ${formatMs(result.hops.at(-1)?.timings[0]?.rtt)}`,
 	mtr: (result) => {
 		const stats = result.hops.at(-1)?.stats;
 		return `${result.hops.length} hops, loss ${stats?.loss}%, avg ${formatMs(stats?.avg)}`;
@@ -122,10 +122,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 		// A trace has the final answers in its last hop.
 		const { answers, timings } = result.hops ? result.hops.at(-1) : result;
 		const values = answers.map((answer: any) => answer.value).join(", ");
-		return `${values || result.statusCodeName || "no answers"}, ${formatMs(timings.total)}`;
+		return `${values || result.statusCodeName || "no answers"}, total ${formatMs(timings.total)}`;
 	},
 	http: (result) =>
-		`${result.statusCode} ${result.statusCodeName}, ${formatMs(result.timings.total)}`,
+		`${result.statusCode} ${result.statusCodeName}, total ${formatMs(result.timings.total)}`,
 };
 
 function formatProbeStatus(result: any): string {
