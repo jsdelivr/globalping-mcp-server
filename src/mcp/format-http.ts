@@ -3,16 +3,59 @@
  */
 import { formatMs } from "./helpers";
 
-export function formatHttpResult(result: any, level: "headers" | "full"): string {
-	const details = formatHttpDetails(result);
+// Header lines that all finished probes have. One probe has nothing to share.
+export function findCommonHeaders(results: any): string[] {
+	const headers: string[][] = results
+		.filter(({ result }: any) => result.status === "finished")
+		.map(({ result }: any) => splitHeaders(result));
 
-	if (level === "headers") {
-		return `${details}${formatHttpHeaders(result)}\n`;
+	if (headers.length < 2) {
+		return [];
 	}
 
-	const note = result.truncated ? "The response body is truncated.\n" : "";
+	return headers[0].filter((line) => headers.every((lines) => lines.includes(line)));
+}
 
-	return `${details}${result.rawOutput}\n${note}`;
+export function formatCommonHeaders(commonHeaders: string[]): string {
+	if (commonHeaders.length === 0) {
+		return "";
+	}
+
+	return `\nHeaders same for all probes:\n${commonHeaders.join("\n")}\n`;
+}
+
+export function formatHttpResult(
+	result: any,
+	level: "headers" | "full",
+	commonHeaders: string[],
+): string {
+	// The HTTP version is only in the first line of the raw output.
+	const statusLine = result.rawOutput.split("\n")[0];
+	const headers = splitHeaders(result).filter((line) => !commonHeaders.includes(line));
+	let text = formatHttpDetails(result);
+	text += `${[statusLine, ...headers].join("\n")}\n`;
+
+	if (commonHeaders.length > 0) {
+		text += `Plus headers same for all probes (${commonHeaders.length}), listed at the top.\n`;
+	}
+
+	if (level === "headers") {
+		return text;
+	}
+
+	if (result.rawBody) {
+		text += `\n${result.rawBody}\n`;
+	}
+
+	if (result.truncated) {
+		text += "The response body is truncated.\n";
+	}
+
+	return text;
+}
+
+function splitHeaders(result: any): string[] {
+	return result.rawHeaders?.split("\n") ?? [];
 }
 
 // The raw output of HTTP has no timings and no TLS details.
@@ -39,9 +82,4 @@ function formatHttpDetails(result: any): string {
 	}
 
 	return text;
-}
-
-function formatHttpHeaders(result: any): string {
-	const statusLine = result.rawOutput.split("\n")[0];
-	return [statusLine, result.rawHeaders].filter(Boolean).join("\n");
 }

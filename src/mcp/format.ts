@@ -1,7 +1,7 @@
 /**
  * Formatting of measurement responses as text
  */
-import { formatHttpResult } from "./format-http";
+import { findCommonHeaders, formatCommonHeaders, formatHttpResult } from "./format-http";
 import { formatPingTotals } from "./format-ping";
 import { formatMs } from "./helpers";
 
@@ -83,28 +83,42 @@ function formatHeader(measurement: any): string {
 }
 
 function formatFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
+	if (measurement.type === "http") {
+		return formatHttpFull(measurement, level, probes);
+	}
+
+	return formatProbesFull(measurement, formatRawOutput, probes);
+}
+
+function formatHttpFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
+	const commonHeaders = findCommonHeaders(measurement.results);
+	const formatResult = (result: any) => formatHttpResult(result, level, commonHeaders);
+
+	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
+}
+
+// A probe that did not finish has no result, only a status and what the tool printed so far.
+function formatProbesFull(
+	measurement: any,
+	formatResult: (result: any) => string,
+	probes?: number[],
+): string {
 	return measurement.results
-		.map((item: any, index: number) => formatProbeFull(measurement.type, item, index, level))
+		.map(({ probe, result }: any, index: number) => {
+			const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
+
+			if (result.status === "finished") {
+				return title + formatResult(result);
+			}
+
+			return `${title}Status: ${formatProbeStatus(result)}\n${formatRawOutput(result)}`;
+		})
 		.filter((_text: string, index: number) => isSelected(index, probes))
 		.join("");
 }
 
-function formatProbeFull(
-	type: string,
-	{ probe, result }: any,
-	index: number,
-	level: "headers" | "full",
-): string {
-	const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-
-	if (type === "http" && result.status === "finished") {
-		return title + formatHttpResult(result, level);
-	}
-
-	const status = result.status === "finished" ? "" : `Status: ${formatProbeStatus(result)}\n`;
-	const output = result.rawOutput ? `${result.rawOutput}\n` : "";
-
-	return title + status + output;
+function formatRawOutput(result: any): string {
+	return result.rawOutput ? `${result.rawOutput}\n` : "";
 }
 
 function formatSummary(measurement: any, probes?: number[]): string {
