@@ -634,8 +634,8 @@ describe("formatMeasurement", () => {
 				- Max RTT: 5.45 ms
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, avg 5.294 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, rtt 5.294 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, rtt 3.375 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -654,8 +654,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -674,8 +674,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, avg 5.3 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, avg 3.3 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, rtt 5.3 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, rtt 3.3 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -903,8 +903,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1050,7 +1050,7 @@ describe("formatMeasurement", () => {
 				- Max RTT: 5.45 ms
 
 				Results, one line per probe:
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, rtt 3.375 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1077,8 +1077,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);

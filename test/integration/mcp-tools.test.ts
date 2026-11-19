@@ -405,7 +405,7 @@ describe("MCP Tools Integration", () => {
 			});
 
 			expect(created.result.content[0].text).toContain(
-				"1: New York, US, NA, Test Network (AS12345) | loss 0%, avg 15.34 ms",
+				"1: New York, US, NA, Test Network (AS12345) | loss 0%, rtt 15.34 ms",
 			);
 			expect(created.result.content[0].text).not.toContain("PING google.com");
 			expect(fetched.result.content[0].text).toBe(created.result.content[0].text);

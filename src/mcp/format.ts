@@ -153,12 +153,16 @@ function formatProbeSummary(type: string, result: any): string {
 }
 
 const summaryByType: Record<string, (result: any) => string> = {
-	ping: (result) => `loss ${result.stats.loss}%, avg ${formatMs(result.stats.avg)}`,
-	traceroute: (result) =>
-		`${result.hops.length} hops, rtt ${formatMs(result.hops.at(-1)?.timings[0]?.rtt)}`,
+	ping: (result) => `loss ${result.stats.loss}%, rtt ${formatMs(result.stats.avg)}`,
+	traceroute: (result) => {
+		const rtts: number[] = result.hops.at(-1)?.timings.map((timing: any) => timing.rtt) ?? [];
+		const sum = rtts.reduce((total, rtt) => total + rtt, 0);
+		const avg = rtts.length > 0 ? Number((sum / rtts.length).toFixed(3)) : null;
+		return `${result.hops.length} hops, rtt ${formatMs(avg)}`;
+	},
 	mtr: (result) => {
 		const stats = result.hops.at(-1)?.stats;
-		return `${result.hops.length} hops, loss ${stats?.loss}%, avg ${formatMs(stats?.avg)}`;
+		return `${result.hops.length} hops, loss ${stats?.loss}%, rtt ${formatMs(stats?.avg)}`;
 	},
 	dns: (result) => {
 		// A trace has the final answers in its last hop.
