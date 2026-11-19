@@ -1,7 +1,7 @@
 /**
  * Formatting of measurement responses as text
  */
-import { formatHttpDetails } from "./format-http";
+import { formatHttpResult } from "./format-http";
 import { formatPingTotals } from "./format-ping";
 import { formatMs } from "./helpers";
 
@@ -11,14 +11,15 @@ const MAX_FULL_OUTPUT_LENGTH = 30_000;
 /**
  * Format a measurement response as text
  * @param measurement The measurement response
- * @param output "full" is the raw output of every probe, "summary" is one line per probe.
- * The default is "full" when it is short enough or when probes are given, else "summary".
+ * @param output "summary" is one line per probe, "full" is the raw output of every probe,
+ * "headers" is "full" without the response body of HTTP.
+ * The default is "full" ("headers" for HTTP) when it is short enough, else "summary".
  * @param probes Numbers of the probes to print, the first probe is 1. The default is all probes.
  * @returns Formatted text
  */
 export function formatMeasurement(
 	measurement: any,
-	output?: "summary" | "full",
+	output?: "summary" | "headers" | "full",
 	probes?: number[],
 ): string {
 	checkProbesExist(measurement, probes);
@@ -29,13 +30,14 @@ export function formatMeasurement(
 		return header + formatSummary(measurement, probes);
 	}
 
-	const full = header + formatFull(measurement, probes);
+	const level = output ?? (measurement.type === "http" ? "headers" : "full");
+	const details = header + formatFull(measurement, level, probes);
 
-	if (output === "full" || probes || full.length <= MAX_FULL_OUTPUT_LENGTH) {
-		return full;
+	if (output || details.length <= MAX_FULL_OUTPUT_LENGTH) {
+		return details;
 	}
 
-	return header + formatSummary(measurement);
+	return header + formatSummary(measurement, probes);
 }
 
 function checkProbesExist(measurement: any, probes?: number[]): void {
@@ -80,33 +82,29 @@ function formatHeader(measurement: any): string {
 	return header;
 }
 
-function formatFull(measurement: any, probes?: number[]): string {
+function formatFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
 	return measurement.results
-		.map((item: any, index: number) => formatProbeFull(measurement.type, item, index))
+		.map((item: any, index: number) => formatProbeFull(measurement.type, item, index, level))
 		.filter((_text: string, index: number) => isSelected(index, probes))
 		.join("");
 }
 
-function formatProbeFull(type: string, { probe, result }: any, index: number): string {
-	let text = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-
-	if (result.status !== "finished") {
-		text += `Status: ${formatProbeStatus(result)}\n`;
-	}
+function formatProbeFull(
+	type: string,
+	{ probe, result }: any,
+	index: number,
+	level: "headers" | "full",
+): string {
+	const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
 
 	if (type === "http" && result.status === "finished") {
-		text += formatHttpDetails(result);
+		return title + formatHttpResult(result, level);
 	}
 
-	if (result.rawOutput) {
-		text += `${result.rawOutput}\n`;
-	}
+	const status = result.status === "finished" ? "" : `Status: ${formatProbeStatus(result)}\n`;
+	const output = result.rawOutput ? `${result.rawOutput}\n` : "";
 
-	if (result.truncated) {
-		text += "The response body is truncated.\n";
-	}
-
-	return text;
+	return title + status + output;
 }
 
 function formatSummary(measurement: any, probes?: number[]): string {
@@ -117,7 +115,9 @@ function formatSummary(measurement: any, probes?: number[]): string {
 		)
 		.filter((_line: string, index: number) => isSelected(index, probes));
 
-	return `\nResults, one line per probe:\n${lines.join("")}\nFor the raw output call getMeasurement with "probes", or use output "full".\n`;
+	const levels = measurement.type === "http" ? '"headers" or "full"' : '"full"';
+
+	return `\nResults, one line per probe:\n${lines.join("")}\nFor details call getMeasurement with "probes" and output ${levels}.\n`;
 }
 
 function formatProbeSummary(type: string, result: any): string {

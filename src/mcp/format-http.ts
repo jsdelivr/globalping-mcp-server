@@ -3,8 +3,20 @@
  */
 import { formatMs } from "./helpers";
 
+export function formatHttpResult(result: any, level: "headers" | "full"): string {
+	const details = formatHttpDetails(result);
+
+	if (level === "headers") {
+		return `${details}${formatHttpHeaders(result)}\n`;
+	}
+
+	const note = result.truncated ? "The response body is truncated.\n" : "";
+
+	return `${details}${result.rawOutput}\n${note}`;
+}
+
 // The raw output of HTTP has no timings and no TLS details.
-export function formatHttpDetails(result: any): string {
+function formatHttpDetails(result: any): string {
 	let text = "";
 
 	if (result.resolvedAddress) {
@@ -27,4 +39,9 @@ export function formatHttpDetails(result: any): string {
 	}
 
 	return text;
+}
+
+function formatHttpHeaders(result: any): string {
+	const statusLine = result.rawOutput.split("\n")[0];
+	return [statusLine, result.rawHeaders].filter(Boolean).join("\n");
 }

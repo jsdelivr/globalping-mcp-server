@@ -450,10 +450,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("Query string (e.g., 'param=value&another=123')"),
 				output: z
-					.enum(["summary", "full"])
+					.enum(["summary", "headers", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'summary': one line per probe. 'headers': the response without the body. 'full': the response with the body. Default: 'headers', or 'summary' when the output is longer than 30000 characters.",
 					),
 			},
 		},
@@ -726,17 +726,17 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.regex(/^[a-zA-Z0-9]+$/)
 					.describe("The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')"),
 				output: z
-					.enum(["summary", "full"])
+					.enum(["summary", "headers", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'summary': one line per probe. 'headers': HTTP only, the response without the body. 'full': everything. Default: 'full' ('headers' for HTTP measurements), or 'summary' when the output is longer than 30000 characters.",
 					),
 				probes: z
 					.array(z.number().int().min(1))
 					.min(1)
 					.optional()
 					.describe(
-						"Numbers of the probes to return, as shown in the output (the first probe is 1). Only these probes are returned, with their raw output unless output is 'summary'. Default: all probes.",
+						"Which probes to return, by their number in the output, e.g. [2, 5]. The first probe is 1. Default: all probes.",
 					),
 			},
 		},

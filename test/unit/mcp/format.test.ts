@@ -7,6 +7,7 @@ import dns from "./fixtures/dns.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
 import http from "./fixtures/http.json";
+import httpGet from "./fixtures/http-get.json";
 import httpIp from "./fixtures/http-ip.json";
 import mtr from "./fixtures/mtr.json";
 import ping from "./fixtures/ping.json";
@@ -290,6 +291,131 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should print http without the body by default", () => {
+		expect(formatMeasurement(httpGet)).toMatchInlineSnapshot(`
+			Measurement ID: 2WkcEkbEvXsFfNaww00321X49
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-19T11:09:57.547Z
+			Updated: 2026-11-19T11:09:57.726Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Options: {"request":{"method":"GET"}}
+			Probes: 2
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 142.251.127.101
+			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 173.194.73.113
+			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+		`);
+	});
+
+	it("should print http with the body when output is full", () => {
+		expect(formatMeasurement(httpGet, "full")).toMatchInlineSnapshot(`
+			Measurement ID: 2WkcEkbEvXsFfNaww00321X49
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-19T11:09:57.547Z
+			Updated: 2026-11-19T11:09:57.726Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Options: {"request":{"method":"GET"}}
+			Probes: 2
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 142.251.127.101
+			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+
+			<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+			<TITLE>301 Moved</TITLE></HEAD><BODY>
+			<H1>301 Moved</H1>
+			The document has moved
+			<A HREF="https://www.google.com/">here</A>.
+			</BODY></HTML>
+
+
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 173.194.73.113
+			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+
+			<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+			<TITLE>301 Moved</TITLE></HEAD><BODY>
+			<H1>301 Moved</H1>
+			The document has moved
+			<A HREF="https://www.google.com/">here</A>.
+			</BODY></HTML>
+		`);
+	});
+
+	it("should print other types in full when output is headers", () => {
+		expect(formatMeasurement(ping, "headers")).toBe(formatMeasurement(ping, "full"));
+	});
+
 	it("should say that the response body is truncated", () => {
 		const truncated = {
 			...http,
@@ -299,7 +425,7 @@ describe("formatMeasurement", () => {
 			],
 		};
 
-		expect(formatMeasurement(truncated)).toMatchInlineSnapshot(`
+		expect(formatMeasurement(truncated, "full")).toMatchInlineSnapshot(`
 			Measurement ID: 2P4xQQKCD6c75fZM200321Wl5
 			Type: http
 			Target: google.com
@@ -418,7 +544,7 @@ describe("formatMeasurement", () => {
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, avg 5.294 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -438,7 +564,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -458,7 +584,7 @@ describe("formatMeasurement", () => {
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, avg 5.3 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, avg 3.3 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -478,7 +604,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -498,7 +624,7 @@ describe("formatMeasurement", () => {
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, total 15 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, total 32 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -519,7 +645,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -539,7 +665,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 208 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 63 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "headers" or "full".
 			`);
 		});
 
@@ -566,7 +692,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -616,7 +742,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (internal): The measurement timed out.
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -658,7 +784,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | in-progress
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
@@ -687,7 +813,7 @@ describe("formatMeasurement", () => {
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 	});
@@ -752,11 +878,11 @@ describe("formatMeasurement", () => {
 				Results, one line per probe:
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, avg 3.375 ms
 
-				For the raw output call getMeasurement with "probes", or use output "full".
+				For details call getMeasurement with "probes" and output "full".
 			`);
 		});
 
-		it("should not switch to summary when probes are given", () => {
+		it("should switch to summary by default when the output of the chosen probes is too long", () => {
 			const long = {
 				...traceroute,
 				results: traceroute.results.map(({ probe, result }) => ({
@@ -765,7 +891,23 @@ describe("formatMeasurement", () => {
 				})),
 			};
 
-			expect(formatMeasurement(long, undefined, [1, 2])).toHaveLength(30324);
+			expect(formatMeasurement(long, undefined, [1, 2])).toMatchInlineSnapshot(`
+				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
+				Type: traceroute
+				Target: google.com
+				Status: finished
+				Created: 2026-11-18T15:27:47.399Z
+				Updated: 2026-11-18T15:27:51.987Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Results, one line per probe:
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 2.983 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.415 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
 		});
 
 		it("should throw for a probe number that does not exist", () => {

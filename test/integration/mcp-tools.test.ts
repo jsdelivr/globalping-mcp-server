@@ -517,6 +517,24 @@ describe("MCP Tools Integration", () => {
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
+		it("should accept headers as output", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 5,
+					method: "tools/call",
+					params: {
+						name: "http",
+						arguments: { target: "example.com", output: "headers" },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
+		});
 	});
 
 	describe("MTR Tool", () => {
