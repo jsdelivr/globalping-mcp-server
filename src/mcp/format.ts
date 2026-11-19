@@ -96,6 +96,10 @@ function formatSummary(measurement: any): string {
 }
 
 function formatProbeSummary(type: string, result: any): string {
+	if (result.status === "in-progress") {
+		return result.status;
+	}
+
 	if (result.status !== "finished") {
 		const reason = result.rawOutput?.split("\n")[0];
 		return reason ? `${formatProbeStatus(result)}: ${reason}` : formatProbeStatus(result);
