@@ -1,0 +1,78 @@
+{
+	"id": "2SSPVk28xkwXHDUC300321Wlu",
+	"type": "http",
+	"status": "finished",
+	"createdAt": "2026-11-18T16:18:37.347Z",
+	"updatedAt": "2026-11-18T16:18:37.401Z",
+	"target": "1.1.1.1",
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"resolvedAddress": "1.1.1.1",
+				"headers": {
+					"date": "Wed, 18 Nov 2026 16:18:37 GMT",
+					"connection": "close",
+					"location": "https://one.one.one.one/",
+					"server": "cloudflare",
+					"cf-ray": "a5c84ac7a958dbe4-FRA"
+				},
+				"rawHeaders": "Date: Wed, 18 Nov 2026 16:18:37 GMT\nConnection: close\nLocation: https://one.one.one.one/\nServer: cloudflare\nCF-RAY: a5c84ac7a958dbe4-FRA",
+				"rawBody": null,
+				"rawOutput": "HTTP/1.1 301\nDate: Wed, 18 Nov 2026 16:18:37 GMT\nConnection: close\nLocation: https://one.one.one.one/\nServer: cloudflare\nCF-RAY: a5c84ac7a958dbe4-FRA",
+				"truncated": false,
+				"statusCode": 301,
+				"statusCodeName": "Moved Permanently",
+				"timings": {
+					"total": 36,
+					"dns": null,
+					"tcp": 7,
+					"tls": 12,
+					"firstByte": 17,
+					"download": 0
+				},
+				"tls": {
+					"authorized": false,
+					"protocol": "TLSv1.3",
+					"cipherName": "TLS_AES_256_GCM_SHA384",
+					"error": "ERR_TLS_CERT_ALTNAME_INVALID",
+					"createdAt": "2025-12-31T19:20:01.000Z",
+					"expiresAt": "2026-12-21T19:20:01.000Z",
+					"issuer": {
+						"C": "US",
+						"O": "SSL Corp",
+						"CN": "SSL.com SSL Intermediate CA ECC R2"
+					},
+					"subject": {
+						"CN": "cloudflare-dns.com",
+						"alt": "DNS:cloudflare-dns.com, DNS:*.cloudflare-dns.com, IP Address:1.0.0.1, IP Address:1.1.1.1, IP Address:162.159.36.1, IP Address:162.159.46.1, IP Address:2606:4700:4700:0:0:0:0:1001, IP Address:2606:4700:4700:0:0:0:0:1111, IP Address:2606:4700:4700:0:0:0:0:64, IP Address:2606:4700:4700:0:0:0:0:6400, DNS:one.one.one.one"
+					},
+					"keyType": "EC",
+					"keyBits": 256,
+					"serialNumber": "4E:D0:33:04:C4:6B:87:A8:C2:EB:55:69:DB:9E:BA:0C",
+					"fingerprint256": "E3:B0:28:26:78:9D:65:3D:22:4D:3E:DA:CB:E4:E8:77:CB:72:86:FC:4C:92:26:72:F6:22:67:41:CA:57:AD:65",
+					"publicKey": "04:63:83:50:25:12:EA:72:78:19:EB:32:47:AF:C1:05:52:9C:2A:2B:60:8A:84:4E:75:6D:81:48:47:C1:C7:BE:CF:85:79:6C:12:29:5B:50:B3:CC:EC:50:A1:94:9E:DC:44:08:07:0C:80:1A:93:D3:BD:78:11:7B:B6:A3:C8:EA:AC"
+				}
+			}
+		}
+	]
+}

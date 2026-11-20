@@ -92,9 +92,6 @@ Key guidelines:
 					destructiveHint: false,
 					openWorldHint: false,
 				},
-				outputSchema: {
-					guide: z.string(),
-				},
 			},
 			async () => {
 				const helpText = `
@@ -136,7 +133,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 
 				return {
 					content: [{ type: "text", text: helpText }],
-					structuredContent: { guide: helpText },
 				};
 			},
 		);
@@ -153,9 +149,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 					destructiveHint: false,
 					openWorldHint: false,
 				},
-				outputSchema: {
-					helpText: z.string(),
-				},
 			},
 			async () => {
 				const helpText = `
@@ -171,6 +164,7 @@ Available Tools:
      - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
      - limit: Number of probes to use (default: 3, max: 100)
      - packets: Number of packets to send (default: 3)
+     - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 2. traceroute - Perform a traceroute test to a target
    Parameters:
@@ -179,15 +173,17 @@ Available Tools:
      - limit: Number of probes to use (default: 3, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
+     - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 3. dns - Perform a DNS lookup for a domain
    Parameters:
      - target: Domain name to resolve (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3, max: 100)
-     - queryType: DNS record type - "A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA" (default: A)
+     - queryType: DNS record type - "A", "AAAA", "ANY", "CNAME", "DNSKEY", "DS", "HTTPS", "MX", "NS", "NSEC", "PTR", "RRSIG", "SOA", "TXT", "SRV", "SVCB" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
+     - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 4. mtr - Perform an MTR (My Traceroute) test to a target
    Parameters:
@@ -197,16 +193,19 @@ Available Tools:
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - packets: Number of packets to send to each hop (default: 3)
+     - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 5. http - Perform an HTTP request to a URL
    Parameters:
      - target: Domain name or IP to test (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3, max: 100)
-     - method: HTTP method - "GET" or "HEAD" (default: GET)
-     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: auto-detect)
+     - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)
+     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: HTTPS)
      - path: Path component of the URL (e.g., '/api/v1/status')
+     - port: Port number (default: 443 for HTTPS, 80 for HTTP)
      - query: Query string (e.g., 'param=value&another=123')
+     - output: How much to return for each probe - "summary", "headers" or "full" (default: "headers", or "summary" when the output is longer than 30000 characters)
 
 6. locations - List all available Globalping probe locations
    No parameters required
@@ -219,15 +218,20 @@ Available Tools:
 8. getMeasurement - Retrieve the current status and results of a measurement by ID
    Parameters:
      - id: The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')
+     - output: How much to return for each probe - "summary", "headers" (only for http measurements) or "full" (default: "full", "headers" for http measurements, or "summary" when the output is longer than 30000 characters)
+     - probes: Which probes to return, by their number in the output, e.g. [2, 5] (default: all probes)
 
 9. compareLocations - Guide on how to run comparison measurements using the same probes
    No parameters required
    Returns instructions for comparing measurements across locations
 
+10. authStatus - Check whether the user is logged in
+   No parameters required
+
 Location Formats:
 When specifying locations, use the magic field format in an array. Examples:
 - Global diversity: ["world"] (increase 'limit' for more locations)
-- Continents: ["EU", "NA", "AS"]
+- Continents: ["Europe", "North America", "Asia"]
 - Countries: ["US", "DE", "JP"]
 - Cities: ["London", "Tokyo", "New York"]
 - Networks: ["Cloudflare", "Google"]
@@ -240,7 +244,6 @@ For more information, visit: https://www.globalping.io
 
 				return {
 					content: [{ type: "text", text: helpText }],
-					structuredContent: { helpText },
 				};
 			},
 		);

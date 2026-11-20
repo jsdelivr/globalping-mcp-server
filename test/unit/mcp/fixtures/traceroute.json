@@ -1,0 +1,264 @@
+{
+	"id": "2GaIM08nHIBGjG08y00321Wl5",
+	"type": "traceroute",
+	"status": "finished",
+	"createdAt": "2026-11-18T15:27:47.399Z",
+	"updatedAt": "2026-11-18T15:27:51.987Z",
+	"target": "google.com",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network", "u-jimaek"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"rawOutput": "traceroute to google.com (64.233.163.113), 20 hops max, 60 byte packets\n 1  _gateway (172.23.1.1)  0.030 ms  0.010 ms\n 2  ex9k1.dc5.hel1.hetzner.com (213.133.119.10)  0.376 ms  0.401 ms\n 3  core32.hel1.hetzner.com (213.133.126.32)  0.402 ms  0.393 ms\n 4  juniper4.dc1.hel1.hetzner.com (213.239.224.25)  0.534 ms  0.525 ms\n 5  google.com (64.233.163.113)  2.983 ms  3.137 ms",
+				"status": "finished",
+				"resolvedAddress": "64.233.163.113",
+				"resolvedHostname": "google.com",
+				"hops": [
+					{
+						"resolvedAddress": "172.23.1.1",
+						"resolvedHostname": "_gateway",
+						"timings": [
+							{
+								"rtt": 0.03
+							},
+							{
+								"rtt": 0.01
+							}
+						]
+					},
+					{
+						"resolvedAddress": "213.133.119.10",
+						"resolvedHostname": "ex9k1.dc5.hel1.hetzner.com",
+						"timings": [
+							{
+								"rtt": 0.376
+							},
+							{
+								"rtt": 0.401
+							}
+						]
+					},
+					{
+						"resolvedAddress": "213.133.126.32",
+						"resolvedHostname": "core32.hel1.hetzner.com",
+						"timings": [
+							{
+								"rtt": 0.402
+							},
+							{
+								"rtt": 0.393
+							}
+						]
+					},
+					{
+						"resolvedAddress": "213.239.224.25",
+						"resolvedHostname": "juniper4.dc1.hel1.hetzner.com",
+						"timings": [
+							{
+								"rtt": 0.534
+							},
+							{
+								"rtt": 0.525
+							}
+						]
+					},
+					{
+						"resolvedAddress": "64.233.163.113",
+						"resolvedHostname": "google.com",
+						"timings": [
+							{
+								"rtt": 2.983
+							},
+							{
+								"rtt": 3.137
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"rawOutput": "traceroute to google.com (142.251.14.102), 20 hops max, 60 byte packets\n 1  _gateway (172.31.1.1)  4.829 ms  5.137 ms\n 2  33838.your-cloud.host (49.12.31.3)  2.470 ms  2.837 ms\n 3  * *\n 4  * *\n 5  core-spine-rdev1.cloud2.fsn1.hetzner.com (213.239.227.193)  3.246 ms  3.242 ms\n 6  core21.fsn1.hetzner.com (213.239.227.194)  3.472 ms  3.469 ms\n 7  core4.fra.hetzner.com (213.239.224.106)  8.174 ms  8.171 ms\n 8  72.14.218.94 (72.14.218.94)  8.238 ms  8.234 ms\n 9  * *\n10  216.239.56.24 (216.239.56.24)  8.707 ms  8.703 ms\n11  * *\n12  * *\n13  * *\n14  * *\n15  * *\n16  * *\n17  google.com (142.251.14.102)  5.415 ms  5.435 ms",
+				"status": "finished",
+				"resolvedAddress": "142.251.14.102",
+				"resolvedHostname": "google.com",
+				"hops": [
+					{
+						"resolvedAddress": "172.31.1.1",
+						"resolvedHostname": "_gateway",
+						"timings": [
+							{
+								"rtt": 4.829
+							},
+							{
+								"rtt": 5.137
+							}
+						]
+					},
+					{
+						"resolvedAddress": "49.12.31.3",
+						"resolvedHostname": "33838.your-cloud.host",
+						"timings": [
+							{
+								"rtt": 2.47
+							},
+							{
+								"rtt": 2.837
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "213.239.227.193",
+						"resolvedHostname": "core-spine-rdev1.cloud2.fsn1.hetzner.com",
+						"timings": [
+							{
+								"rtt": 3.246
+							},
+							{
+								"rtt": 3.242
+							}
+						]
+					},
+					{
+						"resolvedAddress": "213.239.227.194",
+						"resolvedHostname": "core21.fsn1.hetzner.com",
+						"timings": [
+							{
+								"rtt": 3.472
+							},
+							{
+								"rtt": 3.469
+							}
+						]
+					},
+					{
+						"resolvedAddress": "213.239.224.106",
+						"resolvedHostname": "core4.fra.hetzner.com",
+						"timings": [
+							{
+								"rtt": 8.174
+							},
+							{
+								"rtt": 8.171
+							}
+						]
+					},
+					{
+						"resolvedAddress": "72.14.218.94",
+						"resolvedHostname": "72.14.218.94",
+						"timings": [
+							{
+								"rtt": 8.238
+							},
+							{
+								"rtt": 8.234
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "216.239.56.24",
+						"resolvedHostname": "216.239.56.24",
+						"timings": [
+							{
+								"rtt": 8.707
+							},
+							{
+								"rtt": 8.703
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "142.251.14.102",
+						"resolvedHostname": "google.com",
+						"timings": [
+							{
+								"rtt": 5.415
+							},
+							{
+								"rtt": 5.435
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

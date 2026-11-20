@@ -1,0 +1,155 @@
+{
+	"id": "2FkC3ditnkURhoIKB00321Wl5",
+	"type": "dns",
+	"status": "finished",
+	"createdAt": "2026-11-18T15:27:47.693Z",
+	"updatedAt": "2026-11-18T15:27:48.049Z",
+	"target": "google.com",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "; <<>> DiG 9.16.50-Debian <<>> -t A google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 34316\n;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;google.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\ngoogle.com.\t\t225\tIN\tA\t74.125.205.101\ngoogle.com.\t\t225\tIN\tA\t74.125.205.139\ngoogle.com.\t\t225\tIN\tA\t74.125.205.102\ngoogle.com.\t\t225\tIN\tA\t74.125.205.138\ngoogle.com.\t\t225\tIN\tA\t74.125.205.113\ngoogle.com.\t\t225\tIN\tA\t74.125.205.100\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Wed Nov 18 15:27:48 UTC 2026\n;; MSG SIZE  rcvd: 135",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"answers": [
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.101"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.139"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.102"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.138"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.113"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 225,
+						"class": "IN",
+						"value": "74.125.205.100"
+					}
+				],
+				"timings": {
+					"total": 0
+				},
+				"resolver": "private"
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "; <<>> DiG 9.16.44-Debian <<>> -t A google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 26582\n;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;google.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\ngoogle.com.\t\t236\tIN\tA\t142.251.127.113\ngoogle.com.\t\t236\tIN\tA\t142.251.127.138\ngoogle.com.\t\t236\tIN\tA\t142.251.127.101\ngoogle.com.\t\t236\tIN\tA\t142.251.127.102\ngoogle.com.\t\t236\tIN\tA\t142.251.127.139\ngoogle.com.\t\t236\tIN\tA\t142.251.127.100\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Wed Nov 18 15:27:47 UTC 2026\n;; MSG SIZE  rcvd: 135",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"answers": [
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.113"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.138"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.101"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.102"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.139"
+					},
+					{
+						"name": "google.com.",
+						"type": "A",
+						"ttl": 236,
+						"class": "IN",
+						"value": "142.251.127.100"
+					}
+				],
+				"timings": {
+					"total": 0
+				},
+				"resolver": "private"
+			}
+		}
+	]
+}

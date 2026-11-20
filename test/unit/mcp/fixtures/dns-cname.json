@@ -1,0 +1,91 @@
+{
+	"id": "2TuJNBCVrRqTuMaFc00321X5p",
+	"type": "dns",
+	"status": "finished",
+	"createdAt": "2026-11-19T12:53:53.346Z",
+	"updatedAt": "2026-11-19T12:53:53.447Z",
+	"target": "www.github.com",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [{ "magic": "world" }],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private", "private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "\n; <<>> DiG 9.18.49-1~deb12u1-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 8229\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 66 72 61 31 35 (\"fra15\")\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t3545\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t5\tIN\tA\t4.163.8.144\n\n;; Query time: 8 msec\n;; SERVER: x.x.x.x#53(x.x.x.x) (UDP)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 82\n",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"answers": [
+					{
+						"name": "www.github.com.",
+						"type": "CNAME",
+						"ttl": 3545,
+						"class": "IN",
+						"value": "github.com."
+					},
+					{
+						"name": "github.com.",
+						"type": "A",
+						"ttl": 5,
+						"class": "IN",
+						"value": "4.163.8.144"
+					}
+				],
+				"timings": { "total": 8 },
+				"resolver": "private"
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "\n; <<>> DiG 9.16.44-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 5072\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t2039\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t31\tIN\tA\t140.82.121.4\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 73\n",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"answers": [
+					{
+						"name": "www.github.com.",
+						"type": "CNAME",
+						"ttl": 2039,
+						"class": "IN",
+						"value": "github.com."
+					},
+					{
+						"name": "github.com.",
+						"type": "A",
+						"ttl": 31,
+						"class": "IN",
+						"value": "140.82.121.4"
+					}
+				],
+				"timings": { "total": 0 },
+				"resolver": "private"
+			}
+		}
+	]
+}
