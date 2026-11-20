@@ -170,8 +170,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 		const values = answers.map((answer: any) => answer.value).join(", ");
 		return `${values || result.statusCodeName || "no answers"}, total ${formatMs(timings.total)}`;
 	},
-	http: (result) =>
-		`${result.statusCode} ${result.statusCodeName}, total ${formatMs(result.timings.total)}`,
+	http: (result) => {
+		const statusName = result.statusCodeName ? ` ${result.statusCodeName}` : "";
+		return `${result.statusCode}${statusName}, total ${formatMs(result.timings.total)}`;
+	},
 };
 
 function formatProbeStatus(result: any): string {

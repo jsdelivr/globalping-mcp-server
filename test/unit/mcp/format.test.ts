@@ -762,6 +762,36 @@ describe("formatMeasurement", () => {
 			`);
 		});
 
+		it("should summarize http without a status name (HTTP2)", () => {
+			const http2 = {
+				...http,
+				probesCount: 1,
+				results: [
+					{
+						...http.results[0],
+						result: { ...http.results[0].result, statusCodeName: "" },
+					},
+				],
+			};
+
+			expect(formatMeasurement(http2, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2P4xQQKCD6c75fZM200321Wl5
+				Type: http
+				Target: google.com
+				Status: finished
+				Created: 2026-11-18T15:27:48.383Z
+				Updated: 2026-11-18T15:27:48.676Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 1
+
+				Results, one line per probe:
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301, total 208 ms
+
+				For details call getMeasurement with "probes" and output "headers" or "full".
+			`);
+		});
+
 		it("should print the status and the reason of probes that did not finish", () => {
 			expect(formatMeasurement(pingFailed, "summary")).toMatchInlineSnapshot(`
 				Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
