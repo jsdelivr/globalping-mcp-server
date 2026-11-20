@@ -156,13 +156,23 @@ const summaryByType: Record<string, (result: any) => string> = {
 	ping: (result) => `loss ${result.stats.loss}%, rtt ${formatMs(result.stats.avg)}`,
 	traceroute: (result) => {
 		const rtts: number[] = result.hops.at(-1)?.timings.map((timing: any) => timing.rtt) ?? [];
+
+		if (rtts.length === 0) {
+			return `${result.hops.length} hops, no reply from target`;
+		}
+
 		const sum = rtts.reduce((total, rtt) => total + rtt, 0);
-		const avg = rtts.length > 0 ? Number((sum / rtts.length).toFixed(3)) : null;
-		return `${result.hops.length} hops, rtt ${formatMs(avg)}`;
+		const avg = Number((sum / rtts.length).toFixed(3));
+		return `${result.hops.length} hops, rtt ${avg} ms`;
 	},
 	mtr: (result) => {
 		const stats = result.hops.at(-1)?.stats;
-		return `${result.hops.length} hops, loss ${stats?.loss}%, rtt ${formatMs(stats?.avg)}`;
+
+		if (stats?.avg == null) {
+			return `${result.hops.length} hops, no reply from target`;
+		}
+
+		return `${result.hops.length} hops, loss ${stats.loss}%, rtt ${stats.avg} ms`;
 	},
 	dns: (result) => {
 		// A trace has the final answers in its last hop.

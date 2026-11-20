@@ -11,9 +11,11 @@ import http from "./fixtures/http.json";
 import httpGet from "./fixtures/http-get.json";
 import httpIp from "./fixtures/http-ip.json";
 import mtr from "./fixtures/mtr.json";
+import mtrNoReply from "./fixtures/mtr-no-reply.json";
 import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
 import traceroute from "./fixtures/traceroute.json";
+import tracerouteNoReply from "./fixtures/traceroute-no-reply.json";
 
 // Print strings in snapshots as they are, without quotes and escapes.
 expect.addSnapshotSerializer({
@@ -662,6 +664,26 @@ describe("formatMeasurement", () => {
 			`);
 		});
 
+		it("should summarize traceroute without a reply from the target", () => {
+			expect(formatMeasurement(tracerouteNoReply, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2Y2qmgd1qDGtRGxJM00321X5p
+				Type: traceroute
+				Target: 8.8.8.9
+				Status: finished
+				Created: 2026-11-19T12:53:56.258Z
+				Updated: 2026-11-19T12:54:05.488Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
 		it("should summarize mtr", () => {
 			expect(formatMeasurement(mtr, "summary")).toMatchInlineSnapshot(`
 				Measurement ID: 2IVwW2U5Q1aQTR0Pr00321Wl5
@@ -677,6 +699,26 @@ describe("formatMeasurement", () => {
 				Results, one line per probe:
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, rtt 5.3 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, rtt 3.3 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize mtr without a reply from the target", () => {
+			expect(formatMeasurement(mtrNoReply, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2mlumuc7i3j4ZmbHH00321X5p
+				Type: mtr
+				Target: 8.8.8.9
+				Status: finished
+				Created: 2026-11-19T12:53:56.797Z
+				Updated: 2026-11-19T12:54:03.577Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Results, one line per probe:
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, no reply from target
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 9 hops, no reply from target
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
