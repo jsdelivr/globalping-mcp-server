@@ -1,6 +1,7 @@
 /**
  * Formatting of measurement responses as text
  */
+import { GLOBALPING_API } from "../config";
 import {
 	findCommonHeaders,
 	findSameBodyProbes,
@@ -29,6 +30,21 @@ export function formatMeasurement(
 ): string {
 	checkProbesExist(measurement, probes);
 
+	try {
+		return formatText(measurement, output, probes);
+	} catch (error: any) {
+		const url = `${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}/${measurement.id}`;
+		throw new Error(
+			`The results of measurement ${measurement.id} could not be formatted: ${error.message}. You can read the measurement by URL: ${url}`,
+		);
+	}
+}
+
+function formatText(
+	measurement: any,
+	output?: "summary" | "headers" | "full",
+	probes?: number[],
+): string {
 	const header = formatHeader(measurement);
 
 	if (output === "summary") {

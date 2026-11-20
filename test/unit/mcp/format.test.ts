@@ -1184,5 +1184,18 @@ describe("formatMeasurement", () => {
 				),
 			);
 		});
+
+		it("should name the measurement when the results cannot be formatted", () => {
+			expect(() =>
+				formatMeasurement(
+					{ ...mtr, results: [{ ...mtr.results[0], result: { status: "finished" } }] },
+					"summary",
+				),
+			).toThrow(
+				new Error(
+					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'at'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
+				),
+			);
+		});
 	});
 });

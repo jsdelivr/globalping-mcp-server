@@ -3,6 +3,7 @@
  */
 import { z } from "zod";
 import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
+import { GLOBALPING_API } from "../config";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
 import { formatMeasurement } from "./format";
@@ -691,8 +692,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		"getMeasurement",
 		{
 			title: "Get Measurement",
-			description:
-				"Retrieve a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to see a measurement again or to see a measurement created elsewhere. The full JSON with parsed fields is at https://api.globalping.io/v1/measurements/<id>.",
+			description: `Retrieve a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to see a measurement again or to see a measurement created elsewhere. The full JSON with parsed fields is at ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}/<id>.`,
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
