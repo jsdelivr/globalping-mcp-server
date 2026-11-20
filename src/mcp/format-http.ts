@@ -75,7 +75,7 @@ export function formatHttpResult(
 	}
 
 	if (result.truncated) {
-		text += "The response body is truncated.\n";
+		text += "The response is truncated.\n";
 	}
 
 	return text;
@@ -93,19 +93,18 @@ function formatHttpDetails(result: any): string {
 		text += `Resolved IP: ${result.resolvedAddress}\n`;
 	}
 
-	if (result.timings) {
-		const timings = ["total", "dns", "tcp", "tls", "firstByte", "download"]
-			.map((name) => `${name} ${formatMs(result.timings[name])}`)
-			.join(", ");
-		text += `Timings: ${timings}\n`;
-	}
+	const timings = ["total", "dns", "tcp", "tls", "firstByte", "download"]
+		.map((name) => `${name} ${formatMs(result.timings[name])}`)
+		.join(", ");
+	text += `Timings: ${timings}\n`;
 
 	if (result.tls) {
 		const { tls } = result;
 		const valid = tls.authorized ? "valid" : `not valid (${tls.error})`;
+		const subject = tls.subject.CN ?? tls.subject.alt;
 		const issuer = [tls.issuer.O, tls.issuer.CN].filter(Boolean).join(" ");
 		text += `TLS: ${tls.protocol}, ${tls.cipherName}, ${valid}\n`;
-		text += `Certificate: ${tls.subject.CN}, issued by ${issuer}, ${tls.createdAt} to ${tls.expiresAt}\n`;
+		text += `Certificate: ${subject}, issued by ${issuer}, ${tls.createdAt} to ${tls.expiresAt}\n`;
 	}
 
 	return text;

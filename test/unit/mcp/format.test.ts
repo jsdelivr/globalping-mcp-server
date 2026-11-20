@@ -512,7 +512,7 @@ describe("formatMeasurement", () => {
 		expect(formatMeasurement(ping, "headers")).toBe(formatMeasurement(ping, "full"));
 	});
 
-	it("should say that the response body is truncated", () => {
+	it("should say that the response is truncated", () => {
 		const truncated = {
 			...http,
 			probesCount: 1,
@@ -550,7 +550,7 @@ describe("formatMeasurement", () => {
 			X-Frame-Options: SAMEORIGIN
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
-			The response body is truncated.
+			The response is truncated.
 		`);
 	});
 
