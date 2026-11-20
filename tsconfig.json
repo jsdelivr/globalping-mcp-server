@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "es2021",
-		"lib": ["es2022"],
+		"lib": ["es2024"],
 		"jsx": "react-jsx",
 		"module": "es2022",
 		"moduleResolution": "Bundler",

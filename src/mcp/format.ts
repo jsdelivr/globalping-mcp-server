@@ -167,8 +167,14 @@ const summaryByType: Record<string, (result: any) => string> = {
 	dns: (result) => {
 		// A trace has the final answers in its last hop.
 		const { answers, timings } = result.hops ? result.hops.at(-1) : result;
-		const values = answers.map((answer: any) => answer.value).join(", ");
-		return `${values || result.statusCodeName || "no answers"}, total ${formatMs(timings.total)}`;
+		const answersByType = Object.groupBy(answers, (answer: any) => answer.type);
+		const records = Object.entries(answersByType)
+			.map(
+				([type, group]: any) =>
+					`${type} ${group.map((answer: any) => answer.value).join(", ")}`,
+			)
+			.join("; ");
+		return `${records || result.statusCodeName || "no answers"}, total ${formatMs(timings.total)}`;
 	},
 	http: (result) => {
 		const statusName = result.statusCodeName ? ` ${result.statusCodeName}` : "";

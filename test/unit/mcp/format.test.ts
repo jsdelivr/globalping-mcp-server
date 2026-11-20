@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { formatMeasurement } from "../../../src/mcp/format";
 import dns from "./fixtures/dns.json";
+import dnsCname from "./fixtures/dns-cname.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
 import http from "./fixtures/http.json";
@@ -694,8 +695,28 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should group dns answers by record type", () => {
+			expect(formatMeasurement(dnsCname, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2TuJNBCVrRqTuMaFc00321X5p
+				Type: dns
+				Target: www.github.com
+				Status: finished
+				Created: 2026-11-19T12:53:53.346Z
+				Updated: 2026-11-19T12:53:53.447Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Probes: 2
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | CNAME github.com.; A 4.163.8.144, total 8 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | CNAME github.com.; A 140.82.121.4, total 0 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -735,8 +756,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
