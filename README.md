@@ -250,7 +250,7 @@ What's the average response time for cloudflare.com across different continents?
 
 Locations can be specified using the location's `magic` parameter:
 
-* **Continents**: `EU`, `NA`, `AS`, `AF`, `OC`, `SA`
+* **Continents**: `Europe`, `North America`, `Asia`, `Africa`, `Oceania`, `South America`
 * **Country codes**: `US`, `DE`, `JP`, `PL`, `BR`
 * **Cities**: `London`, `Tokyo`, `New York`, `Warsaw`
 * **Networks & ASNs**: `Cloudflare`, `Google`, `AS13335`, `AS15169`

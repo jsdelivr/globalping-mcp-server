@@ -234,7 +234,7 @@ Available Tools:
 Location Formats:
 When specifying locations, use the magic field format in an array. Examples:
 - Global diversity: ["world"] (increase 'limit' for more locations)
-- Continents: ["EU", "NA", "AS"]
+- Continents: ["Europe", "North America", "Asia"]
 - Countries: ["US", "DE", "JP"]
 - Cities: ["London", "Tokyo", "New York"]
 - Networks: ["Cloudflare", "Google"]
