@@ -8,6 +8,16 @@ import { isPublicTarget } from "../lib";
 import { formatMeasurement } from "./format";
 import { parseLocations } from "./helpers";
 
+const continentNames: Record<string, string> = {
+	AF: "Africa",
+	AN: "Antarctica",
+	AS: "Asia",
+	EU: "Europe",
+	NA: "North America",
+	OC: "Oceania",
+	SA: "South America",
+};
+
 /**
  * Helper to wrap tool execution with error handling
  */
@@ -561,7 +571,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 				const continents = [];
 				for (const [continent, countries] of Object.entries(grouped)) {
-					textOutput += `${continent}:\n`;
+					textOutput += `${continentNames[continent]}:\n`;
 
 					const countryList = [];
 					for (const [country, probes] of Object.entries(countries)) {

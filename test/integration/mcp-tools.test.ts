@@ -709,7 +709,21 @@ describe("MCP Tools Integration", () => {
 			expect(data.result).toBeDefined();
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("Total Probes");
+			expect(data.result.content[0].text).toMatchInlineSnapshot(`
+				"Available Globalping Probe Locations:
+
+				North America:
+				  US: New York, Los Angeles
+
+				Europe:
+				  DE: Frankfurt
+
+
+				Total Probes: 3
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]
+				"
+			`);
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
