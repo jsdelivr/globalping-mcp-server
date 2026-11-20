@@ -729,7 +729,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["summary", "headers", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'summary': one line per probe. 'headers': HTTP only, the response without the body. 'full': everything. Default: 'full' ('headers' for HTTP measurements), or 'summary' when the output is longer than 30000 characters.",
+						"How much to return for each probe. 'summary': one line per probe. 'headers': only for http measurements, the response without the body. 'full': everything. Default: 'full' ('headers' for http measurements), or 'summary' when the output is longer than 30000 characters.",
 					),
 				probes: z
 					.array(z.number().int().min(1))
