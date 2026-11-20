@@ -92,9 +92,6 @@ Key guidelines:
 					destructiveHint: false,
 					openWorldHint: false,
 				},
-				outputSchema: {
-					guide: z.string(),
-				},
 			},
 			async () => {
 				const helpText = `
@@ -136,7 +133,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 
 				return {
 					content: [{ type: "text", text: helpText }],
-					structuredContent: { guide: helpText },
 				};
 			},
 		);
@@ -152,9 +148,6 @@ This approach allows for direct side-by-side comparisons of different targets us
 					readOnlyHint: true,
 					destructiveHint: false,
 					openWorldHint: false,
-				},
-				outputSchema: {
-					helpText: z.string(),
 				},
 			},
 			async () => {
@@ -187,7 +180,7 @@ Available Tools:
      - target: Domain name to resolve (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3, max: 100)
-     - queryType: DNS record type - "A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "CAA" (default: A)
+     - queryType: DNS record type - "A", "AAAA", "ANY", "CNAME", "DNSKEY", "DS", "HTTPS", "MX", "NS", "NSEC", "PTR", "RRSIG", "SOA", "TXT", "SRV", "SVCB" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
@@ -207,9 +200,10 @@ Available Tools:
      - target: Domain name or IP to test (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3, max: 100)
-     - method: HTTP method - "GET" or "HEAD" (default: GET)
-     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: auto-detect)
+     - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)
+     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: HTTPS)
      - path: Path component of the URL (e.g., '/api/v1/status')
+     - port: Port number (default: 443 for HTTPS, 80 for HTTP)
      - query: Query string (e.g., 'param=value&another=123')
      - output: How much to return for each probe - "summary", "headers" or "full" (default: "headers", or "summary" when the output is longer than 30000 characters)
 
@@ -231,6 +225,9 @@ Available Tools:
    No parameters required
    Returns instructions for comparing measurements across locations
 
+10. authStatus - Check whether the user is logged in
+   No parameters required
+
 Location Formats:
 When specifying locations, use the magic field format in an array. Examples:
 - Global diversity: ["world"] (increase 'limit' for more locations)
@@ -247,7 +244,6 @@ For more information, visit: https://www.globalping.io
 
 				return {
 					content: [{ type: "text", text: helpText }],
-					structuredContent: { helpText },
 				};
 			},
 		);

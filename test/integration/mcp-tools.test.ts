@@ -724,6 +724,7 @@ describe("MCP Tools Integration", () => {
 				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]
 				"
 			`);
+			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);

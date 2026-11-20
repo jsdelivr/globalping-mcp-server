@@ -528,20 +528,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				destructiveHint: false,
 				openWorldHint: true,
 			},
-			outputSchema: {
-				totalProbes: z.number(),
-				continents: z.array(
-					z.object({
-						name: z.string(),
-						countries: z.array(
-							z.object({
-								name: z.string(),
-								cities: z.array(z.string()),
-							}),
-						),
-					}),
-				),
-			},
 		},
 		async () => {
 			return handleToolExecution(async () => {
@@ -569,24 +555,13 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				// Format the output
 				let textOutput = "Available Globalping Probe Locations:\n\n";
 
-				const continents = [];
 				for (const [continent, countries] of Object.entries(grouped)) {
 					textOutput += `${continentNames[continent]}:\n`;
 
-					const countryList = [];
 					for (const [country, probes] of Object.entries(countries)) {
 						const cities = [...new Set(probes.map((p) => p.location.city))];
 						textOutput += `  ${country}: ${cities.join(", ")}\n`;
-						countryList.push({
-							name: country,
-							cities: cities,
-						});
 					}
-
-					continents.push({
-						name: continent,
-						countries: countryList,
-					});
 
 					textOutput += "\n";
 				}
@@ -596,11 +571,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					'\nNote: To specify locations, use the "magic" field syntax in the locations parameter. ';
 				textOutput += 'For example: ["US", "Europe", "AS13335", "London+UK"]\n';
 
-				const output = {
-					totalProbes: probes.length,
-					continents: continents,
-				};
-
 				return {
 					content: [
 						{
@@ -608,7 +578,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 							text: textOutput,
 						},
 					],
-					structuredContent: output,
 				};
 			}, "Failed to list locations");
 		},
