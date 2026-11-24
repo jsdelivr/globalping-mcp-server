@@ -6,6 +6,7 @@ import {
 	findCommonHeaders,
 	findSameBodyProbes,
 	formatCommonHeaders,
+	formatHttpDetails,
 	formatHttpResult,
 } from "./format-http";
 import { formatPingTotals } from "./format-ping";
@@ -104,7 +105,12 @@ function formatFull(measurement: any, level: "headers" | "full", probes?: number
 		return formatHttpFull(measurement, level, probes);
 	}
 
-	return formatProbesFull(measurement, formatRawOutput, probes);
+	const formatResult = measurement.type === "mtr" ? formatMtrResult : formatRawOutput;
+	return formatProbesFull(measurement, formatResult, probes);
+}
+
+function formatMtrResult(result: any): string {
+	return `Resolved IP: ${result.resolvedAddress}\n${formatRawOutput(result)}`;
 }
 
 function formatHttpFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
@@ -116,7 +122,7 @@ function formatHttpFull(measurement: any, level: "headers" | "full", probes?: nu
 	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
 }
 
-// A probe that did not finish has no result, only a status and what the tool printed so far.
+// A probe that did not finish has a status and what the tool printed so far.
 function formatProbesFull(
 	measurement: any,
 	formatResult: (result: any, number: number) => string,
@@ -130,7 +136,8 @@ function formatProbesFull(
 				return title + formatResult(result, index + 1);
 			}
 
-			return `${title}Status: ${formatProbeStatus(result)}\n${formatRawOutput(result)}`;
+			const details = measurement.type === "http" ? formatHttpDetails(result) : "";
+			return `${title}Status: ${formatProbeStatus(result)}\n${details}${formatRawOutput(result)}`;
 		})
 		.filter((_text: string, index: number) => isSelected(index, probes))
 		.join("");
@@ -171,23 +178,21 @@ function formatProbeSummary(type: string, result: any): string {
 const summaryByType: Record<string, (result: any) => string> = {
 	ping: (result) => `loss ${result.stats.loss}%, rtt ${formatMs(result.stats.avg)}`,
 	traceroute: (result) => {
-		const rtts: number[] = result.hops.at(-1)?.timings.map((timing: any) => timing.rtt) ?? [];
-
-		if (rtts.length === 0) {
+		if (!isTargetReached(result)) {
 			return `${result.hops.length} hops, no reply from target`;
 		}
 
+		const rtts: number[] = result.hops.at(-1).timings.map((timing: any) => timing.rtt);
 		const sum = rtts.reduce((total, rtt) => total + rtt, 0);
 		const avg = Number((sum / rtts.length).toFixed(3));
 		return `${result.hops.length} hops, rtt ${avg} ms`;
 	},
 	mtr: (result) => {
-		const stats = result.hops.at(-1)?.stats;
-
-		if (stats?.avg == null) {
+		if (!isTargetReached(result)) {
 			return `${result.hops.length} hops, no reply from target`;
 		}
 
+		const { stats } = result.hops.at(-1);
 		return `${result.hops.length} hops, loss ${stats.loss}%, rtt ${stats.avg} ms`;
 	},
 	dns: (result) => {
@@ -200,13 +205,28 @@ const summaryByType: Record<string, (result: any) => string> = {
 					`${type} ${group.map((answer: any) => answer.value).join(", ")}`,
 			)
 			.join("; ");
-		return `${records || result.statusCodeName || "no answers"}, total ${formatMs(timings.total)}`;
+
+		if (!records) {
+			const status = result.statusCodeName ? `${result.statusCodeName}, ` : "";
+			return `${status}no answers, total ${formatMs(timings.total)}`;
+		}
+
+		return `${records}, total ${formatMs(timings.total)}`;
 	},
 	http: (result) => {
 		const statusName = result.statusCodeName ? ` ${result.statusCodeName}` : "";
-		return `${result.statusCode}${statusName}, total ${formatMs(result.timings.total)}`;
+		const certificate =
+			result.tls?.authorized === false ? `, certificate not valid (${result.tls.error})` : "";
+		return `${result.statusCode}${statusName}, total ${formatMs(result.timings.total)}${certificate}`;
 	},
 };
+
+// A route can end at a router that replies when the target does not.
+// The last line of the raw output has the address of the target only when the target replied.
+function isTargetReached(result: any): boolean {
+	const lastLine = result.rawOutput.trimEnd().split("\n").at(-1);
+	return lastLine.includes(`(${result.resolvedAddress})`);
+}
 
 function formatProbeStatus(result: any): string {
 	return result.failureSource ? `${result.status} (${result.failureSource})` : result.status;

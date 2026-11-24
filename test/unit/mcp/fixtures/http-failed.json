@@ -1,0 +1,58 @@
+{
+	"id": "24zraPDxnRUybW5of00321XX5",
+	"type": "http",
+	"status": "finished",
+	"createdAt": "2026-11-20T17:03:34.093Z",
+	"updatedAt": "2026-11-20T17:03:49.138Z",
+	"target": "example.com",
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "Europe"
+		}
+	],
+	"measurementOptions": {
+		"port": 81,
+		"request": {
+			"method": "GET"
+		}
+	},
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "failed",
+				"failureSource": "target",
+				"resolvedAddress": "104.20.23.154",
+				"headers": {},
+				"rawHeaders": null,
+				"rawBody": null,
+				"rawOutput": "Request timed out while establishing the TCP connection.",
+				"truncated": false,
+				"statusCode": null,
+				"statusCodeName": null,
+				"timings": {
+					"total": 15001,
+					"dns": 1,
+					"tcp": null,
+					"tls": null,
+					"firstByte": null,
+					"download": null
+				},
+				"tls": null
+			}
+		}
+	]
+}

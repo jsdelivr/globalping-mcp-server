@@ -67,10 +67,8 @@ export function formatHttpResult(
 	}
 
 	if (sameBodyProbe) {
-		return `${text}Body: same as probe ${sameBodyProbe}\n`;
-	}
-
-	if (result.rawBody) {
+		text += `Body: same as probe ${sameBodyProbe}\n`;
+	} else if (result.rawBody) {
 		text += `\n${result.rawBody}\n`;
 	}
 
@@ -86,17 +84,19 @@ function splitHeaders(result: any): string[] {
 }
 
 // The raw output of HTTP has no timings and no TLS details.
-function formatHttpDetails(result: any): string {
+export function formatHttpDetails(result: any): string {
 	let text = "";
 
 	if (result.resolvedAddress) {
 		text += `Resolved IP: ${result.resolvedAddress}\n`;
 	}
 
-	const timings = ["total", "dns", "tcp", "tls", "firstByte", "download"]
-		.map((name) => `${name} ${formatMs(result.timings[name])}`)
-		.join(", ");
-	text += `Timings: ${timings}\n`;
+	if (result.timings) {
+		const timings = ["total", "dns", "tcp", "tls", "firstByte", "download"]
+			.map((name) => `${name} ${formatMs(result.timings[name])}`)
+			.join(", ");
+		text += `Timings: ${timings}\n`;
+	}
 
 	if (result.tls) {
 		const { tls } = result;

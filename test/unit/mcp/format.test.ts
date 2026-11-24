@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 import { formatMeasurement } from "../../../src/mcp/format";
 import dns from "./fixtures/dns.json";
 import dnsCname from "./fixtures/dns-cname.json";
+import dnsNoAnswers from "./fixtures/dns-no-answers.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
 import http from "./fixtures/http.json";
+import httpFailed from "./fixtures/http-failed.json";
 import httpGet from "./fixtures/http-get.json";
 import httpIp from "./fixtures/http-ip.json";
 import mtr from "./fixtures/mtr.json";
@@ -15,6 +17,7 @@ import mtrNoReply from "./fixtures/mtr-no-reply.json";
 import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
 import traceroute from "./fixtures/traceroute.json";
+import tracerouteHopLimit from "./fixtures/traceroute-hop-limit.json";
 import tracerouteNoReply from "./fixtures/traceroute-no-reply.json";
 
 // Print strings in snapshots as they are, without quotes and escapes.
@@ -23,7 +26,7 @@ expect.addSnapshotSerializer({
 	serialize: (value) => value,
 });
 
-// The fixtures are real Globalping API responses for google.com.
+// The fixtures are real Globalping API responses.
 describe("formatMeasurement", () => {
 	it("should print ping with totals over all probes", () => {
 		expect(formatMeasurement(ping)).toMatchInlineSnapshot(`
@@ -124,6 +127,7 @@ describe("formatMeasurement", () => {
 			Probes: 2
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 142.250.154.101
 			Host                                                                   Loss% Drop Rcv Avg  StDev  Javg
 			 1. AS24940 _gateway (213.133.117.207)                                  0.0%    0   3 0.3    0.0   0.2
 			 2. AS24940 core23.fsn1.hetzner.com (213.133.126.23)                    0.0%    0   3 2.8    3.4   3.9
@@ -140,6 +144,7 @@ describe("formatMeasurement", () => {
 			13. AS15169 google.com (142.250.154.101)                                0.0%    0   3 5.3    0.0   2.6
 
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 64.233.161.139
 			Host                                                                  Loss% Drop Rcv Avg  StDev  Javg
 			1. AS???   _gateway (172.31.1.1)                                       0.0%    0   3 1.7    0.2   1.1
 			2. AS24940 20992.your-cloud.host (65.108.115.149)                      0.0%    0   3 0.3    0.1   0.3
@@ -554,6 +559,91 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should say that the response is truncated for a probe with the same body", () => {
+		const truncated = {
+			...httpGet,
+			results: httpGet.results.map(({ probe, result }) => ({
+				probe,
+				result: { ...result, rawBody: httpGet.results[0].result.rawBody, truncated: true },
+			})),
+		};
+
+		expect(formatMeasurement(truncated, "full")).toMatchInlineSnapshot(`
+			Measurement ID: 2WkcEkbEvXsFfNaww00321X49
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-19T11:09:57.547Z
+			Updated: 2026-11-19T11:09:57.726Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Options: {"request":{"method":"GET"}}
+			Probes: 2
+
+			Headers same for all probes:
+			Location: https://www.google.com/
+			Content-Type: text/html; charset=UTF-8
+			Date: Thu, 19 Nov 2026 11:09:57 GMT
+			Expires: Sat, 19 Dec 2026 11:09:57 GMT
+			Cache-Control: public, max-age=2592000
+			Server: gws
+			Content-Length: 220
+			X-XSS-Protection: 0
+			X-Frame-Options: SAMEORIGIN
+			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+			Connection: close
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Resolved IP: 142.251.127.101
+			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Plus headers same for all probes (11), listed at the top.
+
+			<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+			<TITLE>301 Moved</TITLE></HEAD><BODY>
+			<H1>301 Moved</H1>
+			The document has moved
+			<A HREF="https://www.google.com/">here</A>.
+			</BODY></HTML>
+
+			The response is truncated.
+
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 173.194.73.113
+			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			HTTP/1.1 301
+			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
+			Plus headers same for all probes (11), listed at the top.
+			Body: same as probe 1
+			The response is truncated.
+		`);
+	});
+
+	it("should print the resolved IP and timings of an http probe that failed", () => {
+		expect(formatMeasurement(httpFailed)).toMatchInlineSnapshot(`
+			Measurement ID: 24zraPDxnRUybW5of00321XX5
+			Type: http
+			Target: example.com
+			Status: finished
+			Created: 2026-11-20T17:03:34.093Z
+			Updated: 2026-11-20T17:03:49.138Z
+			Locations: [{"magic":"Europe"}]
+			Options: {"port":81,"request":{"method":"GET"}}
+			Probes: 1
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Status: failed (target)
+			Resolved IP: 104.20.23.154
+			Timings: total 15001 ms, dns 1 ms, tcp N/A, tls N/A, firstByte N/A, download N/A
+			Request timed out while establishing the TCP connection.
+		`);
+	});
+
 	it("should print the status of probes that did not finish", () => {
 		expect(formatMeasurement(pingFailed)).toMatchInlineSnapshot(`
 			Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
@@ -568,10 +658,6 @@ describe("formatMeasurement", () => {
 
 			Ping Results:
 			- Successful Probes: 0/2
-			- Total Packets: 0
-			- Received: 0
-			- Dropped: 0
-			- Average Loss: 0.00%
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Status: failed (target)
@@ -603,10 +689,6 @@ describe("formatMeasurement", () => {
 
 			Ping Results:
 			- Successful Probes: 0/1
-			- Total Packets: 0
-			- Received: 0
-			- Dropped: 0
-			- Average Loss: 0.00%
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
 			Status: offline
@@ -679,6 +761,26 @@ describe("formatMeasurement", () => {
 				Results, one line per probe:
 				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize traceroute that ends at a router, not at the target", () => {
+			expect(formatMeasurement(tracerouteHopLimit, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2PIzPEd20eFYYef7e00321XXB
+				Type: traceroute
+				Target: www.usp.br
+				Status: finished
+				Created: 2026-11-20T17:09:55.610Z
+				Updated: 2026-11-20T17:10:10.817Z
+				Locations: [{"magic":"world"}]
+				Limit: 25
+				Probes: 2
+
+				Results, one line per probe:
+				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target
+				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -777,8 +879,29 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, total 15 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, total 32 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, no answers, total 15 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, no answers, total 32 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize dns with the NOERROR status and no answers", () => {
+			expect(formatMeasurement(dnsNoAnswers, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2FJuxZLmgw8WnEneE00321XX6
+				Type: dns
+				Target: github.com
+				Status: finished
+				Created: 2026-11-20T17:04:09.220Z
+				Updated: 2026-11-20T17:04:09.300Z
+				Locations: [{"magic":"world"}]
+				Limit: 2
+				Options: {"query":{"type":"AAAA"}}
+				Probes: 2
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NOERROR, no answers, total 0 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NOERROR, no answers, total 0 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -820,6 +943,24 @@ describe("formatMeasurement", () => {
 				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 208 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 63 ms
+
+				For details call getMeasurement with "probes" and output "headers" or "full".
+			`);
+		});
+
+		it("should summarize http with a certificate that is not valid", () => {
+			expect(formatMeasurement(httpIp, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2SSPVk28xkwXHDUC300321Wlu
+				Type: http
+				Target: 1.1.1.1
+				Status: finished
+				Created: 2026-11-18T16:18:37.347Z
+				Updated: 2026-11-18T16:18:37.401Z
+				Locations: [{"magic":"world"}]
+				Probes: 1
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 36 ms, certificate not valid (ERR_TLS_CERT_ALTNAME_INVALID)
 
 				For details call getMeasurement with "probes" and output "headers" or "full".
 			`);
@@ -869,10 +1010,6 @@ describe("formatMeasurement", () => {
 
 				Ping Results:
 				- Successful Probes: 0/2
-				- Total Packets: 0
-				- Received: 0
-				- Dropped: 0
-				- Average Loss: 0.00%
 
 				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target): queryA ENOTFOUND nonexistent.google.com
@@ -919,10 +1056,6 @@ describe("formatMeasurement", () => {
 
 				Ping Results:
 				- Successful Probes: 0/2
-				- Total Packets: 0
-				- Received: 0
-				- Dropped: 0
-				- Average Loss: 0.00%
 
 				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)
@@ -961,10 +1094,6 @@ describe("formatMeasurement", () => {
 
 				Ping Results:
 				- Successful Probes: 0/2
-				- Total Packets: 0
-				- Received: 0
-				- Dropped: 0
-				- Average Loss: 0.00%
 
 				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | in-progress
@@ -979,11 +1108,11 @@ describe("formatMeasurement", () => {
 				...traceroute,
 				results: traceroute.results.map(({ probe, result }) => ({
 					probe,
-					result: { ...result, rawOutput: "x".repeat(15_000) },
+					result: { ...result, rawOutput: `${"x".repeat(15_000)}\n${result.rawOutput}` },
 				})),
 			};
 
-			expect(formatMeasurement(long, "full")).toHaveLength(30324);
+			expect(formatMeasurement(long, "full")).toHaveLength(31318);
 			expect(formatMeasurement(long)).toMatchInlineSnapshot(`
 				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
 				Type: traceroute
@@ -1154,11 +1283,11 @@ describe("formatMeasurement", () => {
 				...traceroute,
 				results: traceroute.results.map(({ probe, result }) => ({
 					probe,
-					result: { ...result, rawOutput: "x".repeat(15_000) },
+					result: { ...result, rawOutput: `${"x".repeat(31_000)}\n${result.rawOutput}` },
 				})),
 			};
 
-			expect(formatMeasurement(long, undefined, [1, 2])).toMatchInlineSnapshot(`
+			expect(formatMeasurement(long, undefined, [2])).toMatchInlineSnapshot(`
 				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
 				Type: traceroute
 				Target: google.com
@@ -1170,7 +1299,6 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
 				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
@@ -1193,7 +1321,7 @@ describe("formatMeasurement", () => {
 				),
 			).toThrow(
 				new Error(
-					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'at'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
+					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'trimEnd'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
 				),
 			);
 		});

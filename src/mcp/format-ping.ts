@@ -6,6 +6,11 @@ export function formatPingTotals(results: any): string {
 	const pingStats = calculateAverages(results);
 	let text = "\nPing Results:\n";
 	text += `- Successful Probes: ${pingStats.successfulProbes}/${pingStats.probeCount}\n`;
+
+	if (pingStats.successfulProbes === 0) {
+		return text;
+	}
+
 	text += `- Total Packets: ${pingStats.totalPackets}\n`;
 	text += `- Received: ${pingStats.totalReceived}\n`;
 	text += `- Dropped: ${pingStats.totalDropped}\n`;
