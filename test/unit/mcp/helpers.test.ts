@@ -85,7 +85,7 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
+		expect(summary.countedProbes).toBe(2);
 		expect(summary.successfulProbes).toBe(2);
 		expect(summary.totalPackets).toBe(6);
 		expect(summary.totalReceived).toBe(5);
@@ -99,7 +99,8 @@ describe("calculateAverages", () => {
 	it("should handle empty results array", () => {
 		const summary = calculateAverages([]);
 
-		expect(summary.probeCount).toBe(0);
+		expect(summary.countedProbes).toBe(0);
+		expect(summary.excludedProbes).toEqual({});
 		expect(summary.successfulProbes).toBe(0);
 		expect(summary.totalPackets).toBe(0);
 		expect(summary.totalReceived).toBe(0);
@@ -144,7 +145,7 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
+		expect(summary.countedProbes).toBe(2);
 		expect(summary.successfulProbes).toBe(1);
 		expect(summary.totalPackets).toBe(3);
 	});
@@ -174,7 +175,7 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
+		expect(summary.countedProbes).toBe(2);
 		expect(summary.successfulProbes).toBe(1);
 	});
 
@@ -365,6 +366,7 @@ describe("formatMeasurementSummary", () => {
 		expect(summary).toContain("Probes: 2");
 		expect(summary).toContain("Ping Results:");
 		expect(summary).toContain("Probe 1: New York (NY), US, NA, Verizon (AS12345)");
+		expect(summary).toContain("  Status: finished\n  RTT min/avg/max: 10/15/20 ms\n");
 	});
 
 	it("should format traceroute measurement summary", () => {
@@ -570,8 +572,111 @@ describe("formatMeasurementSummary", () => {
 
 		const summary = formatMeasurementSummary(measurement);
 
-		expect(summary).toContain("Probe 1: Paris, FR (AS44444)");
-		expect(summary).toContain("Status: failed");
+		expect(summary).toContain("Probe 1: Paris, FR (AS44444)\n  Status: Error\n");
+	});
+
+	it.each([
+		{
+			type: "ping",
+			result: { status: "failed", failureSource: "target" },
+			label: "Target error",
+		},
+		{
+			type: "traceroute",
+			result: { status: "failed", failureSource: "resolver" },
+			label: "Resolver error",
+		},
+		{
+			type: "dns",
+			result: { status: "failed", failureSource: "internal" },
+			label: "Internal error",
+		},
+		{
+			type: "mtr",
+			result: { status: "failed", failureSource: "unknown-source" },
+			label: "Error",
+		},
+		{ type: "http", result: { status: "offline" }, label: "Probe offline" },
+	])("should label $type probe result as $label", ({ type, result, label }) => {
+		const measurement = {
+			id: "test-id-failure-source",
+			type,
+			target: "example.com",
+			status: "finished",
+			probesCount: 1,
+			results: [
+				{
+					probe: {
+						city: "Paris",
+						country: "FR",
+						asn: 44444,
+					},
+					result: { ...result, rawOutput: "" },
+				},
+			],
+		};
+
+		const summary = formatMeasurementSummary(measurement);
+
+		expect(summary).toContain(`Probe 1: Paris, FR (AS44444)\n  Status: ${label}\n`);
+	});
+
+	it("should report ping probes that do not count against the target separately", () => {
+		const probe = { city: "Paris", country: "FR", asn: 44444 };
+		const measurement = {
+			id: "test-id-excluded",
+			type: "ping",
+			target: "google.com",
+			status: "finished",
+			probesCount: 7,
+			results: [
+				{
+					probe,
+					result: {
+						status: "finished",
+						stats: { total: 3, rcv: 3, drop: 0, loss: 0, min: 10, avg: 15, max: 20 },
+					},
+				},
+				{ probe, result: { status: "failed", failureSource: "target" } },
+				{ probe, result: { status: "failed", failureSource: "internal" } },
+				{ probe, result: { status: "offline" } },
+				{ probe, result: { status: "failed" } },
+				{ probe, result: { status: "failed", failureSource: "resolver" } },
+				{ probe, result: { status: "failed", failureSource: "internal" } },
+			],
+		};
+
+		const summary = formatMeasurementSummary(measurement);
+
+		expect(summary).toContain(
+			"- Successful Probes: 1/3\n- Excluded Probes: 4 (Internal error: 2, Probe offline: 1, Resolver error: 1)\n",
+		);
+	});
+
+	it("should omit the excluded probes line when every ping probe counts", () => {
+		const probe = { city: "Paris", country: "FR", asn: 44444 };
+		const measurement = {
+			id: "test-id-counted",
+			type: "ping",
+			target: "google.com",
+			status: "finished",
+			probesCount: 2,
+			results: [
+				{
+					probe,
+					result: {
+						status: "finished",
+						stats: { total: 3, rcv: 3, drop: 0, loss: 0, min: 10, avg: 15, max: 20 },
+					},
+				},
+				{ probe, result: { status: "failed", failureSource: "target" } },
+			],
+		};
+
+		const summary = formatMeasurementSummary(measurement);
+
+		expect(summary).toContain("- Successful Probes: 1/2\n- Total Packets: 3\n");
+		expect(summary).not.toContain("Excluded Probes");
 	});
 
 	it("should handle unknown measurement type", () => {

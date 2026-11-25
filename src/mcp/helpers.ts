@@ -1,6 +1,13 @@
 /**
  * MCP tool helper functions
  */
+import type { FailureSource, TestResult } from "globalping";
+
+const FAILURE_SOURCE_LABELS: Record<FailureSource, string> = {
+	target: "Target error",
+	resolver: "Resolver error",
+	internal: "Internal error",
+};
 
 /**
  * Parse locations parameter into the correct format
@@ -17,12 +24,42 @@ export function parseLocations(locations?: string[] | string): { magic: string }
 	return locations.map((loc) => ({ magic: loc }));
 }
 
+function formatResultStatus(result: TestResult): string {
+	if (result.status === "failed") {
+		const label = result.failureSource && FAILURE_SOURCE_LABELS[result.failureSource];
+		return label ?? "Error";
+	}
+
+	if (result.status === "offline") {
+		return "Probe offline";
+	}
+
+	return result.status;
+}
+
 /**
  * Calculate average values from ping measurement results
  * @param results The measurement results
  * @returns Summary statistics
  */
 export function calculateAverages(results: any) {
+	const excludedProbes: Record<string, number> = {};
+	let countedProbes = 0;
+
+	for (const item of results) {
+		const { status, failureSource } = item.result;
+		const excluded =
+			status === "offline" ||
+			(status === "failed" && (failureSource === "internal" || failureSource === "resolver"));
+
+		if (excluded) {
+			const label = formatResultStatus(item.result);
+			excludedProbes[label] = (excludedProbes[label] ?? 0) + 1;
+		} else {
+			countedProbes++;
+		}
+	}
+
 	const summary = {
 		totalPackets: 0,
 		totalReceived: 0,
@@ -31,7 +68,8 @@ export function calculateAverages(results: any) {
 		minRtt: null as number | null,
 		maxRtt: null as number | null,
 		avgRtt: null as number | null,
-		probeCount: results.length,
+		countedProbes,
+		excludedProbes,
 		successfulProbes: 0,
 	};
 
@@ -124,7 +162,18 @@ export function formatMeasurementSummary(measurement: any): string {
 		case "ping": {
 			const pingStats = calculateAverages(measurement.results);
 			summary += "Ping Results:\n\n";
-			summary += `- Successful Probes: ${pingStats.successfulProbes}/${pingStats.probeCount}\n`;
+			summary += `- Successful Probes: ${pingStats.successfulProbes}/${pingStats.countedProbes}\n`;
+
+			const excludedCount = measurement.results.length - pingStats.countedProbes;
+
+			if (excludedCount > 0) {
+				const breakdown = Object.entries(pingStats.excludedProbes)
+					.map(([label, count]) => `${label}: ${count}`)
+					.join(", ");
+
+				summary += `- Excluded Probes: ${excludedCount} (${breakdown})\n`;
+			}
+
 			summary += `- Total Packets: ${pingStats.totalPackets}\n`;
 			summary += `- Received: ${pingStats.totalReceived}\n`;
 			summary += `- Dropped: ${pingStats.totalDropped}\n`;
@@ -149,9 +198,9 @@ export function formatMeasurementSummary(measurement: any): string {
 				const testResult = result.result;
 
 				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
+				summary += `  Status: ${formatResultStatus(testResult)}\n`;
 
 				if (testResult.status === "finished" && testResult.stats) {
-					summary += `  Status: ${testResult.status}\n`;
 					const min = testResult.stats.min !== undefined ? testResult.stats.min : "N/A";
 					const avg = testResult.stats.avg !== undefined ? testResult.stats.avg : "N/A";
 					const max = testResult.stats.max !== undefined ? testResult.stats.max : "N/A";
@@ -163,8 +212,6 @@ export function formatMeasurementSummary(measurement: any): string {
 
 					summary += `  RTT min/avg/max: ${min}/${avg}/${max} ms\n`;
 					summary += `  Packet Loss: ${loss}%\n`;
-				} else {
-					summary += `  Status: ${testResult.status}\n`;
 				}
 			});
 			break;
@@ -177,7 +224,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const testResult = result.result;
 
 				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-				summary += `  Status: ${testResult.status}\n`;
+				summary += `  Status: ${formatResultStatus(testResult)}\n`;
 
 				if (testResult.status === "finished" && testResult.hops) {
 					testResult.hops.forEach((hop: any, hopIndex: number) => {
@@ -201,7 +248,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const testResult = result.result;
 
 				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-				summary += `  Status: ${testResult.status}\n`;
+				summary += `  Status: ${formatResultStatus(testResult)}\n`;
 
 				if (testResult.status === "finished") {
 					if (testResult.hops) {
@@ -248,7 +295,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const testResult = result.result;
 
 				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-				summary += `  Status: ${testResult.status}\n`;
+				summary += `  Status: ${formatResultStatus(testResult)}\n`;
 
 				if (testResult.status === "finished" && testResult.hops) {
 					testResult.hops.forEach((hop: any, hopIndex: number) => {
@@ -279,7 +326,7 @@ export function formatMeasurementSummary(measurement: any): string {
 				const testResult = result.result;
 
 				summary += `Probe ${index + 1}: ${formatProbeLocation(probe)}\n`;
-				summary += `  Status: ${testResult.status}\n`;
+				summary += `  Status: ${formatResultStatus(testResult)}\n`;
 
 				if (testResult.status === "finished") {
 					summary += `  HTTP Status: ${testResult.statusCode} ${testResult.statusCodeName}\n`;
