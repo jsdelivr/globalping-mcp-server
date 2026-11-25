@@ -1,0 +1,63 @@
+{
+	"id": "27i0HTDRJKYV9ZSMe00321XRv",
+	"type": "mtr",
+	"status": "finished",
+	"createdAt": "2026-11-20T11:43:54.271Z",
+	"updatedAt": "2026-11-20T11:44:00.438Z",
+	"target": "www.jsdelivr.com",
+	"limit": 50,
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "London"
+		}
+	],
+	"measurementOptions": {
+		"protocol": "UDP",
+		"packets": 1
+	},
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "GB",
+				"state": null,
+				"city": "London",
+				"asn": 204731,
+				"longitude": -0.13,
+				"latitude": 51.51,
+				"network": "FIBRENEST",
+				"tags": ["eyeball-network", "u-joshua-am"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "Host                           Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? (waiting for reply) \n",
+				"resolvedAddress": "104.21.8.91",
+				"resolvedHostname": "www.jsdelivr.com",
+				"hops": [
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 1,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 1,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					}
+				]
+			}
+		}
+	]
+}

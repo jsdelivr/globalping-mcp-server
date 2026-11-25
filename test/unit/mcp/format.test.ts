@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { formatMeasurement } from "../../../src/mcp/format";
 import dns from "./fixtures/dns.json";
 import dnsCname from "./fixtures/dns-cname.json";
+import dnsManyAnswers from "./fixtures/dns-many-answers.json";
 import dnsNoAnswers from "./fixtures/dns-no-answers.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
@@ -13,11 +14,14 @@ import httpFailed from "./fixtures/http-failed.json";
 import httpGet from "./fixtures/http-get.json";
 import httpIp from "./fixtures/http-ip.json";
 import mtr from "./fixtures/mtr.json";
+import mtrNoReplies from "./fixtures/mtr-no-replies.json";
 import mtrNoReply from "./fixtures/mtr-no-reply.json";
 import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
+import pingLost from "./fixtures/ping-lost.json";
 import traceroute from "./fixtures/traceroute.json";
 import tracerouteHopLimit from "./fixtures/traceroute-hop-limit.json";
+import tracerouteNoReplies from "./fixtures/traceroute-no-replies.json";
 import tracerouteNoReply from "./fixtures/traceroute-no-reply.json";
 
 // Print strings in snapshots as they are, without quotes and escapes.
@@ -719,8 +723,35 @@ describe("formatMeasurement", () => {
 				- Max RTT: 5.45 ms
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | loss 0%, rtt 5.294 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, rtt 3.375 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | IP 142.250.154.113, 0/3 lost (0%), rtt min/avg/max 5.142/5.294/5.45 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | IP 173.194.221.102, 0/3 lost (0%), rtt min/avg/max 3.199/3.375/3.534 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize ping that lost all packets", () => {
+			expect(formatMeasurement(pingLost, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2455mfQeJyZvnKyNt00321XS7
+				Type: ping
+				Target: amazon.com
+				Status: finished
+				Created: 2026-11-20T11:55:32.610Z
+				Updated: 2026-11-20T11:55:41.248Z
+				Locations: [{"magic":"Hetzner"}]
+				Limit: 3
+				Options: {"packets":8}
+				Probes: 1
+
+				Ping Results:
+				- Successful Probes: 1/1
+				- Total Packets: 8
+				- Received: 0
+				- Dropped: 8
+				- Average Loss: 100.00%
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | IP 98.82.161.185, 8/8 lost (100%)
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -739,8 +770,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 3.06 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -759,8 +790,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.78, rtt 6.925 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.25, rtt 1.429 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -779,8 +810,28 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target
-				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target
+				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target, last reply from 143.107.151.62, rtt 181.028 ms
+				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target, last reply from 199.100.13.162, rtt 279.96 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize traceroute without a reply from any hop", () => {
+			expect(formatMeasurement(tracerouteNoReplies, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 21pG9dmGygyGfggcP00321XRz
+				Type: traceroute
+				Target: fastly.com
+				Status: finished
+				Created: 2026-11-20T11:47:17.425Z
+				Updated: 2026-11-20T11:47:27.068Z
+				Locations: [{"magic":"Tokyo"}]
+				Limit: 50
+				Options: {"protocol":"UDP","port":443}
+				Probes: 1
+
+				Results, one line per probe:
+				1: Tokyo, JP, AS, ZOUTER (AS205548) | 20 hops, no replies
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -799,8 +850,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, loss 0%, rtt 5.3 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, loss 0%, rtt 3.3 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 13 hops, target 142.250.154.101 reached, loss 0%, rtt 5.3 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, target 64.233.161.139 reached, loss 0%, rtt 3.3 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -819,8 +870,28 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, no reply from target
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 9 hops, no reply from target
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 142.250.225.39, loss 0%, rtt 2 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 213.239.224.10, loss 0%, rtt 5.4 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize mtr without a reply from any hop", () => {
+			expect(formatMeasurement(mtrNoReplies, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 27i0HTDRJKYV9ZSMe00321XRv
+				Type: mtr
+				Target: www.jsdelivr.com
+				Status: finished
+				Created: 2026-11-20T11:43:54.271Z
+				Updated: 2026-11-20T11:44:00.438Z
+				Locations: [{"magic":"London"}]
+				Limit: 50
+				Options: {"protocol":"UDP","packets":1}
+				Probes: 1
+
+				Results, one line per probe:
+				1: London, GB, EU, FIBRENEST (AS204731) | 1 hops, no replies
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -839,8 +910,26 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | NOERROR, A 74.125.205.101, 74.125.205.139, 74.125.205.102, 74.125.205.138, 74.125.205.113, 74.125.205.100, total 0 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | NOERROR, A 142.251.127.113, 142.251.127.138, 142.251.127.101, 142.251.127.102, 142.251.127.139, 142.251.127.100, total 0 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should cut a long list of dns answers", () => {
+			expect(formatMeasurement(dnsManyAnswers, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2m9RfyRtEcneswZfF00321XS7
+				Type: dns
+				Target: registry.npmjs.org
+				Status: finished
+				Created: 2026-11-20T11:55:17.460Z
+				Updated: 2026-11-20T11:55:17.715Z
+				Locations: [{"magic":"eyeball"}]
+				Probes: 1
+
+				Results, one line per probe:
+				1: Kuala Lumpur, MY, AS, TM TECHNOLOGY SERVICES (AS4788) | NOERROR, A 104.16.1.34, 104.16.11.34, 104.16.10.34, 104.16.2.34, 104.16.6.34, 104.16.5.34, 104.16.8.34, 104.16.7.34, 104.16.0.34, 104.16.9.34 and 2 more, total 20 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -859,8 +948,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | CNAME github.com.; A 4.163.8.144, total 8 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | CNAME github.com.; A 140.82.121.4, total 0 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NOERROR, CNAME github.com.; A 4.163.8.144, total 8 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NOERROR, CNAME github.com.; A 140.82.121.4, total 0 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -879,7 +968,7 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, no answers, total 15 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | NXDOMAIN, no answers, resolver 185.12.64.2, total 15 ms
 				2: Helsinki, FI, EU, Hetzner Online (AS24940) | NXDOMAIN, no answers, total 32 ms
 
 				For details call getMeasurement with "probes" and output "full".
@@ -921,8 +1010,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, total 15 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, total 26 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, resolver ns2.google.com, total 15 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, resolver ns2.google.com, total 26 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -941,8 +1030,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 208 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 63 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301 Moved Permanently, IP 172.217.22.110, total 208 ms, first byte 56 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, IP 142.251.110.101, total 63 ms, first byte 34 ms
 
 				For details call getMeasurement with "probes" and output "headers" or "full".
 			`);
@@ -960,7 +1049,7 @@ describe("formatMeasurement", () => {
 				Probes: 1
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, total 36 ms, certificate not valid (ERR_TLS_CERT_ALTNAME_INVALID)
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 301 Moved Permanently, IP 1.1.1.1, total 36 ms, first byte 17 ms, certificate not valid (ERR_TLS_CERT_ALTNAME_INVALID)
 
 				For details call getMeasurement with "probes" and output "headers" or "full".
 			`);
@@ -990,7 +1079,7 @@ describe("formatMeasurement", () => {
 				Probes: 1
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301, total 208 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 301, IP 172.217.22.110, total 208 ms, first byte 56 ms
 
 				For details call getMeasurement with "probes" and output "headers" or "full".
 			`);
@@ -1125,8 +1214,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, rtt 3.06 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 3.06 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1272,7 +1361,7 @@ describe("formatMeasurement", () => {
 				- Max RTT: 5.45 ms
 
 				Results, one line per probe:
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | loss 0%, rtt 3.375 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | IP 173.194.221.102, 0/3 lost (0%), rtt min/avg/max 3.199/3.375/3.534 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1299,7 +1388,7 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, rtt 5.425 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1321,7 +1410,7 @@ describe("formatMeasurement", () => {
 				),
 			).toThrow(
 				new Error(
-					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'trimEnd'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
+					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'findLast'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
 				),
 			);
 		});

@@ -1,0 +1,51 @@
+{
+	"id": "2455mfQeJyZvnKyNt00321XS7",
+	"type": "ping",
+	"status": "finished",
+	"createdAt": "2026-11-20T11:55:32.610Z",
+	"updatedAt": "2026-11-20T11:55:41.248Z",
+	"target": "amazon.com",
+	"limit": 3,
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "Hetzner"
+		}
+	],
+	"measurementOptions": {
+		"packets": 8
+	},
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "PING amazon.com (98.82.161.185) 56(84) bytes of data.\nno answer yet for icmp_seq=1\nno answer yet for icmp_seq=2\nno answer yet for icmp_seq=3\nno answer yet for icmp_seq=4\nno answer yet for icmp_seq=5\nno answer yet for icmp_seq=6\nno answer yet for icmp_seq=7\n\n--- amazon.com ping statistics ---\n8 packets transmitted, 0 received, 100% packet loss, time 3576ms\n",
+				"resolvedAddress": "98.82.161.185",
+				"resolvedHostname": "amazon.com",
+				"timings": [],
+				"stats": {
+					"min": null,
+					"max": null,
+					"avg": null,
+					"total": 8,
+					"loss": 100,
+					"rcv": 0,
+					"drop": 8
+				}
+			}
+		}
+	]
+}

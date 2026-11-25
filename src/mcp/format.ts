@@ -15,6 +15,8 @@ import { formatMs, isSelected } from "./helpers";
 // Above this length the default output is one line per probe.
 const MAX_FULL_OUTPUT_LENGTH = 30_000;
 
+const MAX_DNS_SUMMARY_ANSWERS = 10;
+
 /**
  * Format a measurement response as text
  * @param measurement The measurement response
@@ -176,48 +178,76 @@ function formatProbeSummary(type: string, result: any): string {
 }
 
 const summaryByType: Record<string, (result: any) => string> = {
-	ping: (result) => `loss ${result.stats.loss}%, rtt ${formatMs(result.stats.avg)}`,
-	traceroute: (result) => {
-		if (!isTargetReached(result)) {
-			return `${result.hops.length} hops, no reply from target`;
+	ping: (result) => {
+		const { stats } = result;
+		const loss = `IP ${result.resolvedAddress}, ${stats.drop}/${stats.total} lost (${stats.loss}%)`;
+
+		if (stats.rcv === 0) {
+			return loss;
 		}
 
-		const rtts: number[] = result.hops.at(-1).timings.map((timing: any) => timing.rtt);
+		return `${loss}, rtt min/avg/max ${stats.min}/${stats.avg}/${stats.max} ms`;
+	},
+	traceroute: (result) => {
+		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
+
+		if (!hop) {
+			return `${result.hops.length} hops, no replies`;
+		}
+
+		const rtts: number[] = hop.timings.map((timing: any) => timing.rtt);
 		const sum = rtts.reduce((total, rtt) => total + rtt, 0);
 		const avg = Number((sum / rtts.length).toFixed(3));
-		return `${result.hops.length} hops, rtt ${avg} ms`;
-	},
-	mtr: (result) => {
+
 		if (!isTargetReached(result)) {
-			return `${result.hops.length} hops, no reply from target`;
+			return `${result.hops.length} hops, no reply from target, last reply from ${hop.resolvedAddress}, rtt ${avg} ms`;
 		}
 
-		const { stats } = result.hops.at(-1);
-		return `${result.hops.length} hops, loss ${stats.loss}%, rtt ${stats.avg} ms`;
+		return `${result.hops.length} hops, target ${result.resolvedAddress} reached, rtt ${avg} ms`;
+	},
+	mtr: (result) => {
+		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
+
+		if (!hop) {
+			return `${result.hops.length} hops, no replies`;
+		}
+
+		const { stats } = hop;
+
+		if (!isTargetReached(result)) {
+			return `${result.hops.length} hops, no reply from target, last reply from ${hop.resolvedAddress}, loss ${stats.loss}%, rtt ${stats.avg} ms`;
+		}
+
+		return `${result.hops.length} hops, target ${result.resolvedAddress} reached, loss ${stats.loss}%, rtt ${stats.avg} ms`;
 	},
 	dns: (result) => {
 		// A trace has the final answers in its last hop.
-		const { answers, timings } = result.hops ? result.hops.at(-1) : result;
-		const answersByType = Object.groupBy(answers, (answer: any) => answer.type);
+		const { answers, timings, resolver } = result.hops ? result.hops.at(-1) : result;
+		const shown = answers.slice(0, MAX_DNS_SUMMARY_ANSWERS);
+		const answersByType = Object.groupBy(shown, (answer: any) => answer.type);
 		const records = Object.entries(answersByType)
 			.map(
 				([type, group]: any) =>
 					`${type} ${group.map((answer: any) => answer.value).join(", ")}`,
 			)
 			.join("; ");
+		const more =
+			answers.length > shown.length ? ` and ${answers.length - shown.length} more` : "";
 
-		if (!records) {
-			const status = result.statusCodeName ? `${result.statusCodeName}, ` : "";
-			return `${status}no answers, total ${formatMs(timings.total)}`;
-		}
-
-		return `${records}, total ${formatMs(timings.total)}`;
+		return [
+			result.statusCodeName,
+			records ? records + more : "no answers",
+			resolver && resolver !== "private" && `resolver ${resolver}`,
+			`total ${formatMs(timings.total)}`,
+		]
+			.filter(Boolean)
+			.join(", ");
 	},
 	http: (result) => {
 		const statusName = result.statusCodeName ? ` ${result.statusCodeName}` : "";
 		const certificate =
 			result.tls?.authorized === false ? `, certificate not valid (${result.tls.error})` : "";
-		return `${result.statusCode}${statusName}, total ${formatMs(result.timings.total)}${certificate}`;
+		return `${result.statusCode}${statusName}, IP ${result.resolvedAddress}, total ${formatMs(result.timings.total)}, first byte ${formatMs(result.timings.firstByte)}${certificate}`;
 	},
 };
 
