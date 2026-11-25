@@ -10,7 +10,7 @@ import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOr
 import { registerGlobalpingTools } from "./mcp";
 import type { GlobalpingEnv, Props, State } from "./types";
 
-export { GrantStore } from "./auth/grant-store";
+export { GrantStore } from "./auth";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer(

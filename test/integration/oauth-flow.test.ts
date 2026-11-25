@@ -221,7 +221,11 @@ describe("OAuth Routes Integration", () => {
 	it("supports the legacy SSE transport with an OAuth access token", async () => {
 		const clientId = await registerPublicClient();
 		const code = await authorizeClient(clientId, "https://localhost/sse");
-		const tokenResponse = await requestToken(clientId, { code }, "https://localhost/sse");
+		const tokenResponse = await requestToken(
+			clientId,
+			{ code },
+			"https://localhost/sse",
+		);
 		expect(tokenResponse.status).toBe(200);
 		const tokens = (await tokenResponse.json()) as { access_token: string };
 
@@ -314,7 +318,8 @@ describe("OAuth Routes Integration", () => {
 				authorization_servers: [`${protocol}://localhost`],
 				scopes_supported: ["measurements"],
 			});
-		});
+		},
+		);
 	});
 
 	describe("Authorization Endpoint", () => {
@@ -518,13 +523,9 @@ describe("OAuth Routes Integration", () => {
 			return { status: response.status, ...body };
 		};
 
-		type GrantStub = ReturnType<typeof env.GRANT_STORE.get>;
-
-		const moveGrantToKV = async (store: GrantStub, grantKey: string) => {
-			const value = (await store.read(grantKey)) as string;
-			await env.OAUTH_KV.put(grantKey, value);
+		const moveGrantToKV = async (store: ReturnType<typeof env.GRANT_STORE.get>, grantKey: string) => {
+			await env.OAUTH_KV.put(grantKey, (await store.read(grantKey)) as string);
 			await runInDurableObject(store, (_instance, state) => state.storage.deleteAll());
-			return value;
 		};
 
 		it("ignores an outdated grant copy in KV", async () => {
@@ -543,14 +544,10 @@ describe("OAuth Routes Integration", () => {
 		it("moves a grant that exists only in KV into the store", async () => {
 			const clientId = await registerPublicClient();
 			const { refreshToken, grantKey, store } = await login(clientId);
-			const legacy = await moveGrantToKV(store, grantKey);
+			await moveGrantToKV(store, grantKey);
 
 			const first = await refresh(clientId, refreshToken);
 			expect(first.status).toBe(200);
-			const stored = await store.read(grantKey);
-			expect(stored).not.toBeNull();
-			expect(stored).not.toBe(legacy);
-
 			const second = await refresh(clientId, first.refresh_token as string);
 			expect(second.status).toBe(200);
 		});

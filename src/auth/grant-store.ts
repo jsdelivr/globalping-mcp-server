@@ -1,10 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import type { GlobalpingEnv } from "../types";
 
-// The OAuth provider keeps grants in OAUTH_KV. KV caches reads in each Cloudflare
-// location for up to 60 seconds, so a refresh in one location can read a grant from
-// before a token rotation in another location and reject a valid refresh token.
-// Grants are kept in one Durable Object per user instead, so all locations read the same data.
+// Grants live in one Durable Object per user, not in KV.
+// KV can return old data for up to 60 seconds, and a refresh with an old grant fails.
 
 const GRANT_PREFIX = "grant:";
 
@@ -12,119 +10,74 @@ type Entry = { value: string; expiresAt?: number };
 
 export class GrantStore extends DurableObject {
 	async read(key: string): Promise<string | null> {
-		return (await this.load(key))?.value ?? null;
+		const entry = await this.ctx.storage.get<Entry>(key);
+		if (!entry) {
+			return null;
+		}
+		if (entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) {
+			await this.ctx.storage.delete(key);
+			return null;
+		}
+		return entry.value;
 	}
 
 	async write(key: string, value: string, expiresAt?: number): Promise<void> {
 		await this.ctx.storage.put<Entry>(key, { value, expiresAt });
 	}
 
-	// Migration from KV: can be removed after 2027-01-01.
-	async writeIfMissing(key: string, value: string, expiresAt?: number): Promise<string> {
-		const entry = await this.load(key);
-		if (entry) {
-			return entry.value;
-		}
-		await this.write(key, value, expiresAt);
-		return value;
-	}
-
 	async remove(key: string): Promise<void> {
 		await this.ctx.storage.delete(key);
 	}
 
-	async list(prefix: string): Promise<string[]> {
-		const keys: string[] = [];
-		for (const [key, entry] of await this.ctx.storage.list<Entry>({ prefix })) {
-			if (isExpired(entry)) {
-				await this.ctx.storage.delete(key);
-			} else {
-				keys.push(key);
-			}
-		}
-		return keys;
-	}
-
-	private async load(key: string): Promise<Entry | undefined> {
-		const entry = await this.ctx.storage.get<Entry>(key);
-		if (entry && isExpired(entry)) {
-			await this.ctx.storage.delete(key);
-			return undefined;
-		}
-		return entry;
+	async list(): Promise<string[]> {
+		return [...(await this.ctx.storage.list()).keys()];
 	}
 }
 
-function isExpired(entry: Entry) {
-	return entry.expiresAt !== undefined && entry.expiresAt <= Date.now();
-}
-
-/**
- * Returns env with OAUTH_KV replaced by a KV that keeps grant:* keys in GrantStore
- * and passes all other keys to the real KV.
- */
 export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 	const kv = env.OAUTH_KV;
-	const storeFor = (userId: string) => env.GRANT_STORE.get(env.GRANT_STORE.idFromName(userId));
 	// Keys look like grant:{userId}:{grantId}.
-	const userOf = (key: string) => key.slice(GRANT_PREFIX.length, key.lastIndexOf(":"));
+	const storeFor = (key: string) =>
+		env.GRANT_STORE.get(
+			env.GRANT_STORE.idFromName(key.slice(GRANT_PREFIX.length, key.lastIndexOf(":"))),
+		);
 
 	const grantKV = {
 		async get(key: string, options?: any) {
 			if (!key.startsWith(GRANT_PREFIX)) {
 				return kv.get(key, options);
 			}
-			const store = storeFor(userOf(key));
-			let value = await store.read(key);
+			let value = await storeFor(key).read(key);
 
-			// Migration from KV: can be removed after 2027-01-01, when all grants in KV have expired.
-			if (value === null) {
-				const legacy = await kv.get(key);
-				if (legacy !== null) {
-					const { expiresAt } = JSON.parse(legacy);
-					value = await store.writeIfMissing(
-						key,
-						legacy,
-						typeof expiresAt === "number" ? expiresAt * 1000 : undefined,
-					);
-				}
-			}
+			// Old grants are still in KV. Can be removed after 2027-01-01.
+			value ??= await kv.get(key);
 
 			if (value === null) {
 				return null;
 			}
-			const type = typeof options === "string" ? options : (options?.type ?? "text");
-			if (type === "json") {
-				return JSON.parse(value);
-			}
-			if (type === "text") {
-				return value;
-			}
-			throw new Error(`Unsupported read type for grants: ${type}`);
+			return options?.type === "json" ? JSON.parse(value) : value;
 		},
 
-		async put(key: string, value: any, options?: KVNamespacePutOptions) {
+		async put(key: string, value: string, options?: KVNamespacePutOptions) {
 			if (!key.startsWith(GRANT_PREFIX)) {
 				return kv.put(key, value, options);
-			}
-			if (typeof value !== "string") {
-				throw new Error("Grants must be stored as strings");
 			}
 			const expiresAt = options?.expiration
 				? options.expiration * 1000
 				: options?.expirationTtl
 					? Date.now() + options.expirationTtl * 1000
 					: undefined;
-			await storeFor(userOf(key)).write(key, value, expiresAt);
+			await storeFor(key).write(key, value, expiresAt);
 		},
 
 		async delete(key: string) {
 			if (!key.startsWith(GRANT_PREFIX)) {
 				return kv.delete(key);
 			}
-			await storeFor(userOf(key)).remove(key);
-			// Migration from KV: can be removed after 2027-01-01, when all grants in KV have expired.
+			// Old grants are still in KV. Can be removed after 2027-01-01.
+			// KV goes first, so a read between the two deletes does not find the grant there.
 			await kv.delete(key);
+			await storeFor(key).remove(key);
 		},
 
 		async list(options?: KVNamespaceListOptions) {
@@ -135,28 +88,15 @@ export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 			if (prefix === GRANT_PREFIX || !prefix.endsWith(":")) {
 				throw new Error("Grants can only be listed for one user");
 			}
-			const names = new Set(
-				await storeFor(prefix.slice(GRANT_PREFIX.length, -1)).list(prefix),
-			);
+			const names = new Set(await storeFor(prefix).list());
 
-			// Migration from KV: can be removed after 2027-01-01, when all grants in KV have expired.
-			let cursor: string | undefined;
-			do {
-				const page = await kv.list({ prefix, cursor });
-				for (const { name } of page.keys) {
-					names.add(name);
-				}
-				cursor = page.list_complete ? undefined : page.cursor;
-			} while (cursor);
+			// Old grants are still in KV. Can be removed after 2027-01-01.
+			for (const { name } of (await kv.list({ prefix })).keys) {
+				names.add(name);
+			}
 
-			return {
-				keys: [...names].map((name) => ({ name })),
-				list_complete: true,
-				cacheStatus: null,
-			};
+			return { keys: [...names].map((name) => ({ name })), list_complete: true };
 		},
-
-		getWithMetadata: kv.getWithMetadata.bind(kv),
 	};
 
 	return { ...env, OAUTH_KV: grantKV as unknown as KVNamespace };
