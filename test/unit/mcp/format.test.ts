@@ -19,6 +19,7 @@ import mtrNoReply from "./fixtures/mtr-no-reply.json";
 import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
 import pingLost from "./fixtures/ping-lost.json";
+import pingResolverFailed from "./fixtures/ping-resolver-failed.json";
 import traceroute from "./fixtures/traceroute.json";
 import tracerouteHopLimit from "./fixtures/traceroute-hop-limit.json";
 import tracerouteNoReplies from "./fixtures/traceroute-no-replies.json";
@@ -673,6 +674,44 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should not count probes that failed for a reason other than the target", () => {
+		expect(formatMeasurement(pingResolverFailed)).toMatchInlineSnapshot(`
+			Measurement ID: 2CbzBns1VzVs8U55q00321ZNs
+			Type: ping
+			Target: dnssec-failed.org
+			Status: finished
+			Created: 2026-11-25T15:40:50.559Z
+			Updated: 2026-11-25T15:40:56.794Z
+			Locations: [{"magic":"world"}]
+			Limit: 20
+			Probes: 3
+
+			Ping Results:
+			- Successful Probes: 1/1
+			- Excluded Probes: 2 (resolver error: 2)
+			- Total Packets: 3
+			- Received: 0
+			- Dropped: 3
+			- Average Loss: 100.00%
+
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Status: failed (resolver)
+			queryA ESERVFAIL dnssec-failed.org
+
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Status: failed (resolver)
+			queryA ESERVFAIL dnssec-failed.org
+
+			Probe 3: Lauterbourg, FR, EU, Contabo (AS51167)
+			PING dnssec-failed.org (96.99.227.255) 56(84) bytes of data.
+			no answer yet for icmp_seq=1
+			no answer yet for icmp_seq=2
+
+			--- dnssec-failed.org ping statistics ---
+			3 packets transmitted, 0 received, 100% packet loss, time 1043ms
+		`);
+	});
+
 	it("should handle a probe without raw output", () => {
 		const offline = {
 			...ping,
@@ -692,7 +731,8 @@ describe("formatMeasurement", () => {
 			Probes: 1
 
 			Ping Results:
-			- Successful Probes: 0/1
+			- Successful Probes: 0/0
+			- Excluded Probes: 1 (offline: 1)
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
 			Status: offline
@@ -1144,7 +1184,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Ping Results:
-				- Successful Probes: 0/2
+				- Successful Probes: 0/1
+				- Excluded Probes: 1 (internal error: 1)
 
 				Results, one line per probe:
 				1: Helsinki, FI, EU, Hetzner Online (AS24940) | failed (target)

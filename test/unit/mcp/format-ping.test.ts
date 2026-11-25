@@ -39,7 +39,6 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
 		expect(summary.successfulProbes).toBe(2);
 		expect(summary.totalPackets).toBe(6);
 		expect(summary.totalReceived).toBe(5);
@@ -53,7 +52,6 @@ describe("calculateAverages", () => {
 	it("should handle empty results array", () => {
 		const summary = calculateAverages([]);
 
-		expect(summary.probeCount).toBe(0);
 		expect(summary.successfulProbes).toBe(0);
 		expect(summary.totalPackets).toBe(0);
 		expect(summary.totalReceived).toBe(0);
@@ -98,7 +96,6 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
 		expect(summary.successfulProbes).toBe(1);
 		expect(summary.totalPackets).toBe(3);
 	});
@@ -128,7 +125,6 @@ describe("calculateAverages", () => {
 
 		const summary = calculateAverages(results);
 
-		expect(summary.probeCount).toBe(2);
 		expect(summary.successfulProbes).toBe(1);
 	});
 

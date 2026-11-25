@@ -2,10 +2,26 @@
  * Ping parts of the measurement text
  */
 
+const EXCLUDED_LABELS: Record<string, string> = {
+	offline: "offline",
+	internal: "internal error",
+	resolver: "resolver error",
+};
+
 export function formatPingTotals(results: any): string {
 	const pingStats = calculateAverages(results);
+	const excluded: string[] = results
+		.map(({ result }: any) => EXCLUDED_LABELS[result.failureSource ?? result.status])
+		.filter(Boolean);
 	let text = "\nPing Results:\n";
-	text += `- Successful Probes: ${pingStats.successfulProbes}/${pingStats.probeCount}\n`;
+	text += `- Successful Probes: ${pingStats.successfulProbes}/${results.length - excluded.length}\n`;
+
+	if (excluded.length > 0) {
+		const counts = Object.entries(Object.groupBy(excluded, (label) => label))
+			.map(([label, group]: any) => `${label}: ${group.length}`)
+			.join(", ");
+		text += `- Excluded Probes: ${excluded.length} (${counts})\n`;
+	}
 
 	if (pingStats.successfulProbes === 0) {
 		return text;
@@ -45,7 +61,6 @@ export function calculateAverages(results: any) {
 		minRtt: null as number | null,
 		maxRtt: null as number | null,
 		avgRtt: null as number | null,
-		probeCount: results.length,
 		successfulProbes: 0,
 	};
 
