@@ -33,7 +33,7 @@
 			},
 			"result": {
 				"status": "finished",
-				"rawOutput": "Host                           Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? (waiting for reply) \n",
+				"rawOutput": "Host                           Loss% Drop Rcv Avg  StDev  Javg\n1. AS??? (waiting for reply)",
 				"resolvedAddress": "104.21.8.91",
 				"resolvedHostname": "www.jsdelivr.com",
 				"hops": [

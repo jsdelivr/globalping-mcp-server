@@ -25,7 +25,7 @@
 			},
 			"result": {
 				"status": "finished",
-				"rawOutput": "\n; <<>> DiG 9.18.49-1~deb12u1-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 8229\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 66 72 61 31 35 (\"fra15\")\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t3545\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t5\tIN\tA\t4.163.8.144\n\n;; Query time: 8 msec\n;; SERVER: x.x.x.x#53(x.x.x.x) (UDP)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 82\n",
+				"rawOutput": "; <<>> DiG 9.18.49-1~deb12u1-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 8229\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 66 72 61 31 35 (\"fra15\")\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t3545\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t5\tIN\tA\t4.163.8.144\n\n;; Query time: 8 msec\n;; SERVER: x.x.x.x#53(x.x.x.x) (UDP)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 82",
 				"statusCodeName": "NOERROR",
 				"statusCode": 0,
 				"answers": [
@@ -64,7 +64,7 @@
 			},
 			"result": {
 				"status": "finished",
-				"rawOutput": "\n; <<>> DiG 9.16.44-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 5072\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t2039\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t31\tIN\tA\t140.82.121.4\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 73\n",
+				"rawOutput": "; <<>> DiG 9.16.44-Debian <<>> -t A www.github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 5072\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;www.github.com.\t\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.github.com.\t\t2039\tIN\tCNAME\tgithub.com.\ngithub.com.\t\t31\tIN\tA\t140.82.121.4\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Thu Nov 19 12:53:53 UTC 2026\n;; MSG SIZE  rcvd: 73",
 				"statusCodeName": "NOERROR",
 				"statusCode": 0,
 				"answers": [

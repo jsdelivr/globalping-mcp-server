@@ -713,6 +713,45 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should print only the status of a probe that is still running", () => {
+		const measurement = {
+			...pingFailed,
+			status: "in-progress",
+			results: [
+				{
+					probe: pingFailed.results[0].probe,
+					result: {
+						status: "in-progress",
+						rawOutput: "PING google.com (142.250.75.14) 56(84) bytes of data.\n",
+					},
+				},
+				pingFailed.results[1],
+			],
+		};
+
+		expect(formatMeasurement(measurement)).toMatchInlineSnapshot(`
+			Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
+			Type: ping
+			Target: nonexistent.google.com
+			Status: in-progress
+			Created: 2026-11-18T15:27:48.584Z
+			Updated: 2026-11-18T15:27:48.667Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Probes: 2
+
+			Ping Results:
+			- Successful Probes: 0/2
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Status: in-progress
+
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Status: failed (target)
+			queryA ENOTFOUND nonexistent.google.com
+		`);
+	});
+
 	it("should handle a probe without raw output", () => {
 		const offline = {
 			...ping,

@@ -34,7 +34,7 @@
 			},
 			"result": {
 				"status": "finished",
-				"rawOutput": "\n; <<>> DiG 9.16.44-Debian <<>> -t AAAA github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 484\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;github.com.\t\t\tIN\tAAAA\n\n;; AUTHORITY SECTION:\ngithub.com.\t\t896\tIN\tSOA\tns-1707.awsdns-21.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Fri Nov 20 17:04:09 UTC 2026\n;; MSG SIZE  rcvd: 123\n",
+				"rawOutput": "; <<>> DiG 9.16.44-Debian <<>> -t AAAA github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 484\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;github.com.\t\t\tIN\tAAAA\n\n;; AUTHORITY SECTION:\ngithub.com.\t\t896\tIN\tSOA\tns-1707.awsdns-21.co.uk. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Fri Nov 20 17:04:09 UTC 2026\n;; MSG SIZE  rcvd: 123",
 				"statusCodeName": "NOERROR",
 				"statusCode": 0,
 				"answers": [],
@@ -60,7 +60,7 @@
 			},
 			"result": {
 				"status": "finished",
-				"rawOutput": "\n; <<>> DiG 9.16.44-Debian <<>> -t AAAA github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 6709\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;github.com.\t\t\tIN\tAAAA\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Fri Nov 20 17:04:09 UTC 2026\n;; MSG SIZE  rcvd: 39\n",
+				"rawOutput": "; <<>> DiG 9.16.44-Debian <<>> -t AAAA github.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 6709\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;github.com.\t\t\tIN\tAAAA\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Fri Nov 20 17:04:09 UTC 2026\n;; MSG SIZE  rcvd: 39",
 				"statusCodeName": "NOERROR",
 				"statusCode": 0,
 				"answers": [],

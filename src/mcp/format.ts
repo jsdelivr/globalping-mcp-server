@@ -124,7 +124,8 @@ function formatHttpFull(measurement: any, level: "headers" | "full", probes?: nu
 	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
 }
 
-// A probe that did not finish has a status and what the tool printed so far.
+// A probe that is still running has only a status.
+// A probe that failed has a status and what the tool printed.
 function formatProbesFull(
 	measurement: any,
 	formatResult: (result: any, number: number) => string,
@@ -138,8 +139,14 @@ function formatProbesFull(
 				return title + formatResult(result, index + 1);
 			}
 
+			const status = `${title}Status: ${formatProbeStatus(result)}\n`;
+
+			if (result.status === "in-progress") {
+				return status;
+			}
+
 			const details = measurement.type === "http" ? formatHttpDetails(result) : "";
-			return `${title}Status: ${formatProbeStatus(result)}\n${details}${formatRawOutput(result)}`;
+			return status + details + formatRawOutput(result);
 		})
 		.filter((_text: string, index: number) => isSelected(index, probes))
 		.join("");
