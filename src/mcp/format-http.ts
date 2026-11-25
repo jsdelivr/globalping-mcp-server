@@ -24,39 +24,47 @@ export function formatCommonHeaders(commonHeaders: string[]): string {
 	return `\nHeaders same for all probes:\n${commonHeaders.join("\n")}\n`;
 }
 
-// For a probe that repeats the body of an earlier printed probe: the number of that earlier probe.
-export function findSameBodyProbes(results: any, probes?: number[]): Map<number, number> {
-	const firstProbeByBody = new Map<string, number>();
-	const sameBodyProbes = new Map<number, number>();
+// For a probe that repeats the value of an earlier printed probe: the number of that earlier probe.
+export function findSameProbes(
+	results: any,
+	probes: number[] | undefined,
+	getValue: (result: any) => string | null,
+): Map<number, number> {
+	const firstProbeByValue = new Map<string, number>();
+	const sameProbes = new Map<number, number>();
 
 	results.forEach(({ result }: any, index: number) => {
-		if (result.status !== "finished" || !result.rawBody || !isSelected(index, probes)) {
+		const value = getValue(result);
+
+		if (result.status !== "finished" || !value || !isSelected(index, probes)) {
 			return;
 		}
 
-		const firstProbe = firstProbeByBody.get(result.rawBody);
+		const firstProbe = firstProbeByValue.get(value);
 
 		if (firstProbe) {
-			sameBodyProbes.set(index + 1, firstProbe);
+			sameProbes.set(index + 1, firstProbe);
 		} else {
-			firstProbeByBody.set(result.rawBody, index + 1);
+			firstProbeByValue.set(value, index + 1);
 		}
 	});
 
-	return sameBodyProbes;
+	return sameProbes;
 }
 
 export function formatHttpResult(
 	result: any,
 	level: "headers" | "full",
 	commonHeaders: string[],
+	sameTlsProbe?: number,
 	sameBodyProbe?: number,
 ): string {
 	// The HTTP version is only in the first line of the raw output.
 	const statusLine = result.rawOutput.split("\n")[0];
+	const statusName = result.statusCodeName ? ` ${result.statusCodeName}` : "";
 	const headers = splitHeaders(result).filter((line) => !commonHeaders.includes(line));
-	let text = formatHttpDetails(result);
-	text += `${[statusLine, ...headers].join("\n")}\n`;
+	let text = formatHttpDetails(result, sameTlsProbe);
+	text += `${[statusLine + statusName, ...headers].join("\n")}\n`;
 
 	if (commonHeaders.length > 0) {
 		text += `Plus headers same for all probes (${commonHeaders.length}), listed at the top.\n`;
@@ -83,8 +91,7 @@ function splitHeaders(result: any): string[] {
 	return result.rawHeaders?.split("\n") ?? [];
 }
 
-// The raw output of HTTP has no timings and no TLS details.
-export function formatHttpDetails(result: any): string {
+export function formatHttpDetails(result: any, sameTlsProbe?: number): string {
 	let text = "";
 
 	if (result.resolvedAddress) {
@@ -98,13 +105,32 @@ export function formatHttpDetails(result: any): string {
 		text += `Timings: ${timings}\n`;
 	}
 
-	if (result.tls) {
-		const { tls } = result;
-		const valid = tls.authorized ? "valid" : `not valid (${tls.error})`;
-		const subject = tls.subject.CN ?? tls.subject.alt;
-		const issuer = [tls.issuer.O, tls.issuer.CN].filter(Boolean).join(" ");
-		text += `TLS: ${tls.protocol}, ${tls.cipherName}, ${valid}\n`;
-		text += `Certificate: ${subject}, issued by ${issuer}, ${tls.createdAt} to ${tls.expiresAt}\n`;
+	if (sameTlsProbe) {
+		text += `TLS: same as probe ${sameTlsProbe}\n`;
+	} else if (result.tls) {
+		text += formatTls(result.tls);
+	}
+
+	return text;
+}
+
+function formatTls(tls: any): string {
+	const valid = tls.authorized ? "valid" : `not valid (${tls.error})`;
+	let text = `TLS: ${tls.protocol}, ${tls.cipherName}, ${valid}\nCertificate:\n`;
+
+	for (const [label, value] of [
+		["Subject", tls.subject.CN],
+		["Alt names", tls.subject.alt],
+		["Issuer", [tls.issuer.CN, tls.issuer.O, tls.issuer.C].filter(Boolean).join(", ")],
+		["Dates", `${tls.createdAt} to ${tls.expiresAt}`],
+		["Key", tls.keyBits && `${tls.keyType} ${tls.keyBits} bits`],
+		["Serial number", tls.serialNumber],
+		["SHA-256 fingerprint", tls.fingerprint256],
+		["Public key", tls.publicKey],
+	]) {
+		if (value) {
+			text += `- ${label}: ${value}\n`;
+		}
 	}
 
 	return text;

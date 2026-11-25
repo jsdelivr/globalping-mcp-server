@@ -1,0 +1,62 @@
+{
+	"id": "2fN1hEqEMN07pafZC00321ZOy",
+	"type": "ping",
+	"status": "finished",
+	"createdAt": "2026-11-25T16:48:51.525Z",
+	"updatedAt": "2026-11-25T16:48:53.235Z",
+	"target": "github.com",
+	"limit": 30,
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"measurementOptions": {
+		"protocol": "TCP",
+		"port": 443
+	},
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "PING github.com (140.82.121.4) on port 443.\nReply from github.com (140.82.121.4) on port 443: tcp_conn=1 time=23.2 ms\nReply from github.com (140.82.121.4) on port 443: tcp_conn=2 time=23.6 ms\nReply from github.com (140.82.121.4) on port 443: tcp_conn=3 time=23.6 ms\n\n--- github.com (140.82.121.4) ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 1025 ms\nrtt min/avg/max/mdev = 23.182/23.474/23.647/0.207 ms",
+				"resolvedAddress": "140.82.121.4",
+				"resolvedHostname": "github.com",
+				"timings": [
+					{
+						"rtt": 23.2
+					},
+					{
+						"rtt": 23.6
+					},
+					{
+						"rtt": 23.6
+					}
+				],
+				"stats": {
+					"min": 23.18,
+					"max": 23.65,
+					"avg": 23.47,
+					"total": 3,
+					"loss": 0,
+					"rcv": 3,
+					"drop": 0
+				}
+			}
+		}
+	]
+}

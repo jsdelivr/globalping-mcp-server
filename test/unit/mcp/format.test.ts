@@ -20,6 +20,7 @@ import ping from "./fixtures/ping.json";
 import pingFailed from "./fixtures/ping-failed.json";
 import pingLost from "./fixtures/ping-lost.json";
 import pingResolverFailed from "./fixtures/ping-resolver-failed.json";
+import pingTcp from "./fixtures/ping-tcp.json";
 import traceroute from "./fixtures/traceroute.json";
 import tracerouteHopLimit from "./fixtures/traceroute-hop-limit.json";
 import tracerouteNoReplies from "./fixtures/traceroute-no-replies.json";
@@ -57,24 +58,47 @@ describe("formatMeasurement", () => {
 			- Max RTT: 5.45 ms
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
-			PING google.com (142.250.154.113) 56(84) bytes of data.
-			64 bytes from google.com (142.250.154.113): icmp_seq=1 ttl=111 time=5.29 ms
-			64 bytes from google.com (142.250.154.113): icmp_seq=2 ttl=111 time=5.14 ms
-			64 bytes from google.com (142.250.154.113): icmp_seq=3 ttl=111 time=5.45 ms
-
-			--- google.com ping statistics ---
-			3 packets transmitted, 3 received, 0% packet loss, time 1002ms
-			rtt min/avg/max/mdev = 5.142/5.294/5.450/0.125 ms
+			Resolved IP: 142.250.154.113
+			Packets: 3 sent, 3 received, 0 lost (0%)
+			RTT: min 5.142 ms, avg 5.294 ms, max 5.45 ms
+			Replies: 5.29 ms ttl 111, 5.14 ms ttl 111, 5.45 ms ttl 111
 
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
-			PING google.com (173.194.221.102) 56(84) bytes of data.
-			64 bytes from google.com (173.194.221.102): icmp_seq=1 ttl=106 time=3.53 ms
-			64 bytes from google.com (173.194.221.102): icmp_seq=2 ttl=106 time=3.39 ms
-			64 bytes from google.com (173.194.221.102): icmp_seq=3 ttl=106 time=3.20 ms
+			Resolved IP: 173.194.221.102
+			Packets: 3 sent, 3 received, 0 lost (0%)
+			RTT: min 3.199 ms, avg 3.375 ms, max 3.534 ms
+			Replies: 3.53 ms ttl 106, 3.39 ms ttl 106, 3.2 ms ttl 106
+		`);
+	});
 
-			--- google.com ping statistics ---
-			3 packets transmitted, 3 received, 0% packet loss, time 1002ms
-			rtt min/avg/max/mdev = 3.199/3.375/3.534/0.137 ms
+	it("should print replies of TCP ping without TTL", () => {
+		expect(formatMeasurement(pingTcp)).toMatchInlineSnapshot(`
+			Measurement ID: 2fN1hEqEMN07pafZC00321ZOy
+			Type: ping
+			Target: github.com
+			Status: finished
+			Created: 2026-11-25T16:48:51.525Z
+			Updated: 2026-11-25T16:48:53.235Z
+			Locations: [{"magic":"world"}]
+			Limit: 30
+			Options: {"protocol":"TCP","port":443}
+			Probes: 1
+
+			Ping Results:
+			- Successful Probes: 1/1
+			- Total Packets: 3
+			- Received: 3
+			- Dropped: 0
+			- Average Loss: 0.00%
+			- Min RTT: 23.18 ms
+			- Avg RTT: 23.47 ms
+			- Max RTT: 23.65 ms
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Resolved IP: 140.82.121.4
+			Packets: 3 sent, 3 received, 0 lost (0%)
+			RTT: min 23.18 ms, avg 23.47 ms, max 23.65 ms
+			Replies: 23.2 ms, 23.6 ms, 23.6 ms
 		`);
 	});
 
@@ -91,32 +115,34 @@ describe("formatMeasurement", () => {
 			Probes: 2
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
-			traceroute to google.com (64.233.163.113), 20 hops max, 60 byte packets
-			 1  _gateway (172.23.1.1)  0.030 ms  0.010 ms
-			 2  ex9k1.dc5.hel1.hetzner.com (213.133.119.10)  0.376 ms  0.401 ms
-			 3  core32.hel1.hetzner.com (213.133.126.32)  0.402 ms  0.393 ms
-			 4  juniper4.dc1.hel1.hetzner.com (213.239.224.25)  0.534 ms  0.525 ms
-			 5  google.com (64.233.163.113)  2.983 ms  3.137 ms
+			Resolved IP: 64.233.163.113
+			Hop | Host | RTT ms
+			1 | _gateway (172.23.1.1) | 0.03, 0.01
+			2 | ex9k1.dc5.hel1.hetzner.com (213.133.119.10) | 0.376, 0.401
+			3 | core32.hel1.hetzner.com (213.133.126.32) | 0.402, 0.393
+			4 | juniper4.dc1.hel1.hetzner.com (213.239.224.25) | 0.534, 0.525
+			5 | google.com (64.233.163.113) | 2.983, 3.137
 
 			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
-			traceroute to google.com (142.251.14.102), 20 hops max, 60 byte packets
-			 1  _gateway (172.31.1.1)  4.829 ms  5.137 ms
-			 2  33838.your-cloud.host (49.12.31.3)  2.470 ms  2.837 ms
-			 3  * *
-			 4  * *
-			 5  core-spine-rdev1.cloud2.fsn1.hetzner.com (213.239.227.193)  3.246 ms  3.242 ms
-			 6  core21.fsn1.hetzner.com (213.239.227.194)  3.472 ms  3.469 ms
-			 7  core4.fra.hetzner.com (213.239.224.106)  8.174 ms  8.171 ms
-			 8  72.14.218.94 (72.14.218.94)  8.238 ms  8.234 ms
-			 9  * *
-			10  216.239.56.24 (216.239.56.24)  8.707 ms  8.703 ms
-			11  * *
-			12  * *
-			13  * *
-			14  * *
-			15  * *
-			16  * *
-			17  google.com (142.251.14.102)  5.415 ms  5.435 ms
+			Resolved IP: 142.251.14.102
+			Hop | Host | RTT ms
+			1 | _gateway (172.31.1.1) | 4.829, 5.137
+			2 | 33838.your-cloud.host (49.12.31.3) | 2.47, 2.837
+			3 | no reply
+			4 | no reply
+			5 | core-spine-rdev1.cloud2.fsn1.hetzner.com (213.239.227.193) | 3.246, 3.242
+			6 | core21.fsn1.hetzner.com (213.239.227.194) | 3.472, 3.469
+			7 | core4.fra.hetzner.com (213.239.224.106) | 8.174, 8.171
+			8 | 72.14.218.94 | 8.238, 8.234
+			9 | no reply
+			10 | 216.239.56.24 | 8.707, 8.703
+			11 | no reply
+			12 | no reply
+			13 | no reply
+			14 | no reply
+			15 | no reply
+			16 | no reply
+			17 | google.com (142.251.14.102) | 5.415, 5.435
 		`);
 	});
 
@@ -134,33 +160,33 @@ describe("formatMeasurement", () => {
 
 			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
 			Resolved IP: 142.250.154.101
-			Host                                                                   Loss% Drop Rcv Avg  StDev  Javg
-			 1. AS24940 _gateway (213.133.117.207)                                  0.0%    0   3 0.3    0.0   0.2
-			 2. AS24940 core23.fsn1.hetzner.com (213.133.126.23)                    0.0%    0   3 2.8    3.4   3.9
-			 3. AS24940 core5.fra.hetzner.com (213.239.224.78)                      0.0%    0   3 5.4    0.3   2.6
-			 4. AS24940 213-239-239-118.clients.your-server.de (213.239.239.118)    0.0%    0   3 5.0    0.1   2.5
-			 5. AS???   (waiting for reply)
-			 6. AS15169 192.178.252.254 (192.178.252.254)                           0.0%    0   3 6.1    0.2   3.0
-			 7. AS???   (waiting for reply)
-			 8. AS???   (waiting for reply)
-			 9. AS???   (waiting for reply)
-			10. AS???   (waiting for reply)
-			11. AS???   (waiting for reply)
-			12. AS???   (waiting for reply)
-			13. AS15169 google.com (142.250.154.101)                                0.0%    0   3 5.3    0.0   2.6
+			Hop | ASN | Host | Loss % | Sent | Received | Dropped | Min ms | Avg ms | Max ms | StDev ms | Jitter min ms | Jitter avg ms | Jitter max ms | RTT ms
+			1 | 24940 | _gateway (213.133.117.207) | 0 | 3 | 3 | 0 | 0.279 | 0.3 | 0.365 | 0 | 0 | 0.2 | 0.3 | 0.326, 0.365, 0.279
+			2 | 24940 | core23.fsn1.hetzner.com (213.133.126.23) | 0 | 3 | 3 | 0 | 0.35 | 2.8 | 7.685 | 3.4 | 0.1 | 3.9 | 7.7 | 0.35, 0.494, 7.685
+			3 | 24940 | core5.fra.hetzner.com (213.239.224.78) | 0 | 3 | 3 | 0 | 5.04 | 5.4 | 5.696 | 0.3 | 0.1 | 2.6 | 5 | 5.607, 5.696, 5.04
+			4 | 24940 | 213-239-239-118.clients.your-server.de (213.239.239.118) | 0 | 3 | 3 | 0 | 4.98 | 5 | 5.097 | 0.1 | 0.1 | 2.5 | 5 | 4.998, 5.097, 4.98
+			5 | no reply
+			6 | 15169 | 192.178.252.254 | 0 | 3 | 3 | 0 | 5.824 | 6.1 | 6.373 | 0.2 | 0.1 | 3 | 5.8 | 6.224, 6.373, 5.824
+			7 | no reply
+			8 | no reply
+			9 | no reply
+			10 | no reply
+			11 | no reply
+			12 | no reply
+			13 | 15169 | google.com (142.250.154.101) | 0 | 3 | 3 | 0 | 5.289 | 5.3 | 5.342 | 0 | 0 | 2.6 | 5.3 | 5.331, 5.342, 5.289
 
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 64.233.161.139
-			Host                                                                  Loss% Drop Rcv Avg  StDev  Javg
-			1. AS???   _gateway (172.31.1.1)                                       0.0%    0   3 1.7    0.2   1.1
-			2. AS24940 20992.your-cloud.host (65.108.115.149)                      0.0%    0   3 0.3    0.1   0.3
-			3. AS???   (waiting for reply)
-			4. AS???   (waiting for reply)
-			5. AS24940 core-spine-rdev1.cloud1.hel1.hetzner.com (213.239.228.2)    0.0%    0   3 0.7    0.2   0.5
-			6. AS24940 core32.hel1.hetzner.com (213.239.228.5)                     0.0%    0   3 0.5    0.1   0.3
-			7. AS24940 juniper4.dc1.hel1.hetzner.com (213.239.224.25)              0.0%    0   3 0.7    0.1   0.3
-			8. AS15169 142.251.195.234 (142.251.195.234)                           0.0%    0   3 1.9    1.3   1.8
-			9. AS15169 google.com (64.233.161.139)                                 0.0%    0   3 3.3    0.1   1.6
+			Hop | ASN | Host | Loss % | Sent | Received | Dropped | Min ms | Avg ms | Max ms | StDev ms | Jitter min ms | Jitter avg ms | Jitter max ms | RTT ms
+			1 |  | _gateway (172.31.1.1) | 0 | 3 | 3 | 0 | 1.492 | 1.7 | 2.067 | 0.2 | 0.2 | 1.1 | 2.1 | 1.668, 1.492, 2.067
+			2 | 24940 | 20992.your-cloud.host (65.108.115.149) | 0 | 3 | 3 | 0 | 0.162 | 0.3 | 0.51 | 0.1 | 0.2 | 0.3 | 0.3 | 0.51, 0.162, 0.247
+			3 | no reply
+			4 | no reply
+			5 | 24940 | core-spine-rdev1.cloud1.hel1.hetzner.com (213.239.228.2) | 0 | 3 | 3 | 0 | 0.511 | 0.7 | 0.912 | 0.2 | 0.1 | 0.5 | 0.9 | 0.511, 0.621, 0.912
+			6 | 24940 | core32.hel1.hetzner.com (213.239.228.5) | 0 | 3 | 3 | 0 | 0.386 | 0.5 | 0.656 | 0.1 | 0.1 | 0.3 | 0.4 | 0.656, 0.509, 0.386
+			7 | 24940 | juniper4.dc1.hel1.hetzner.com (213.239.224.25) | 0 | 3 | 3 | 0 | 0.521 | 0.7 | 0.84 | 0.1 | 0.1 | 0.3 | 0.5 | 0.84, 0.78, 0.521
+			8 | 15169 | 142.251.195.234 | 0 | 3 | 3 | 0 | 0.98 | 1.9 | 3.651 | 1.3 | 1 | 1.8 | 2.6 | 3.651, 1.016, 0.98
+			9 | 15169 | google.com (64.233.161.139) | 0 | 3 | 3 | 0 | 3.131 | 3.3 | 3.464 | 0.1 | 0.1 | 1.6 | 3.1 | 3.464, 3.322, 3.131
 		`);
 	});
 
@@ -177,54 +203,178 @@ describe("formatMeasurement", () => {
 			Probes: 2
 
 			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
-			; <<>> DiG 9.16.50-Debian <<>> -t A google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid
-			;; global options: +cmd
-			;; Got answer:
-			;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 34316
-			;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1
-
-			;; OPT PSEUDOSECTION:
-			; EDNS: version: 0, flags:; udp: 65494
-			;; QUESTION SECTION:
-			;google.com.			IN	A
-
-			;; ANSWER SECTION:
-			google.com.		225	IN	A	74.125.205.101
-			google.com.		225	IN	A	74.125.205.139
-			google.com.		225	IN	A	74.125.205.102
-			google.com.		225	IN	A	74.125.205.138
-			google.com.		225	IN	A	74.125.205.113
-			google.com.		225	IN	A	74.125.205.100
-
-			;; Query time: 0 msec
-			;; SERVER: x.x.x.x#53(x.x.x.x)
-			;; WHEN: Wed Nov 18 15:27:48 UTC 2026
-			;; MSG SIZE  rcvd: 135
+			Response code: NOERROR (0)
+			Resolver: private, total 0 ms
+			Answers: 6
+			google.com. 225 IN A 74.125.205.101
+			google.com. 225 IN A 74.125.205.139
+			google.com. 225 IN A 74.125.205.102
+			google.com. 225 IN A 74.125.205.138
+			google.com. 225 IN A 74.125.205.113
+			google.com. 225 IN A 74.125.205.100
 
 			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
-			; <<>> DiG 9.16.44-Debian <<>> -t A google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid
-			;; global options: +cmd
-			;; Got answer:
-			;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 26582
-			;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1
+			Response code: NOERROR (0)
+			Resolver: private, total 0 ms
+			Answers: 6
+			google.com. 236 IN A 142.251.127.113
+			google.com. 236 IN A 142.251.127.138
+			google.com. 236 IN A 142.251.127.101
+			google.com. 236 IN A 142.251.127.102
+			google.com. 236 IN A 142.251.127.139
+			google.com. 236 IN A 142.251.127.100
+		`);
+	});
 
-			;; OPT PSEUDOSECTION:
-			; EDNS: version: 0, flags:; udp: 65494
-			;; QUESTION SECTION:
-			;google.com.			IN	A
+	it("should print dns without answers", () => {
+		expect(formatMeasurement(dnsNxdomain)).toMatchInlineSnapshot(`
+			Measurement ID: 2iz5JAV8tHTMdV2jT00321Wl5
+			Type: dns
+			Target: nonexistent.google.com
+			Status: finished
+			Created: 2026-11-18T15:27:48.164Z
+			Updated: 2026-11-18T15:27:48.278Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Probes: 2
 
-			;; ANSWER SECTION:
-			google.com.		236	IN	A	142.251.127.113
-			google.com.		236	IN	A	142.251.127.138
-			google.com.		236	IN	A	142.251.127.101
-			google.com.		236	IN	A	142.251.127.102
-			google.com.		236	IN	A	142.251.127.139
-			google.com.		236	IN	A	142.251.127.100
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Response code: NXDOMAIN (3)
+			Resolver: 185.12.64.2, total 15 ms
+			Answers: 0
 
-			;; Query time: 0 msec
-			;; SERVER: x.x.x.x#53(x.x.x.x)
-			;; WHEN: Wed Nov 18 15:27:47 UTC 2026
-			;; MSG SIZE  rcvd: 135
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Response code: NXDOMAIN (3)
+			Resolver: private, total 32 ms
+			Answers: 0
+		`);
+	});
+
+	it("should print every hop of a dns trace", () => {
+		expect(formatMeasurement(dnsTrace)).toMatchInlineSnapshot(`
+			Measurement ID: 2fIuRvqrxqKwKmGFM00321Wl5
+			Type: dns
+			Target: google.com
+			Status: finished
+			Created: 2026-11-18T15:27:47.951Z
+			Updated: 2026-11-18T15:27:48.197Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Options: {"trace":true}
+			Probes: 2
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Hop 1
+			Resolver: 127.0.0.53, total 3 ms
+			Answers: 13
+			. 68726 IN NS b.root-servers.net.
+			. 68726 IN NS c.root-servers.net.
+			. 68726 IN NS d.root-servers.net.
+			. 68726 IN NS e.root-servers.net.
+			. 68726 IN NS f.root-servers.net.
+			. 68726 IN NS g.root-servers.net.
+			. 68726 IN NS h.root-servers.net.
+			. 68726 IN NS i.root-servers.net.
+			. 68726 IN NS j.root-servers.net.
+			. 68726 IN NS k.root-servers.net.
+			. 68726 IN NS l.root-servers.net.
+			. 68726 IN NS m.root-servers.net.
+			. 68726 IN NS a.root-servers.net.
+			Hop 2
+			Resolver: j.root-servers.net, total 0 ms
+			Answers: 15
+			com. 172800 IN NS a.gtld-servers.net.
+			com. 172800 IN NS b.gtld-servers.net.
+			com. 172800 IN NS c.gtld-servers.net.
+			com. 172800 IN NS d.gtld-servers.net.
+			com. 172800 IN NS e.gtld-servers.net.
+			com. 172800 IN NS f.gtld-servers.net.
+			com. 172800 IN NS g.gtld-servers.net.
+			com. 172800 IN NS h.gtld-servers.net.
+			com. 172800 IN NS i.gtld-servers.net.
+			com. 172800 IN NS j.gtld-servers.net.
+			com. 172800 IN NS k.gtld-servers.net.
+			com. 172800 IN NS l.gtld-servers.net.
+			com. 172800 IN NS m.gtld-servers.net.
+			com. 86400 IN DS 19718 13 2 8ACBB0CD28F41250A80A491389424D341522D946B0DA0C0291F2D3D771D7805A
+			com. 86400 IN RRSIG DS 8 1 86400 20261201050000 20261118040000 8763 . GycTMMQZpKNBq967IWI9eSQ29075PY4L3od+Ruimd4Dd0Vt/o+i4DrLGUuxNwqJCaeP/Gc6j6K9JBAukXaCFJo4T9gFKMubI9g+3YHmi1PTvojyN2O0PpU1jKZ3yOytq7luiN2Az/UdGn4Fp/c90eCzRFpRz8rXHvxn19o1D4MmxdbMepaw/u0hgEbRECFr3dhM+yP86iVHdLTTi2soWP9kVqhtpR95Cys8XN8hQa1b/ZtL50oLBRkZvIF/OkZnuNmMHxm+M6u8saUdgDI7tcuE09VK0DqKrnPw240g1uk1WkAk4SPTYWR9LbfuK1sSP6piKWpURr9yDJuEYxlt3fg==
+			Hop 3
+			Resolver: g.gtld-servers.net, total 31 ms
+			Answers: 8
+			google.com. 172800 IN NS ns2.google.com.
+			google.com. 172800 IN NS ns1.google.com.
+			google.com. 172800 IN NS ns3.google.com.
+			google.com. 172800 IN NS ns4.google.com.
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN NSEC3 1 1 0 - CK0Q35HRS4H76G6CHNB9414CJN6S5UPL NS SOA RRSIG DNSKEY NSEC3PARAM
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN RRSIG NSEC3 13 2 900 20261122020710 20261115005710 65344 com. P0u6dMaghMaDzuRB1IyD9U6LJxgDgPhoJDbyNPwE7FtbHW+ReihU+1OPkJwrG1ADEm3YTd9KkkMG7C8iPSF7RA==
+			S84BOR4DK28HNHPLC218O483VOOOD5D8.com. 900 IN NSEC3 1 1 0 - S84BR9CIB2A20L3ETR1M2415ENPP99L8 NS DS RRSIG
+			S84BOR4DK28HNHPLC218O483VOOOD5D8.com. 900 IN RRSIG NSEC3 13 2 900 20261123012729 20261116001729 65344 com. /GT9xODVda4m2OvmVohenizu50qNqBvXejAW0b2w+DRfxrc8gVodFlvLWobvji2fvBofm5xGq4jbcs70TMAuCg==
+			Hop 4
+			Resolver: ns2.google.com, total 15 ms
+			Answers: 6
+			google.com. 300 IN A 64.233.164.138
+			google.com. 300 IN A 64.233.164.113
+			google.com. 300 IN A 64.233.164.139
+			google.com. 300 IN A 64.233.164.101
+			google.com. 300 IN A 64.233.164.102
+			google.com. 300 IN A 64.233.164.100
+
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Hop 1
+			Resolver: 127.0.0.53, total 1 ms
+			Answers: 14
+			. 83649 IN NS m.root-servers.net.
+			. 83649 IN NS j.root-servers.net.
+			. 83649 IN NS b.root-servers.net.
+			. 83649 IN NS d.root-servers.net.
+			. 83649 IN NS f.root-servers.net.
+			. 83649 IN NS h.root-servers.net.
+			. 83649 IN NS c.root-servers.net.
+			. 83649 IN NS l.root-servers.net.
+			. 83649 IN NS k.root-servers.net.
+			. 83649 IN NS e.root-servers.net.
+			. 83649 IN NS g.root-servers.net.
+			. 83649 IN NS i.root-servers.net.
+			. 83649 IN NS a.root-servers.net.
+			. 83649 IN RRSIG NS 8 0 518400 20261201050000 20261118040000 8763 . rAKB1aLi/F3mIR4mGkfyY+lUX98i/AgGhS3vi0cMOhYseWAHW1zb9iH2FqEuaZso86eBqXNp+zDiVfgW5KfsVCL3D+fui10G7ReGqo1fH7KTao4tmZQXqYLW6sd7q1A+g4lkOAFnAig7CJSAPgDe5nOe22izE6VBHZiHMPetBctTvtafphZXcCq2AgRW2p898jRyyAwQ8MuMjU0VPvXhVAycVoVn7xgc9oezInNDS/2jjUHLqObMv/5rfTafnRlQX9MWd3W1rJoOCHXfnnF6xmmqbtIP4DWeEmjqVPBPtGPFuLv5hBgOhZWnmI2lW+N3deT8ECFnq7Sg7u+4dxSk/A==
+			Hop 2
+			Resolver: b.root-servers.net, total 12 ms
+			Answers: 15
+			com. 172800 IN NS a.gtld-servers.net.
+			com. 172800 IN NS b.gtld-servers.net.
+			com. 172800 IN NS c.gtld-servers.net.
+			com. 172800 IN NS d.gtld-servers.net.
+			com. 172800 IN NS e.gtld-servers.net.
+			com. 172800 IN NS f.gtld-servers.net.
+			com. 172800 IN NS g.gtld-servers.net.
+			com. 172800 IN NS h.gtld-servers.net.
+			com. 172800 IN NS i.gtld-servers.net.
+			com. 172800 IN NS j.gtld-servers.net.
+			com. 172800 IN NS k.gtld-servers.net.
+			com. 172800 IN NS l.gtld-servers.net.
+			com. 172800 IN NS m.gtld-servers.net.
+			com. 86400 IN DS 19718 13 2 8ACBB0CD28F41250A80A491389424D341522D946B0DA0C0291F2D3D771D7805A
+			com. 86400 IN RRSIG DS 8 1 86400 20261201050000 20261118040000 8763 . GycTMMQZpKNBq967IWI9eSQ29075PY4L3od+Ruimd4Dd0Vt/o+i4DrLGUuxNwqJCaeP/Gc6j6K9JBAukXaCFJo4T9gFKMubI9g+3YHmi1PTvojyN2O0PpU1jKZ3yOytq7luiN2Az/UdGn4Fp/c90eCzRFpRz8rXHvxn19o1D4MmxdbMepaw/u0hgEbRECFr3dhM+yP86iVHdLTTi2soWP9kVqhtpR95Cys8XN8hQa1b/ZtL50oLBRkZvIF/OkZnuNmMHxm+M6u8saUdgDI7tcuE09VK0DqKrnPw240g1uk1WkAk4SPTYWR9LbfuK1sSP6piKWpURr9yDJuEYxlt3fg==
+			Hop 3
+			Resolver: e.gtld-servers.net, total 32 ms
+			Answers: 8
+			google.com. 172800 IN NS ns2.google.com.
+			google.com. 172800 IN NS ns1.google.com.
+			google.com. 172800 IN NS ns3.google.com.
+			google.com. 172800 IN NS ns4.google.com.
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN NSEC3 1 1 0 - CK0Q35HRS4H76G6CHNB9414CJN6S5UPL NS SOA RRSIG DNSKEY NSEC3PARAM
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN RRSIG NSEC3 13 2 900 20261122020710 20261115005710 65344 com. P0u6dMaghMaDzuRB1IyD9U6LJxgDgPhoJDbyNPwE7FtbHW+ReihU+1OPkJwrG1ADEm3YTd9KkkMG7C8iPSF7RA==
+			S84BOR4DK28HNHPLC218O483VOOOD5D8.com. 900 IN NSEC3 1 1 0 - S84BR9CIB2A20L3ETR1M2415ENPP99L8 NS DS RRSIG
+			S84BOR4DK28HNHPLC218O483VOOOD5D8.com. 900 IN RRSIG NSEC3 13 2 900 20261123012729 20261116001729 65344 com. /GT9xODVda4m2OvmVohenizu50qNqBvXejAW0b2w+DRfxrc8gVodFlvLWobvji2fvBofm5xGq4jbcs70TMAuCg==
+			Hop 4
+			Resolver: ns2.google.com, total 26 ms
+			Answers: 6
+			google.com. 300 IN A 142.250.154.138
+			google.com. 300 IN A 142.250.154.139
+			google.com. 300 IN A 142.250.154.101
+			google.com. 300 IN A 142.250.154.102
+			google.com. 300 IN A 142.250.154.100
+			google.com. 300 IN A 142.250.154.113
 		`);
 	});
 
@@ -257,17 +407,24 @@ describe("formatMeasurement", () => {
 			Resolved IP: 172.217.22.110
 			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
 			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
 			Resolved IP: 142.251.110.101
 			Timings: total 63 ms, dns 2 ms, tcp 6 ms, tls 21 ms, firstByte 34 ms, download 0 ms
-			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			TLS: same as probe 1
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-4qzX9y7LbdqRUfstppMOBQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 		`);
@@ -288,8 +445,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 1.1.1.1
 			Timings: total 36 ms, dns N/A, tcp 7 ms, tls 12 ms, firstByte 17 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, not valid (ERR_TLS_CERT_ALTNAME_INVALID)
-			Certificate: cloudflare-dns.com, issued by SSL Corp SSL.com SSL Intermediate CA ECC R2, 2025-12-31T19:20:01.000Z to 2026-12-21T19:20:01.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: cloudflare-dns.com
+			- Alt names: DNS:cloudflare-dns.com, DNS:*.cloudflare-dns.com, IP Address:1.0.0.1, IP Address:1.1.1.1, IP Address:162.159.36.1, IP Address:162.159.46.1, IP Address:2606:4700:4700:0:0:0:0:1001, IP Address:2606:4700:4700:0:0:0:0:1111, IP Address:2606:4700:4700:0:0:0:0:64, IP Address:2606:4700:4700:0:0:0:0:6400, DNS:one.one.one.one
+			- Issuer: SSL.com SSL Intermediate CA ECC R2, SSL Corp, US
+			- Dates: 2025-12-31T19:20:01.000Z to 2026-12-21T19:20:01.000Z
+			- Key: EC 256 bits
+			- Serial number: 4E:D0:33:04:C4:6B:87:A8:C2:EB:55:69:DB:9E:BA:0C
+			- SHA-256 fingerprint: E3:B0:28:26:78:9D:65:3D:22:4D:3E:DA:CB:E4:E8:77:CB:72:86:FC:4C:92:26:72:F6:22:67:41:CA:57:AD:65
+			- Public key: 04:63:83:50:25:12:EA:72:78:19:EB:32:47:AF:C1:05:52:9C:2A:2B:60:8A:84:4E:75:6D:81:48:47:C1:C7:BE:CF:85:79:6C:12:29:5B:50:B3:CC:EC:50:A1:94:9E:DC:44:08:07:0C:80:1A:93:D3:BD:78:11:7B:B6:A3:C8:EA:AC
+			HTTP/1.1 301 Moved Permanently
 			Date: Wed, 18 Nov 2026 16:18:37 GMT
 			Connection: close
 			Location: https://one.one.one.one/
@@ -328,17 +493,24 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
-			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			TLS: same as probe 1
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 		`);
@@ -374,8 +546,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
@@ -390,9 +570,8 @@ describe("formatMeasurement", () => {
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
-			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			TLS: same as probe 1
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 			Body: same as probe 1
@@ -431,8 +610,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Location: https://www.google.com/
 			Content-Type: text/html; charset=UTF-8
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
@@ -493,8 +680,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
@@ -509,9 +704,8 @@ describe("formatMeasurement", () => {
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
-			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			TLS: same as probe 1
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
@@ -547,8 +741,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 172.217.22.110
 			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Location: https://www.google.com/
 			Content-Type: text/html; charset=UTF-8
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
@@ -603,8 +805,16 @@ describe("formatMeasurement", () => {
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
@@ -620,9 +830,8 @@ describe("formatMeasurement", () => {
 			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
-			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-			Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-			HTTP/1.1 301
+			TLS: same as probe 1
+			HTTP/1.1 301 Moved Permanently
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 			Body: same as probe 1
@@ -704,12 +913,8 @@ describe("formatMeasurement", () => {
 			queryA ESERVFAIL dnssec-failed.org
 
 			Probe 3: Lauterbourg, FR, EU, Contabo (AS51167)
-			PING dnssec-failed.org (96.99.227.255) 56(84) bytes of data.
-			no answer yet for icmp_seq=1
-			no answer yet for icmp_seq=2
-
-			--- dnssec-failed.org ping statistics ---
-			3 packets transmitted, 0 received, 100% packet loss, time 1043ms
+			Resolved IP: 96.99.227.255
+			Packets: 3 sent, 0 received, 3 lost (100%)
 		`);
 	});
 
@@ -1297,11 +1502,17 @@ describe("formatMeasurement", () => {
 				...traceroute,
 				results: traceroute.results.map(({ probe, result }) => ({
 					probe,
-					result: { ...result, rawOutput: `${"x".repeat(15_000)}\n${result.rawOutput}` },
+					result: {
+						...result,
+						hops: [
+							{ ...result.hops[0], resolvedHostname: "x".repeat(15_000) },
+							...result.hops.slice(1),
+						],
+					},
 				})),
 			};
 
-			expect(formatMeasurement(long, "full")).toHaveLength(31318);
+			expect(formatMeasurement(long, "full")).toHaveLength(31206);
 			expect(formatMeasurement(long)).toMatchInlineSnapshot(`
 				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
 				Type: traceroute
@@ -1346,14 +1557,10 @@ describe("formatMeasurement", () => {
 				- Max RTT: 5.45 ms
 
 				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
-				PING google.com (173.194.221.102) 56(84) bytes of data.
-				64 bytes from google.com (173.194.221.102): icmp_seq=1 ttl=106 time=3.53 ms
-				64 bytes from google.com (173.194.221.102): icmp_seq=2 ttl=106 time=3.39 ms
-				64 bytes from google.com (173.194.221.102): icmp_seq=3 ttl=106 time=3.20 ms
-
-				--- google.com ping statistics ---
-				3 packets transmitted, 3 received, 0% packet loss, time 1002ms
-				rtt min/avg/max/mdev = 3.199/3.375/3.534/0.137 ms
+				Resolved IP: 173.194.221.102
+				Packets: 3 sent, 3 received, 0 lost (0%)
+				RTT: min 3.199 ms, avg 3.375 ms, max 3.534 ms
+				Replies: 3.53 ms ttl 106, 3.39 ms ttl 106, 3.2 ms ttl 106
 			`);
 		});
 
@@ -1387,8 +1594,16 @@ describe("formatMeasurement", () => {
 				Resolved IP: 173.194.73.113
 				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 				TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-				Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-				HTTP/1.1 301
+				Certificate:
+				- Subject: *.google.com
+				- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+				- Issuer: WE2, Google Trust Services, US
+				- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+				- Key: EC 256 bits
+				- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+				- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+				- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+				HTTP/1.1 301 Moved Permanently
 				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 				Plus headers same for all probes (11), listed at the top.
 			`);
@@ -1424,8 +1639,16 @@ describe("formatMeasurement", () => {
 				Resolved IP: 173.194.73.113
 				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 				TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
-				Certificate: *.google.com, issued by Google Trust Services WE2, 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
-				HTTP/1.1 301
+				Certificate:
+				- Subject: *.google.com
+				- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+				- Issuer: WE2, Google Trust Services, US
+				- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+				- Key: EC 256 bits
+				- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+				- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+				- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+				HTTP/1.1 301 Moved Permanently
 				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 				Plus headers same for all probes (11), listed at the top.
 
@@ -1472,7 +1695,13 @@ describe("formatMeasurement", () => {
 				...traceroute,
 				results: traceroute.results.map(({ probe, result }) => ({
 					probe,
-					result: { ...result, rawOutput: `${"x".repeat(31_000)}\n${result.rawOutput}` },
+					result: {
+						...result,
+						hops: [
+							{ ...result.hops[0], resolvedHostname: "x".repeat(31_000) },
+							...result.hops.slice(1),
+						],
+					},
 				})),
 			};
 

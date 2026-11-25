@@ -4,7 +4,7 @@
 import { GLOBALPING_API } from "../config";
 import {
 	findCommonHeaders,
-	findSameBodyProbes,
+	findSameProbes,
 	formatCommonHeaders,
 	formatHttpDetails,
 	formatHttpResult,
@@ -20,7 +20,7 @@ const MAX_DNS_SUMMARY_ANSWERS = 10;
 /**
  * Format a measurement response as text
  * @param measurement The measurement response
- * @param output "summary" is one line per probe, "full" is the raw output of every probe,
+ * @param output "summary" is one line per probe, "full" is all parsed details of every probe,
  * "headers" is "full" without the response body of HTTP.
  * The default is "full" ("headers" for HTTP) when it is short enough, else "summary".
  * @param probes Numbers of the probes to print, the first probe is 1. The default is all probes.
@@ -107,19 +107,107 @@ function formatFull(measurement: any, level: "headers" | "full", probes?: number
 		return formatHttpFull(measurement, level, probes);
 	}
 
-	const formatResult = measurement.type === "mtr" ? formatMtrResult : formatRawOutput;
-	return formatProbesFull(measurement, formatResult, probes);
+	return formatProbesFull(measurement, fullByType[measurement.type] ?? formatRawOutput, probes);
 }
 
-function formatMtrResult(result: any): string {
-	return `Resolved IP: ${result.resolvedAddress}\n${formatRawOutput(result)}`;
+const fullByType: Record<string, (result: any) => string> = {
+	ping: ({ resolvedAddress, stats, timings }) => {
+		let text = `Resolved IP: ${resolvedAddress}\n`;
+		text += `Packets: ${stats.total} sent, ${stats.rcv} received, ${stats.drop} lost (${stats.loss}%)\n`;
+
+		if (stats.rcv === 0) {
+			return text;
+		}
+
+		// A reply of TCP ping has no TTL.
+		const replies = timings.map(({ rtt, ttl }: any) =>
+			ttl == null ? `${rtt} ms` : `${rtt} ms ttl ${ttl}`,
+		);
+		text += `RTT: min ${stats.min} ms, avg ${stats.avg} ms, max ${stats.max} ms\n`;
+		text += `Replies: ${replies.join(", ")}\n`;
+		return text;
+	},
+	traceroute: (result) => {
+		const rows = result.hops.map((hop: any, index: number) =>
+			hop.resolvedAddress
+				? `${index + 1} | ${formatHost(hop)} | ${formatRtts(hop)}`
+				: `${index + 1} | no reply`,
+		);
+		return `Resolved IP: ${result.resolvedAddress}\nHop | Host | RTT ms\n${rows.join("\n")}\n`;
+	},
+	mtr: (result) => {
+		const rows = result.hops.map((hop: any, index: number) => {
+			if (!hop.resolvedAddress) {
+				return `${index + 1} | no reply`;
+			}
+
+			const { stats } = hop;
+			return [
+				index + 1,
+				hop.asn.join(", "),
+				formatHost(hop),
+				stats.loss,
+				stats.total,
+				stats.rcv,
+				stats.drop,
+				stats.min,
+				stats.avg,
+				stats.max,
+				stats.stDev,
+				stats.jMin,
+				stats.jAvg,
+				stats.jMax,
+				formatRtts(hop),
+			].join(" | ");
+		});
+		const columns =
+			"Hop | ASN | Host | Loss % | Sent | Received | Dropped | Min ms | Avg ms | Max ms | StDev ms | Jitter min ms | Jitter avg ms | Jitter max ms | RTT ms";
+		return `Resolved IP: ${result.resolvedAddress}\n${columns}\n${rows.join("\n")}\n`;
+	},
+	dns: (result) => {
+		if (result.hops) {
+			return result.hops
+				.map((hop: any, index: number) => `Hop ${index + 1}\n${formatDnsAnswers(hop)}`)
+				.join("");
+		}
+
+		return `Response code: ${result.statusCodeName} (${result.statusCode})\n${formatDnsAnswers(result)}`;
+	},
+};
+
+function formatHost({ resolvedAddress, resolvedHostname }: any): string {
+	return resolvedHostname && resolvedHostname !== resolvedAddress
+		? `${resolvedHostname} (${resolvedAddress})`
+		: resolvedAddress;
+}
+
+function formatRtts(hop: any): string {
+	return hop.timings.map((timing: any) => timing.rtt).join(", ");
+}
+
+function formatDnsAnswers({ resolver, timings, answers }: any): string {
+	const records = answers
+		.map(
+			(answer: any) =>
+				`${answer.name} ${answer.ttl} ${answer.class} ${answer.type} ${answer.value}\n`,
+		)
+		.join("");
+	return `Resolver: ${resolver}, total ${formatMs(timings.total)}\nAnswers: ${answers.length}\n${records}`;
 }
 
 function formatHttpFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
-	const commonHeaders = findCommonHeaders(measurement.results);
-	const sameBodyProbes = findSameBodyProbes(measurement.results, probes);
+	const { results } = measurement;
+	const commonHeaders = findCommonHeaders(results);
+	const sameTlsProbes = findSameProbes(results, probes, ({ tls }) => tls && JSON.stringify(tls));
+	const sameBodyProbes = findSameProbes(results, probes, ({ rawBody }) => rawBody);
 	const formatResult = (result: any, number: number) =>
-		formatHttpResult(result, level, commonHeaders, sameBodyProbes.get(number));
+		formatHttpResult(
+			result,
+			level,
+			commonHeaders,
+			sameTlsProbes.get(number),
+			sameBodyProbes.get(number),
+		);
 
 	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
 }

@@ -5,7 +5,7 @@
  * to test the complete request/response cycle through the MCP protocol.
  */
 import { SELF } from "cloudflare:test";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { exerciseLegacySSE } from "./sse";
 import { exerciseStreamableHTTP } from "./streamable-http";
 
@@ -377,7 +377,7 @@ describe("MCP Tools Integration", () => {
 				"Probe 1: New York, US, NA, Test Network (AS12345)",
 			);
 			expect(data.result.content[0].text).toContain(
-				"PING google.com (142.250.185.46): 56 data bytes",
+				"Resolved IP: 142.250.185.46\nPackets: 3 sent, 3 received, 0 lost (0%)\nRTT: min 10.12 ms, avg 15.34 ms, max 20.56 ms\n",
 			);
 			expect(data.result.structuredContent).toBeUndefined();
 
@@ -589,7 +589,7 @@ describe("MCP Tools Integration", () => {
 				"Measurement ID: mockMeasurement123\nType: ping\nTarget: google.com\nStatus: finished\nCreated: 2024-01-01T00:00:00Z\nUpdated: 2024-01-01T00:00:10Z\nProbes: 3\n",
 			);
 			expect(data.result.content[0].text).toContain(
-				"PING google.com (142.250.185.46): 56 data bytes",
+				"Resolved IP: 142.250.185.46\nPackets: 3 sent, 3 received, 0 lost (0%)\nRTT: min 10.12 ms, avg 15.34 ms, max 20.56 ms\n",
 			);
 			expect(data.result.structuredContent).toBeUndefined();
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);

@@ -79,7 +79,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["summary", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
 					),
 			},
 		},
@@ -164,7 +164,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["summary", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
 					),
 			},
 		},
@@ -272,7 +272,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["summary", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
 					),
 			},
 		},
@@ -364,7 +364,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["summary", "full"])
 					.optional()
 					.describe(
-						"How much to return for each probe. 'full': the raw output of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
 					),
 			},
 		},
@@ -692,7 +692,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		"getMeasurement",
 		{
 			title: "Get Measurement",
-			description: `Retrieve a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to see a measurement again or to see a measurement created elsewhere. The full JSON with parsed fields is at ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}/<id>.`,
+			description: `Retrieve a measurement by ID. A running measurement is returned as in-progress with partial results. Use this tool to see a measurement again or to see a measurement created elsewhere. The JSON with the raw output of every probe is at ${GLOBALPING_API.BASE_URL}${GLOBALPING_API.ENDPOINTS.MEASUREMENTS}/<id>.`,
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
