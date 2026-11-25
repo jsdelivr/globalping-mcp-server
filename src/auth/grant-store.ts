@@ -91,9 +91,14 @@ export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 			const names = new Set(await storeFor(prefix).list());
 
 			// Old grants are still in KV. Can be removed after 2027-01-01.
-			for (const { name } of (await kv.list({ prefix })).keys) {
-				names.add(name);
-			}
+			let cursor: string | undefined;
+			do {
+				const page = await kv.list({ prefix, cursor });
+				for (const { name } of page.keys) {
+					names.add(name);
+				}
+				cursor = page.list_complete ? undefined : page.cursor;
+			} while (cursor);
 
 			return { keys: [...names].map((name) => ({ name })), list_complete: true };
 		},
