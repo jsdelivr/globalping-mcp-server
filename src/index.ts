@@ -4,11 +4,13 @@ import * as agentcat from "agentcat";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
 import app from "./app";
-import { isAPITokenRequest, isValidAPIToken, sanitizeToken } from "./auth";
+import { isAPITokenRequest, isValidAPIToken, sanitizeToken, withGrantStore } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
 import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOrigin } from "./lib";
 import { registerGlobalpingTools } from "./mcp";
 import type { GlobalpingEnv, Props, State } from "./types";
+
+export { GrantStore } from "./auth/grant-store";
 
 export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 	server = new McpServer(
@@ -595,6 +597,6 @@ export default {
 					: {}),
 				scopes_supported: OAUTH_CONFIG.SCOPES,
 			},
-		}).fetch(req, env, ctx);
+		}).fetch(req, withGrantStore(env), ctx);
 	},
 };
