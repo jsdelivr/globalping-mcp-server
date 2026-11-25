@@ -1,0 +1,189 @@
+{
+	"id": "2XZNMQDZ5yrN4jhBX00321ZOF",
+	"type": "traceroute",
+	"status": "finished",
+	"createdAt": "2026-11-25T16:03:01.435Z",
+	"updatedAt": "2026-11-25T16:03:12.209Z",
+	"target": "amazon.com",
+	"limit": 50,
+	"probesCount": 1,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "AS",
+				"region": "Eastern Asia",
+				"country": "JP",
+				"state": null,
+				"city": "Tokyo",
+				"asn": 16509,
+				"longitude": 139.69,
+				"latitude": 35.69,
+				"network": "Amazon.com",
+				"tags": ["aws-ap-northeast-1", "aws", "datacenter-network", "u-Amia33"],
+				"resolvers": ["1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001"]
+			},
+			"result": {
+				"rawOutput": "traceroute to amazon.com (98.87.170.71), 20 hops max, 60 byte packets\n 1  _gateway (244.5.0.33)  5.464 ms  5.440 ms\n 2  240.3.116.10 (240.3.116.10)  0.409 ms  0.407 ms\n 3  242.8.195.147 (242.8.195.147)  2.916 ms  2.914 ms\n 4  240.0.48.35 (240.0.48.35)  149.123 ms  149.598 ms\n 5  242.17.232.129 (242.17.232.129)  148.114 ms  148.110 ms\n 6  240.3.20.97 (240.3.20.97)  146.538 ms 240.3.20.130 (240.3.20.130)  148.497 ms\n 7  242.7.160.141 (242.7.160.141)  151.922 ms 242.7.169.241 (242.7.169.241)  151.795 ms\n 8  * *\n 9  * *\n10  * *\n11  * *\n12  * *\n13  * *\n14  * *\n15  * *\n16  * *\n17  * *\n18  * *\n19  * *\n20  * *",
+				"status": "finished",
+				"resolvedAddress": "98.87.170.71",
+				"resolvedHostname": "amazon.com",
+				"hops": [
+					{
+						"resolvedAddress": "244.5.0.33",
+						"resolvedHostname": "_gateway",
+						"timings": [
+							{
+								"rtt": 5.464
+							},
+							{
+								"rtt": 5.44
+							}
+						]
+					},
+					{
+						"resolvedAddress": "240.3.116.10",
+						"resolvedHostname": "240.3.116.10",
+						"timings": [
+							{
+								"rtt": 0.409
+							},
+							{
+								"rtt": 0.407
+							}
+						]
+					},
+					{
+						"resolvedAddress": "242.8.195.147",
+						"resolvedHostname": "242.8.195.147",
+						"timings": [
+							{
+								"rtt": 2.916
+							},
+							{
+								"rtt": 2.914
+							}
+						]
+					},
+					{
+						"resolvedAddress": "240.0.48.35",
+						"resolvedHostname": "240.0.48.35",
+						"timings": [
+							{
+								"rtt": 149.123
+							},
+							{
+								"rtt": 149.598
+							}
+						]
+					},
+					{
+						"resolvedAddress": "242.17.232.129",
+						"resolvedHostname": "242.17.232.129",
+						"timings": [
+							{
+								"rtt": 148.114
+							},
+							{
+								"rtt": 148.11
+							}
+						]
+					},
+					{
+						"resolvedAddress": "240.3.20.97",
+						"resolvedHostname": "240.3.20.97",
+						"timings": [
+							{
+								"rtt": 146.538
+							},
+							{
+								"rtt": 148.497
+							}
+						]
+					},
+					{
+						"resolvedAddress": "242.7.160.141",
+						"resolvedHostname": "242.7.160.141",
+						"timings": [
+							{
+								"rtt": 151.922
+							},
+							{
+								"rtt": 151.795
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					}
+				]
+			}
+		}
+	]
+}

@@ -24,6 +24,7 @@ import traceroute from "./fixtures/traceroute.json";
 import tracerouteHopLimit from "./fixtures/traceroute-hop-limit.json";
 import tracerouteNoReplies from "./fixtures/traceroute-no-replies.json";
 import tracerouteNoReply from "./fixtures/traceroute-no-reply.json";
+import tracerouteTwoAddresses from "./fixtures/traceroute-two-addresses.json";
 
 // Print strings in snapshots as they are, without quotes and escapes.
 expect.addSnapshotSerializer({
@@ -810,8 +811,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 3.06 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 2.983 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.415 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -830,8 +831,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.78, rtt 6.925 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.25, rtt 1.429 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.78, rtt 6.932 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.25, rtt 1.431 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -850,8 +851,27 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target, last reply from 143.107.151.62, rtt 181.028 ms
-				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target, last reply from 199.100.13.162, rtt 279.96 ms
+				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target, last reply from 143.107.151.62, rtt 180.984 ms
+				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target, last reply from 199.100.13.162, rtt 279.995 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize traceroute with two addresses on the last hop that replied", () => {
+			expect(formatMeasurement(tracerouteTwoAddresses, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2XZNMQDZ5yrN4jhBX00321ZOF
+				Type: traceroute
+				Target: amazon.com
+				Status: finished
+				Created: 2026-11-25T16:03:01.435Z
+				Updated: 2026-11-25T16:03:12.209Z
+				Locations: [{"magic":"world"}]
+				Limit: 50
+				Probes: 1
+
+				Results, one line per probe:
+				1: Tokyo, JP, AS, Amazon.com (AS16509) | 20 hops, no reply from target, last reply from 242.7.160.141, rtt 151.922 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -995,7 +1015,7 @@ describe("formatMeasurement", () => {
 			`);
 		});
 
-		it("should summarize dns without answers by its status code name", () => {
+		it("should summarize dns with the NXDOMAIN status", () => {
 			expect(formatMeasurement(dnsNxdomain, "summary")).toMatchInlineSnapshot(`
 				Measurement ID: 2iz5JAV8tHTMdV2jT00321Wl5
 				Type: dns
@@ -1255,8 +1275,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 3.06 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 5 hops, target 64.233.163.113 reached, rtt 2.983 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.415 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1429,7 +1449,7 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.425 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 17 hops, target 142.251.14.102 reached, rtt 5.415 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);

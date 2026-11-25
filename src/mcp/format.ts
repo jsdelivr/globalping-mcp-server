@@ -178,15 +178,10 @@ function formatProbeSummary(type: string, result: any): string {
 }
 
 const summaryByType: Record<string, (result: any) => string> = {
-	ping: (result) => {
-		const { stats } = result;
-		const loss = `IP ${result.resolvedAddress}, ${stats.drop}/${stats.total} lost (${stats.loss}%)`;
-
-		if (stats.rcv === 0) {
-			return loss;
-		}
-
-		return `${loss}, rtt min/avg/max ${stats.min}/${stats.avg}/${stats.max} ms`;
+	ping: ({ resolvedAddress, stats }) => {
+		const rtt =
+			stats.rcv === 0 ? "" : `, rtt min/avg/max ${stats.min}/${stats.avg}/${stats.max} ms`;
+		return `IP ${resolvedAddress}, ${stats.drop}/${stats.total} lost (${stats.loss}%)${rtt}`;
 	},
 	traceroute: (result) => {
 		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
@@ -195,15 +190,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 			return `${result.hops.length} hops, no replies`;
 		}
 
-		const rtts: number[] = hop.timings.map((timing: any) => timing.rtt);
-		const sum = rtts.reduce((total, rtt) => total + rtt, 0);
-		const avg = Number((sum / rtts.length).toFixed(3));
-
-		if (!isTargetReached(result)) {
-			return `${result.hops.length} hops, no reply from target, last reply from ${hop.resolvedAddress}, rtt ${avg} ms`;
-		}
-
-		return `${result.hops.length} hops, target ${result.resolvedAddress} reached, rtt ${avg} ms`;
+		const target = isTargetReached(result)
+			? `target ${result.resolvedAddress} reached`
+			: `no reply from target, last reply from ${hop.resolvedAddress}`;
+		return `${result.hops.length} hops, ${target}, rtt ${hop.timings[0].rtt} ms`;
 	},
 	mtr: (result) => {
 		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
@@ -212,13 +202,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 			return `${result.hops.length} hops, no replies`;
 		}
 
-		const { stats } = hop;
-
-		if (!isTargetReached(result)) {
-			return `${result.hops.length} hops, no reply from target, last reply from ${hop.resolvedAddress}, loss ${stats.loss}%, rtt ${stats.avg} ms`;
-		}
-
-		return `${result.hops.length} hops, target ${result.resolvedAddress} reached, loss ${stats.loss}%, rtt ${stats.avg} ms`;
+		const target = isTargetReached(result)
+			? `target ${result.resolvedAddress} reached`
+			: `no reply from target, last reply from ${hop.resolvedAddress}`;
+		return `${result.hops.length} hops, ${target}, loss ${hop.stats.loss}%, rtt ${hop.stats.avg} ms`;
 	},
 	dns: (result) => {
 		// A trace has the final answers in its last hop.
