@@ -831,8 +831,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.78, rtt 6.932 ms
-				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.25, rtt 1.431 ms
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.78 on hop 8, rtt 6.932 ms
+				2: Helsinki, FI, EU, Hetzner Online (AS24940) | 20 hops, no reply from target, last reply from 213.239.224.25 on hop 7, rtt 1.431 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -851,8 +851,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target, last reply from 143.107.151.62, rtt 180.984 ms
-				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target, last reply from 199.100.13.162, rtt 279.995 ms
+				1: Los Angeles (CA), US, NA, HostPapa (AS36352) | 20 hops, no reply from target, last reply from 143.107.151.62 on hop 20, rtt 180.984 ms
+				2: Tokyo, JP, AS, xTom (AS3258) | 20 hops, no reply from target, last reply from 199.100.13.162 on hop 20, rtt 279.995 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -871,7 +871,7 @@ describe("formatMeasurement", () => {
 				Probes: 1
 
 				Results, one line per probe:
-				1: Tokyo, JP, AS, Amazon.com (AS16509) | 20 hops, no reply from target, last reply from 242.7.160.141, rtt 151.922 ms
+				1: Tokyo, JP, AS, Amazon.com (AS16509) | 20 hops, no reply from target, last reply from 242.7.160.141 on hop 7, rtt 151.922 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -930,8 +930,8 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 142.250.225.39, loss 0%, rtt 2 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 213.239.224.10, loss 0%, rtt 5.4 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 142.250.225.39 on hop 8, loss 0%, rtt 2 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | 9 hops, no reply from target, last reply from 213.239.224.10 on hop 8, loss 0%, rtt 5.4 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);
@@ -1471,7 +1471,7 @@ describe("formatMeasurement", () => {
 				),
 			).toThrow(
 				new Error(
-					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'findLast'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
+					`The results of measurement ${mtr.id} could not be formatted: Cannot read properties of undefined (reading 'findLastIndex'). You can read the measurement by URL: https://api.globalping.io/v1/measurements/${mtr.id}`,
 				),
 			);
 		});

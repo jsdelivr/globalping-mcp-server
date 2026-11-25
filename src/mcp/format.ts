@@ -184,27 +184,29 @@ const summaryByType: Record<string, (result: any) => string> = {
 		return `IP ${resolvedAddress}, ${stats.drop}/${stats.total} lost (${stats.loss}%)${rtt}`;
 	},
 	traceroute: (result) => {
-		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
+		const index = result.hops.findLastIndex((hop: any) => hop.resolvedAddress);
 
-		if (!hop) {
+		if (index === -1) {
 			return `${result.hops.length} hops, no replies`;
 		}
 
+		const hop = result.hops[index];
 		const target = isTargetReached(result)
 			? `target ${result.resolvedAddress} reached`
-			: `no reply from target, last reply from ${hop.resolvedAddress}`;
+			: `no reply from target, last reply from ${hop.resolvedAddress} on hop ${index + 1}`;
 		return `${result.hops.length} hops, ${target}, rtt ${hop.timings[0].rtt} ms`;
 	},
 	mtr: (result) => {
-		const hop = result.hops.findLast((hop: any) => hop.resolvedAddress);
+		const index = result.hops.findLastIndex((hop: any) => hop.resolvedAddress);
 
-		if (!hop) {
+		if (index === -1) {
 			return `${result.hops.length} hops, no replies`;
 		}
 
+		const hop = result.hops[index];
 		const target = isTargetReached(result)
 			? `target ${result.resolvedAddress} reached`
-			: `no reply from target, last reply from ${hop.resolvedAddress}`;
+			: `no reply from target, last reply from ${hop.resolvedAddress} on hop ${index + 1}`;
 		return `${result.hops.length} hops, ${target}, loss ${hop.stats.loss}%, rtt ${hop.stats.avg} ms`;
 	},
 	dns: (result) => {
