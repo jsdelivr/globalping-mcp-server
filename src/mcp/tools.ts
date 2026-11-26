@@ -19,6 +19,11 @@ const continentNames: Record<string, string> = {
 	SA: "South America",
 };
 
+const ipVersionSchema = z.literal([4, 6]).optional();
+const targetIpVersionSchema = ipVersionSchema.describe(
+	"IP version (default: 4). Only for domain targets.",
+);
+
 /**
  * Helper to wrap tool execution with error handling
  */
@@ -75,6 +80,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("Number of probes to use (default: 3 or one per location, max: 100)"),
 				packets: z.number().optional().describe("Number of packets to send (default: 3)"),
+				protocol: z
+					.enum(["ICMP", "TCP"])
+					.optional()
+					.describe("Protocol to use (default: ICMP)"),
+				port: z.number().optional().describe("Port number for TCP (default: 80)"),
+				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
 					.optional()
@@ -83,7 +94,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 			},
 		},
-		async ({ target, locations, limit, packets, output }, { signal }) => {
+		async (
+			{ target, locations, limit, packets, protocol, port, ipVersion, output },
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -105,6 +119,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						limit,
 						measurementOptions: {
 							packets: packets || 3,
+							protocol,
+							port,
+							ipVersion,
 						},
 					},
 					token,
@@ -160,6 +177,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
 				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
+				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
 					.optional()
@@ -168,7 +186,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 			},
 		},
-		async ({ target, locations, limit, protocol, port, output }, { signal }) => {
+		async ({ target, locations, limit, protocol, port, ipVersion, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -191,6 +209,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						measurementOptions: {
 							protocol: protocol as any,
 							port: port || 80,
+							ipVersion,
 						},
 					},
 					token,
@@ -268,6 +287,14 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.boolean()
 					.optional()
 					.describe("Trace delegation path from root servers (default: false)"),
+				protocol: z
+					.enum(["UDP", "TCP"])
+					.optional()
+					.describe("Protocol to use (default: UDP)"),
+				port: z.number().optional().describe("Port number (default: 53)"),
+				ipVersion: ipVersionSchema.describe(
+					"IP version (default: 4). Only for a domain resolver.",
+				),
 				output: z
 					.enum(["summary", "full"])
 					.optional()
@@ -276,7 +303,21 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 			},
 		},
-		async ({ target, locations, limit, queryType, resolver, trace, output }, { signal }) => {
+		async (
+			{
+				target,
+				locations,
+				limit,
+				queryType,
+				resolver,
+				trace,
+				protocol,
+				port,
+				ipVersion,
+				output,
+			},
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -302,6 +343,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 							},
 							resolver,
 							trace: trace || false,
+							protocol,
+							port,
+							ipVersion,
 						},
 					},
 					token,
@@ -360,6 +404,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.number()
 					.optional()
 					.describe("Number of packets to send to each hop (default: 3)"),
+				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
 					.optional()
@@ -368,7 +413,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 			},
 		},
-		async ({ target, locations, limit, protocol, port, packets, output }, { signal }) => {
+		async (
+			{ target, locations, limit, protocol, port, packets, ipVersion, output },
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -392,6 +440,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 							protocol: protocol as any,
 							port: port || 80,
 							packets: packets || 3,
+							ipVersion,
 						},
 					},
 					token,
@@ -445,7 +494,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.optional()
 					.describe("HTTP method (default: GET)"),
 				protocol: z
-					.enum(["HTTP", "HTTPS"])
+					.enum(["HTTP", "HTTPS", "HTTP2"])
 					.optional()
 					.describe("Protocol to use (default: HTTPS)"),
 				path: z
@@ -455,11 +504,23 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				port: z
 					.number()
 					.optional()
-					.describe("Port number (default: 443 for HTTPS, 80 for HTTP)"),
+					.describe("Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)"),
 				query: z
 					.string()
 					.optional()
 					.describe("Query string (e.g., 'param=value&another=123')"),
+				host: z.string().optional().describe("Host header value (default: the target)"),
+				headers: z
+					.record(z.string(), z.string())
+					.optional()
+					.describe(
+						"Request headers (e.g., { 'Accept-Encoding': 'br' }). Use 'host' to set the Host header.",
+					),
+				resolver: z
+					.string()
+					.optional()
+					.describe("IP address of the DNS resolver to use (e.g., '1.1.1.1')"),
+				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "headers", "full"])
 					.optional()
@@ -469,7 +530,21 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async (
-			{ target, locations, limit, method, protocol, path, query, port, output },
+			{
+				target,
+				locations,
+				limit,
+				method,
+				protocol,
+				path,
+				query,
+				port,
+				host,
+				headers,
+				resolver,
+				ipVersion,
+				output,
+			},
 			{ signal },
 		) => {
 			return handleToolExecution(async () => {
@@ -498,9 +573,13 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 								method: method || "GET",
 								path,
 								query,
+								host,
+								headers,
 							},
+							resolver,
 							protocol: protocol,
-							port: port || (protocol === "HTTPS" ? 443 : 80),
+							port: port || (protocol === "HTTP" ? 80 : 443),
+							ipVersion,
 						},
 					},
 					token,

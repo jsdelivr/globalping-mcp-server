@@ -591,6 +591,74 @@ describe("MCP Tools Integration", () => {
 
 			expect(mockAPI.createdMeasurements[0].limit).toBe(2);
 		});
+
+		it("should send the ping options to the API", async () => {
+			await call("ping", { target: "google.com", protocol: "TCP", port: 443, ipVersion: 6 });
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				packets: 3,
+				protocol: "TCP",
+				port: 443,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the ip version of traceroute and mtr to the API", async () => {
+			await call("traceroute", { target: "google.com", ipVersion: 6 });
+			await call("mtr", { target: "google.com", ipVersion: 6 });
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				port: 80,
+				ipVersion: 6,
+			});
+			expect(mockAPI.createdMeasurements[1].measurementOptions).toEqual({
+				port: 80,
+				packets: 3,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the dns options to the API", async () => {
+			await call("dns", {
+				target: "google.com",
+				resolver: "dns.google",
+				protocol: "TCP",
+				port: 5353,
+				ipVersion: 6,
+			});
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				query: { type: "A" },
+				resolver: "dns.google",
+				trace: false,
+				protocol: "TCP",
+				port: 5353,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the http options to the API", async () => {
+			await call("http", {
+				target: "example.com",
+				protocol: "HTTP2",
+				host: "example.org",
+				headers: { "Accept-Encoding": "br" },
+				resolver: "1.1.1.1",
+				ipVersion: 6,
+			});
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				request: {
+					method: "GET",
+					host: "example.org",
+					headers: { "Accept-Encoding": "br" },
+				},
+				resolver: "1.1.1.1",
+				protocol: "HTTP2",
+				port: 443,
+				ipVersion: 6,
+			});
+		});
 	});
 
 	describe("Get Measurement Tool", () => {

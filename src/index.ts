@@ -162,6 +162,9 @@ Available Tools:
      - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
      - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - packets: Number of packets to send (default: 3)
+     - protocol: Protocol to use - "ICMP" or "TCP" (default: ICMP)
+     - port: Port number for TCP (default: 80)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 2. traceroute - Perform a traceroute test to a target
@@ -171,6 +174,7 @@ Available Tools:
      - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 3. dns - Perform a DNS lookup for a domain
@@ -181,6 +185,9 @@ Available Tools:
      - queryType: DNS record type - "A", "AAAA", "ANY", "CNAME", "DNSKEY", "DS", "HTTPS", "MX", "NS", "NSEC", "PTR", "RRSIG", "SOA", "TXT", "SRV", "SVCB" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
+     - protocol: Protocol to use - "UDP" or "TCP" (default: UDP)
+     - port: Port number (default: 53)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for a domain resolver
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 4. mtr - Perform an MTR (My Traceroute) test to a target
@@ -191,6 +198,7 @@ Available Tools:
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - packets: Number of packets to send to each hop (default: 3)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 5. http - Perform an HTTP request to a URL
@@ -199,10 +207,14 @@ Available Tools:
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)
-     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: HTTPS)
+     - protocol: Protocol to use - "HTTP", "HTTPS" or "HTTP2" (default: HTTPS)
      - path: Path component of the URL (e.g., '/api/v1/status')
-     - port: Port number (default: 443 for HTTPS, 80 for HTTP)
+     - port: Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)
      - query: Query string (e.g., 'param=value&another=123')
+     - host: Host header value (default: the target)
+     - headers: Request headers (e.g., { 'Accept-Encoding': 'br' })
+     - resolver: IP address of the DNS resolver to use (e.g., '1.1.1.1')
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary", "headers" or "full" (default: "headers", or "summary" when the output is longer than 30000 characters)
 
 6. locations - List all available Globalping probe locations
