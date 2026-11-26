@@ -565,6 +565,20 @@ describe("OAuth Routes Integration", () => {
 			expect(result.error_description).toBe("Grant not found");
 		});
 
+		it("ignores a KV copy of a revoked grant", async () => {
+			const clientId = await registerPublicClient();
+			const { refreshToken, grantKey, store } = await login(clientId);
+			const revoked = (await store.read(grantKey)) as string;
+
+			// A new login of the same client revokes the old grant.
+			await login(clientId);
+			await env.OAUTH_KV.put(grantKey, revoked);
+
+			const result = await refresh(clientId, refreshToken);
+			expect(result.status).toBe(400);
+			expect(result.error_description).toBe("Grant not found");
+		});
+
 		it("drops expired grants", async () => {
 			const store = env.GRANT_STORE.get(env.GRANT_STORE.idFromName("expiry_user"));
 			await store.write("grant:expiry_user:old", "{}", Date.now() - 1);

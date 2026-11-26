@@ -6,13 +6,15 @@ import type { GlobalpingEnv } from "../types";
 
 const GRANT_PREFIX = "grant:";
 
-type Entry = { value: string; expiresAt?: number };
+// A null value marks a deleted grant.
+type Entry = { value: string | null; expiresAt?: number };
 
 export class GrantStore extends DurableObject {
-	async read(key: string): Promise<string | null> {
+	// Returns null for a deleted or expired grant, undefined for a grant that was never here.
+	async read(key: string): Promise<string | null | undefined> {
 		const entry = await this.ctx.storage.get<Entry>(key);
 		if (!entry) {
-			return null;
+			return undefined;
 		}
 		if (entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) {
 			await this.ctx.storage.delete(key);
@@ -26,7 +28,11 @@ export class GrantStore extends DurableObject {
 	}
 
 	async remove(key: string): Promise<void> {
-		await this.ctx.storage.delete(key);
+		// Can be a plain delete after 2027-01-01.
+		await this.ctx.storage.put<Entry>(key, {
+			value: null,
+			expiresAt: Date.now() + 60 * 60 * 1000,
+		});
 	}
 
 	async list(): Promise<string[]> {
@@ -50,7 +56,9 @@ export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 			let value = await storeFor(key).read(key);
 
 			// Old grants are still in KV. Can be removed after 2027-01-01.
-			value ??= await kv.get(key);
+			if (value === undefined) {
+				value = await kv.get(key);
+			}
 
 			if (value === null) {
 				return null;
