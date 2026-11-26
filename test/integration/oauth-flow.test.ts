@@ -4,8 +4,9 @@
  * These tests verify OAuth route handling using SELF fetcher
  * to test the complete request/response cycle through the Worker.
  */
-import { SELF, env } from "cloudflare:test";
+import { SELF, env, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { withGrantStore } from "../../src/auth";
 import { exerciseLegacySSE } from "./sse";
 import { exerciseStreamableHTTP } from "./streamable-http";
 
@@ -22,6 +23,7 @@ declare module "cloudflare:test" {
 			get: (key: string) => Promise<string | null>;
 			delete?: (key: string) => Promise<void>;
 		};
+		GRANT_STORE: DurableObjectNamespace<import("../../src/auth/grant-store").GrantStore>;
 	}
 }
 // Mock Globalping OAuth token and user data endpoints
@@ -500,6 +502,109 @@ describe("OAuth Routes Integration", () => {
 				expect(await refreshResponse.json()).toMatchObject({ resource });
 			},
 		);
+	});
+
+	describe("Grant storage", () => {
+		const login = async (clientId: string) => {
+			const code = await authorizeClient(clientId);
+			const response = await requestToken(clientId, { code });
+			expect(response.status).toBe(200);
+			const { refresh_token } = (await response.json()) as { refresh_token: string };
+			const [userId, grantId] = refresh_token.split(":");
+			const store = env.GRANT_STORE.get(env.GRANT_STORE.idFromName(userId));
+			return { refreshToken: refresh_token, grantKey: `grant:${userId}:${grantId}`, store };
+		};
+
+		const refresh = async (clientId: string, refreshToken: string) => {
+			const response = await requestToken(clientId, { refreshToken });
+			const body = (await response.json()) as {
+				refresh_token?: string;
+				error_description?: string;
+			};
+			return { status: response.status, ...body };
+		};
+
+		const moveGrantToKV = async (store: ReturnType<typeof env.GRANT_STORE.get>, grantKey: string) => {
+			await env.OAUTH_KV.put(grantKey, (await store.read(grantKey)) as string);
+			await runInDurableObject(store, (_instance, state) => state.storage.deleteAll());
+		};
+
+		it("ignores an outdated grant copy in KV", async () => {
+			const clientId = await registerPublicClient();
+			const { refreshToken, grantKey, store } = await login(clientId);
+			const beforeRotation = (await store.read(grantKey)) as string;
+
+			const first = await refresh(clientId, refreshToken);
+			expect(first.status).toBe(200);
+			await env.OAUTH_KV.put(grantKey, beforeRotation);
+
+			const second = await refresh(clientId, first.refresh_token as string);
+			expect(second.status).toBe(200);
+		});
+
+		it("moves a grant that exists only in KV into the store", async () => {
+			const clientId = await registerPublicClient();
+			const { refreshToken, grantKey, store } = await login(clientId);
+			await moveGrantToKV(store, grantKey);
+
+			const first = await refresh(clientId, refreshToken);
+			expect(first.status).toBe(200);
+			const second = await refresh(clientId, first.refresh_token as string);
+			expect(second.status).toBe(200);
+		});
+
+		it("revokes a grant that exists only in KV", async () => {
+			const clientId = await registerPublicClient();
+			const { refreshToken, grantKey, store } = await login(clientId);
+			await moveGrantToKV(store, grantKey);
+
+			// A new login of the same client revokes the old grant.
+			await login(clientId);
+
+			const result = await refresh(clientId, refreshToken);
+			expect(result.status).toBe(400);
+			expect(result.error_description).toBe("Grant not found");
+		});
+
+		it("ignores a KV copy of a revoked grant", async () => {
+			const clientId = await registerPublicClient();
+			const { refreshToken, grantKey, store } = await login(clientId);
+			const revoked = (await store.read(grantKey)) as string;
+
+			// A new login of the same client revokes the old grant.
+			await login(clientId);
+			await env.OAUTH_KV.put(grantKey, revoked);
+
+			const result = await refresh(clientId, refreshToken);
+			expect(result.status).toBe(400);
+			expect(result.error_description).toBe("Grant not found");
+		});
+
+		it("rejects a write when another request changed the grant", async () => {
+			const key = "grant:race_user:1";
+			const first = withGrantStore(env as any).OAUTH_KV;
+			const second = withGrantStore(env as any).OAUTH_KV;
+			await first.put(key, "1");
+
+			await first.get(key);
+			await second.get(key);
+			await first.put(key, "2");
+
+			await expect(second.put(key, "3")).rejects.toMatchObject({ code: "temporarily_unavailable" });
+			expect(await second.get(key)).toBe("2");
+		});
+
+		it("drops expired grants", async () => {
+			const store = env.GRANT_STORE.get(env.GRANT_STORE.idFromName("expiry_user"));
+			await store.write("grant:expiry_user:live", "{}", Date.now() + 60_000);
+			await runInDurableObject(store, (_instance, state) =>
+				state.storage.put("grant:expiry_user:old", { value: "{}", expiresAt: Date.now() - 1 }),
+			);
+			expect(await store.read("grant:expiry_user:old")).toBeNull();
+
+			await runDurableObjectAlarm(store);
+			expect(await store.list()).toEqual(["grant:expiry_user:live"]);
+		});
 	});
 
 	describe("OAuth Callback - Error Paths", () => {

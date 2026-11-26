@@ -25,6 +25,10 @@
 			{
 				"class_name": "GlobalpingMCP",
 				"name": "globalping_mcp_object"
+			},
+			{
+				"class_name": "GrantStore",
+				"name": "GRANT_STORE"
 			}
 		]
 	},
@@ -41,6 +45,10 @@
 					"to": "GlobalpingMCP"
 				}
 			]
+		},
+		{
+			"tag": "v3",
+			"new_sqlite_classes": ["GrantStore"]
 		}
 	],
 	"kv_namespaces": [
