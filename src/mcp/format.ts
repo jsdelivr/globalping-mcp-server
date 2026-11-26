@@ -289,7 +289,8 @@ const summaryByType: Record<string, (result: any) => string> = {
 		const target = isTargetReached(result)
 			? `target ${result.resolvedAddress} reached`
 			: `no reply from target, last reply from ${hop.resolvedAddress} on hop ${index + 1}`;
-		return `${result.hops.length} hops, ${target}, rtt ${hop.timings[0].rtt} ms`;
+		const rtt = hop.timings.length === 0 ? "" : `, rtt ${hop.timings[0].rtt} ms`;
+		return `${result.hops.length} hops, ${target}${rtt}`;
 	},
 	mtr: (result) => {
 		const index = result.hops.findLastIndex((hop: any) => hop.resolvedAddress);
