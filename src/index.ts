@@ -82,55 +82,6 @@ Key guidelines:
 			return sanitizeToken(raw);
 		});
 
-		// Tool to retrieve previous measurement by ID
-		this.server.registerTool(
-			"getMeasurement",
-			{
-				title: "Get Previous Measurement",
-				description:
-					"Retrieve the full details of a past measurement using its ID. Use this tool to access raw JSON data, individual probe results, or cached measurements when the initial summary is insufficient.",
-				annotations: {
-					readOnlyHint: true,
-					destructiveHint: false,
-					openWorldHint: false,
-				},
-				inputSchema: {
-					id: z
-						.string()
-						.describe(
-							"The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')",
-						),
-				},
-				outputSchema: {
-					measurement: z.object({}),
-				},
-			},
-			async ({ id }) => {
-				// Check if we have this measurement cached in state
-				if (this.state.measurements[id]) {
-					const measurement = this.state.measurements[id];
-					return {
-						content: [
-							{
-								type: "text",
-								text: `Cached measurement found:\n\n${JSON.stringify(measurement, null, 2)}`,
-							},
-						],
-						structuredContent: { measurement },
-					};
-				}
-
-				return {
-					content: [
-						{
-							type: "text",
-							text: "Measurement not found in cache. Use one of the measurement tools (ping, traceroute, dns, mtr, http) to generate a new measurement.",
-						},
-					],
-				};
-			},
-		);
-
 		// Tool to explain comparison measurements
 		this.server.registerTool(
 			"compareLocations",
@@ -267,9 +218,9 @@ Available Tools:
    No parameters required
    The rate limit is the free hourly allowance, not a hard cap: authenticated users with credits can run additional tests by spending one credit per test
 
-8. getMeasurement - Retrieve a previously run measurement by ID
+8. getMeasurement - Retrieve the current status and results of a measurement by ID
    Parameters:
-     - id: The ID of a previously run measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')
+     - id: The ID of a measurement (e.g., '01HT4DGF5ZS7B2M93QP5ZTS3DN')
 
 9. compareLocations - Guide on how to run comparison measurements using the same probes
    No parameters required
