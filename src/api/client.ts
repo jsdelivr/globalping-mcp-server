@@ -94,15 +94,16 @@ export async function runMeasurement(
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
-	// Always enforce a default limit if not specified
-	if (!options.limit) {
-		options.limit = GLOBALPING_API.DEFAULT_LIMIT;
+	const defaultLimit = Math.max(
+		GLOBALPING_API.DEFAULT_LIMIT,
+		Array.isArray(options.locations) ? options.locations.length : 0,
+	);
+
+	if (!options.limit || options.limit < GLOBALPING_API.MIN_LIMIT) {
+		options.limit = defaultLimit;
 	}
 
-	// Ensure limit is within reasonable bounds
-	if (options.limit < GLOBALPING_API.MIN_LIMIT) {
-		options.limit = GLOBALPING_API.DEFAULT_LIMIT;
-	} else if (options.limit > GLOBALPING_API.MAX_LIMIT) {
+	if (options.limit > GLOBALPING_API.MAX_LIMIT) {
 		options.limit = GLOBALPING_API.MAX_LIMIT;
 	}
 

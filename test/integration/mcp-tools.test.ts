@@ -14,6 +14,7 @@ const createMockGlobalpingAPI = () => {
 	const originalFetch = globalThis.fetch;
 	let pendingRequests = 0;
 	let idleResolvers: Array<() => void> = [];
+	const createdMeasurements: any[] = [];
 
 	const mockFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
 		pendingRequests++;
@@ -29,6 +30,8 @@ const createMockGlobalpingAPI = () => {
 			// Mock Globalping API responses
 			if (urlString.includes("api.globalping.io/v1/measurements")) {
 				if (method === "POST") {
+					createdMeasurements.push(await (input as Request).json());
+
 					return new Response(
 						JSON.stringify({
 							id: "mockMeasurement123",
@@ -207,7 +210,7 @@ const createMockGlobalpingAPI = () => {
 		});
 	};
 
-	return { mockFetch, originalFetch, waitForIdle };
+	return { mockFetch, originalFetch, waitForIdle, createdMeasurements };
 };
 
 // Helper to create MCP requests with proper headers
@@ -562,6 +565,31 @@ describe("MCP Tools Integration", () => {
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe("Measurement options", () => {
+		const call = (name: string, args: object) =>
+			makeMCPRequest(
+				{ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } },
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+		it("should use one probe for each location by default", async () => {
+			await call("ping", { target: "google.com", locations: ["US", "DE", "JP", "BR", "AU"] });
+
+			expect(mockAPI.createdMeasurements[0].limit).toBe(5);
+		});
+
+		it("should keep the limit of the user", async () => {
+			await call("ping", {
+				target: "google.com",
+				locations: ["US", "DE", "JP", "BR", "AU"],
+				limit: 2,
+			});
+
+			expect(mockAPI.createdMeasurements[0].limit).toBe(2);
 		});
 	});
 

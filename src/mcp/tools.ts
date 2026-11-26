@@ -73,7 +73,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.min(1)
 					.max(100)
 					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
+					.describe("Number of probes to use (default: 3 or one per location, max: 100)"),
 				packets: z.number().optional().describe("Number of packets to send (default: 3)"),
 				output: z
 					.enum(["summary", "full"])
@@ -102,7 +102,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "ping",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							packets: packets || 3,
 						},
@@ -152,7 +152,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.max(100)
 					.optional()
 					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+						"Number of probes to use (default: 3 or one per location, max: 100). Higher limits provide more diverse results when using 'world' location.",
 					),
 
 				protocol: z
@@ -187,7 +187,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "traceroute",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							protocol: protocol as any,
 							port: port || 80,
@@ -237,7 +237,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.max(100)
 					.optional()
 					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+						"Number of probes to use (default: 3 or one per location, max: 100). Higher limits provide more diverse results when using 'world' location.",
 					),
 				queryType: z
 					.enum([
@@ -295,7 +295,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "dns",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							query: {
 								type: queryType || "A",
@@ -349,7 +349,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.max(100)
 					.optional()
 					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+						"Number of probes to use (default: 3 or one per location, max: 100). Higher limits provide more diverse results when using 'world' location.",
 					),
 				protocol: z
 					.enum(["ICMP", "TCP", "UDP"])
@@ -387,7 +387,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "mtr",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							protocol: protocol as any,
 							port: port || 80,
@@ -438,7 +438,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.max(100)
 					.optional()
 					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
+						"Number of probes to use (default: 3 or one per location, max: 100). Higher limits provide more diverse results when using 'world' location.",
 					),
 				method: z
 					.enum(["GET", "HEAD", "OPTIONS"])
@@ -492,7 +492,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "http",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							request: {
 								method: method || "GET",

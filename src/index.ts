@@ -26,12 +26,8 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 					listChanged: true,
 				},
 			},
-			instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
+			instructions: `Globalping runs ping, traceroute, DNS, MTR and HTTP measurements from thousands of probes worldwide.
 
-Key guidelines:
-- Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
-- Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.
-- Use 'compareLocations' to understand how to benchmark performance.
 - Authentication: You can authenticate via OAuth (prompted automatically) or by providing a Globalping API token in the 'Authorization' header (Bearer <token>) for higher rate limits.
 - If a user asks for 'latency' or 'reachability', use 'ping'.
 - If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
@@ -164,7 +160,7 @@ Available Tools:
    Parameters:
      - target: Domain name or IP to test (e.g., 'google.com', '1.1.1.1')
      - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - packets: Number of packets to send (default: 3)
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
@@ -172,7 +168,7 @@ Available Tools:
    Parameters:
      - target: Domain name or IP to test (e.g., 'cloudflare.com', '1.1.1.1')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
@@ -181,7 +177,7 @@ Available Tools:
    Parameters:
      - target: Domain name to resolve (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - queryType: DNS record type - "A", "AAAA", "ANY", "CNAME", "DNSKEY", "DS", "HTTPS", "MX", "NS", "NSEC", "PTR", "RRSIG", "SOA", "TXT", "SRV", "SVCB" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
@@ -191,7 +187,7 @@ Available Tools:
    Parameters:
      - target: Domain name or IP to test (e.g., 'google.com', '8.8.8.8')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - packets: Number of packets to send to each hop (default: 3)
@@ -201,7 +197,7 @@ Available Tools:
    Parameters:
      - target: Domain name or IP to test (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)
      - protocol: Protocol to use - "HTTP" or "HTTPS" (default: HTTPS)
      - path: Path component of the URL (e.g., '/api/v1/status')
