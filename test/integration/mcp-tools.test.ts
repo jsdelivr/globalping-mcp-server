@@ -156,9 +156,36 @@ const createMockGlobalpingAPI = () => {
 			if (urlString.includes("/v1/probes")) {
 				return new Response(
 					JSON.stringify([
-						{ location: { continent: "NA", country: "US", city: "New York" } },
-						{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
-						{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
+						{
+							location: {
+								continent: "NA",
+								country: "US",
+								city: "New York",
+								network: "Comcast",
+								asn: 7922,
+							},
+							tags: ["eyeball-network"],
+						},
+						{
+							location: {
+								continent: "NA",
+								country: "US",
+								city: "Los Angeles",
+								network: "Amazon.com",
+								asn: 16509,
+							},
+							tags: ["aws", "u-user-tag"],
+						},
+						{
+							location: {
+								continent: "EU",
+								country: "DE",
+								city: "Frankfurt",
+								network: "Hetzner Online",
+								asn: 24940,
+							},
+							tags: ["datacenter-network"],
+						},
 					]),
 					{
 						status: 200,
@@ -820,24 +847,59 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
 			expect(data.result.content[0].text).toMatchInlineSnapshot(`
-				"Available Globalping Probe Locations:
+				"Countries with Globalping probes and the number of probes:
 
 				North America:
-				  US: New York, Los Angeles
+				US: 2
 
 				Europe:
-				  DE: Frankfurt
+				DE: 1
 
+				Networks with 5 or more probes (0 of 3):
+
+
+				Tags:
+				aws, datacenter-network, eyeball-network
 
 				Total Probes: 3
 
-				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]
-				"
+				Call this tool with "country" to see all cities, networks and tags of one country.
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]"
 			`);
 			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+		});
+
+		it("should fetch the locations of one country", async () => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 7,
+					method: "tools/call",
+					params: { name: "locations", arguments: { country: "us" } },
+				},
+				validToken,
+				sessionId,
+			);
+			const data = await getMCPResponse(response);
+
+			expect(data.result.content[0].text).toMatchInlineSnapshot(`
+				"Globalping probes in US: 2
+
+				Cities with the number of probes:
+				New York: 1, Los Angeles: 1
+
+				Networks:
+				Comcast (AS7922), Amazon.com (AS16509)
+
+				Tags:
+				aws, eyeball-network
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]"
+			`);
 		});
 	});
 

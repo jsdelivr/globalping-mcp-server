@@ -217,9 +217,10 @@ Available Tools:
      - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary", "headers" or "full" (default: "headers", or "summary" when the output is longer than 30000 characters)
 
-6. locations - List all available Globalping probe locations
-   No parameters required
-   Returns a list of probe locations grouped by continent and country
+6. locations - List the locations of Globalping probes
+   Parameters:
+     - country: Two-letter country code (e.g., 'US'). Optional
+   Returns countries, the biggest networks and tags, or all cities, networks and tags of one country
 
 7. limits - Show your current free test allowance and credits for the Globalping API
    No parameters required

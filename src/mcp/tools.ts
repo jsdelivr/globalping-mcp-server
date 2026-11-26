@@ -7,17 +7,8 @@ import { GLOBALPING_API } from "../config";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
 import { formatMeasurement } from "./format";
+import { formatLocations } from "./format-locations";
 import { parseLocations } from "./helpers";
-
-const continentNames: Record<string, string> = {
-	AF: "Africa",
-	AN: "Antarctica",
-	AS: "Asia",
-	EU: "Europe",
-	NA: "North America",
-	OC: "Oceania",
-	SA: "South America",
-};
 
 const packetsSchema = z.number().int().min(1).max(16).optional();
 const portSchema = z.number().int().min(0).max(65535).optional();
@@ -607,61 +598,27 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "List Probe Locations",
 			description:
-				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simply provide the location you need to the tools above, the field is smart and will auto select the right probes.",
+				"List the locations of Globalping probes. Without 'country': countries, the biggest networks and tags. With 'country': all cities, networks and tags of this country. Use this tool to find values for the 'locations' argument of the measurement tools. It is rarely needed: 'locations' finds a place, network or ASN by its name.",
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
 				openWorldHint: true,
 			},
+			inputSchema: {
+				country: z
+					.string()
+					.length(2)
+					.optional()
+					.describe("Two-letter country code (e.g., 'US')"),
+			},
 		},
-		async () => {
+		async ({ country }) => {
 			return handleToolExecution(async () => {
-				const token = getToken();
-				const probes = await getLocations(token);
-
-				// Group probes by continent and country
-				const grouped: Record<string, Record<string, any[]>> = {};
-
-				for (const probe of probes) {
-					const continent = probe.location.continent;
-					const country = probe.location.country;
-
-					if (!grouped[continent]) {
-						grouped[continent] = {};
-					}
-
-					if (!grouped[continent][country]) {
-						grouped[continent][country] = [];
-					}
-
-					grouped[continent][country].push(probe);
-				}
-
-				// Format the output
-				let textOutput = "Available Globalping Probe Locations:\n\n";
-
-				for (const [continent, countries] of Object.entries(grouped)) {
-					textOutput += `${continentNames[continent]}:\n`;
-
-					for (const [country, probes] of Object.entries(countries)) {
-						const cities = [...new Set(probes.map((p) => p.location.city))];
-						textOutput += `  ${country}: ${cities.join(", ")}\n`;
-					}
-
-					textOutput += "\n";
-				}
-
-				textOutput += `\nTotal Probes: ${probes.length}\n`;
-				textOutput +=
-					'\nNote: To specify locations, use the "magic" field syntax in the locations parameter. ';
-				textOutput += 'For example: ["US", "Europe", "AS13335", "London+UK"]\n';
+				const probes = await getLocations(getToken());
 
 				return {
 					content: [
-						{
-							type: "text",
-							text: textOutput,
-						},
+						{ type: "text", text: formatLocations(probes, country?.toUpperCase()) },
 					],
 				};
 			}, "Failed to list locations");
