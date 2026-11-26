@@ -173,7 +173,7 @@ Available Tools:
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
-     - port: Port number for TCP/UDP (default: 80)
+     - port: Port number for TCP (default: 80)
      - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 

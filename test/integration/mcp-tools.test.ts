@@ -659,6 +659,20 @@ describe("MCP Tools Integration", () => {
 				ipVersion: 6,
 			});
 		});
+
+		it.each([
+			["ping", { limit: 1.5 }],
+			["ping", { packets: 17 }],
+			["mtr", { packets: 0 }],
+			["traceroute", { port: 70000 }],
+			["dns", { port: -1 }],
+			["http", { port: 1.5 }],
+		])("should reject %s with %j without calling the API", async (name, args) => {
+			const data = await call(name, { target: "google.com", ...args });
+
+			expect(data.result.isError).toBe(true);
+			expect(mockAPI.mockFetch).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("Get Measurement Tool", () => {

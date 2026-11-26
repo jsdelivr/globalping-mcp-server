@@ -19,6 +19,8 @@ const continentNames: Record<string, string> = {
 	SA: "South America",
 };
 
+const packetsSchema = z.number().int().min(1).max(16).optional();
+const portSchema = z.number().int().min(0).max(65535).optional();
 const ipVersionSchema = z.literal([4, 6]).optional();
 const targetIpVersionSchema = ipVersionSchema.describe(
 	"IP version (default: 4). Only for domain targets.",
@@ -75,16 +77,17 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 				limit: z
 					.number()
+					.int()
 					.min(1)
 					.max(100)
 					.optional()
 					.describe("Number of probes to use (default: 3 or one per location, max: 100)"),
-				packets: z.number().optional().describe("Number of packets to send (default: 3)"),
+				packets: packetsSchema.describe("Number of packets to send (default: 3)"),
 				protocol: z
 					.enum(["ICMP", "TCP"])
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
-				port: z.number().optional().describe("Port number for TCP (default: 80)"),
+				port: portSchema.describe("Port number for TCP (default: 80)"),
 				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
@@ -165,6 +168,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 				limit: z
 					.number()
+					.int()
 					.min(1)
 					.max(100)
 					.optional()
@@ -176,7 +180,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
-				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
+				port: portSchema.describe("Port number for TCP (default: 80)"),
 				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
@@ -252,6 +256,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 				limit: z
 					.number()
+					.int()
 					.min(1)
 					.max(100)
 					.optional()
@@ -291,7 +296,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["UDP", "TCP"])
 					.optional()
 					.describe("Protocol to use (default: UDP)"),
-				port: z.number().optional().describe("Port number (default: 53)"),
+				port: portSchema.describe("Port number (default: 53)"),
 				ipVersion: ipVersionSchema.describe(
 					"IP version (default: 4). Only for a domain resolver.",
 				),
@@ -389,6 +394,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 				limit: z
 					.number()
+					.int()
 					.min(1)
 					.max(100)
 					.optional()
@@ -399,11 +405,10 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
-				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
-				packets: z
-					.number()
-					.optional()
-					.describe("Number of packets to send to each hop (default: 3)"),
+				port: portSchema.describe("Port number for TCP/UDP (default: 80)"),
+				packets: packetsSchema.describe(
+					"Number of packets to send to each hop (default: 3)",
+				),
 				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "full"])
@@ -483,6 +488,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					),
 				limit: z
 					.number()
+					.int()
 					.min(1)
 					.max(100)
 					.optional()
@@ -501,10 +507,9 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.string()
 					.optional()
 					.describe("Path component of the URL (e.g., '/api/v1/status')"),
-				port: z
-					.number()
-					.optional()
-					.describe("Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)"),
+				port: portSchema.describe(
+					"Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)",
+				),
 				query: z
 					.string()
 					.optional()
