@@ -57,13 +57,13 @@ describe("formatMeasurement", () => {
 			- Avg RTT: 4.33 ms
 			- Max RTT: 5.45 ms
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-kneuper-it
 			Resolved IP: 142.250.154.113
 			Packets: 3 sent, 3 received, 0 lost (0%)
 			RTT: min 5.142 ms, avg 5.294 ms, max 5.45 ms
 			Replies: 5.29 ms ttl 111, 5.14 ms ttl 111, 5.45 ms ttl 111
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 173.194.221.102
 			Packets: 3 sent, 3 received, 0 lost (0%)
 			RTT: min 3.199 ms, avg 3.375 ms, max 3.534 ms
@@ -94,7 +94,7 @@ describe("formatMeasurement", () => {
 			- Avg RTT: 23.47 ms
 			- Max RTT: 23.65 ms
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 140.82.121.4
 			Packets: 3 sent, 3 received, 0 lost (0%)
 			RTT: min 23.18 ms, avg 23.47 ms, max 23.65 ms
@@ -114,7 +114,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-jimaek
 			Resolved IP: 64.233.163.113
 			Hop | Host | RTT ms
 			1 | _gateway (172.23.1.1) | 0.03, 0.01
@@ -123,7 +123,7 @@ describe("formatMeasurement", () => {
 			4 | juniper4.dc1.hel1.hetzner.com (213.239.224.25) | 0.534, 0.525
 			5 | google.com (64.233.163.113) | 2.983, 3.137
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.14.102
 			Hop | Host | RTT ms
 			1 | _gateway (172.31.1.1) | 4.829, 5.137
@@ -158,7 +158,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-watn3y
 			Resolved IP: 142.250.154.101
 			Hop | ASN | Host | Loss % | Sent | Received | Dropped | Min ms | Avg ms | Max ms | StDev ms | Jitter min ms | Jitter avg ms | Jitter max ms | RTT ms
 			1 | 24940 | _gateway (213.133.117.207) | 0 | 3 | 3 | 0 | 0.279 | 0.3 | 0.365 | 0 | 0 | 0.2 | 0.3 | 0.326, 0.365, 0.279
@@ -175,7 +175,7 @@ describe("formatMeasurement", () => {
 			12 | no reply
 			13 | 15169 | google.com (142.250.154.101) | 0 | 3 | 3 | 0 | 5.289 | 5.3 | 5.342 | 0 | 0 | 2.6 | 5.3 | 5.331, 5.342, 5.289
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 64.233.161.139
 			Hop | ASN | Host | Loss % | Sent | Received | Dropped | Min ms | Avg ms | Max ms | StDev ms | Jitter min ms | Jitter avg ms | Jitter max ms | RTT ms
 			1 |  | _gateway (172.31.1.1) | 0 | 3 | 3 | 0 | 1.492 | 1.7 | 2.067 | 0.2 | 0.2 | 1.1 | 2.1 | 1.668, 1.492, 2.067
@@ -202,7 +202,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Response code: NOERROR (0)
 			Resolver: private, total 0 ms
 			Answers: 6
@@ -213,7 +213,7 @@ describe("formatMeasurement", () => {
 			google.com. 225 IN A 74.125.205.113
 			google.com. 225 IN A 74.125.205.100
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Response code: NOERROR (0)
 			Resolver: private, total 0 ms
 			Answers: 6
@@ -238,12 +238,12 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 2
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Response code: NXDOMAIN (3)
 			Resolver: 185.12.64.2, total 15 ms
 			Answers: 0
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Response code: NXDOMAIN (3)
 			Resolver: private, total 32 ms
 			Answers: 0
@@ -263,7 +263,7 @@ describe("formatMeasurement", () => {
 			Options: {"trace":true}
 			Probes: 2
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Hop 1
 			Resolver: 127.0.0.53, total 3 ms
 			Answers: 13
@@ -319,7 +319,7 @@ describe("formatMeasurement", () => {
 			google.com. 300 IN A 64.233.164.102
 			google.com. 300 IN A 64.233.164.100
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-suleymn20, u-suleymn20:sndu-falkenstein
 			Hop 1
 			Resolver: 127.0.0.53, total 1 ms
 			Answers: 14
@@ -403,7 +403,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-V8AA
 			Resolved IP: 172.217.22.110
 			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -420,7 +420,7 @@ describe("formatMeasurement", () => {
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.110.101
 			Timings: total 63 ms, dns 2 ms, tcp 6 ms, tls 21 ms, firstByte 34 ms, download 0 ms
 			TLS: same as probe 1
@@ -441,7 +441,7 @@ describe("formatMeasurement", () => {
 			Locations: [{"magic":"world"}]
 			Probes: 1
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 1.1.1.1
 			Timings: total 36 ms, dns N/A, tcp 7 ms, tls 12 ms, firstByte 17 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, not valid (ERR_TLS_CERT_ALTNAME_INVALID)
@@ -489,7 +489,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -506,7 +506,7 @@ describe("formatMeasurement", () => {
 			Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-lc09yjC1OTBN8btuKydg3w' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
 			Plus headers same for all probes (11), listed at the top.
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 			TLS: same as probe 1
@@ -542,7 +542,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -567,7 +567,7 @@ describe("formatMeasurement", () => {
 			</BODY></HTML>
 
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 			TLS: same as probe 1
@@ -606,7 +606,7 @@ describe("formatMeasurement", () => {
 			Options: {"request":{"method":"GET"}}
 			Probes: 2
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -633,7 +633,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Status: failed (target)
 			Request timed out while establishing the TCP connection.
 		`);
@@ -676,7 +676,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -701,7 +701,7 @@ describe("formatMeasurement", () => {
 			</BODY></HTML>
 
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 			TLS: same as probe 1
@@ -737,7 +737,7 @@ describe("formatMeasurement", () => {
 			Limit: 2
 			Probes: 1
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-V8AA
 			Resolved IP: 172.217.22.110
 			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -801,7 +801,7 @@ describe("formatMeasurement", () => {
 			Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 			Connection: close
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 142.251.127.101
 			Timings: total 156 ms, dns 1 ms, tcp 7 ms, tls 22 ms, firstByte 126 ms, download 0 ms
 			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -827,7 +827,7 @@ describe("formatMeasurement", () => {
 
 			The response is truncated.
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Resolved IP: 173.194.73.113
 			Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 			TLS: same as probe 1
@@ -851,7 +851,7 @@ describe("formatMeasurement", () => {
 			Options: {"port":81,"request":{"method":"GET"}}
 			Probes: 1
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Status: failed (target)
 			Resolved IP: 104.20.23.154
 			Timings: total 15001 ms, dns 1 ms, tcp N/A, tls N/A, firstByte N/A, download N/A
@@ -874,11 +874,11 @@ describe("formatMeasurement", () => {
 			Ping Results:
 			- Successful Probes: 0/2
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-Lusitaniae
 			Status: failed (target)
 			queryA ENOTFOUND nonexistent.google.com
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-dominhhieu1405
 			Status: failed (target)
 			queryA ENOTFOUND nonexistent.google.com
 		`);
@@ -904,15 +904,15 @@ describe("formatMeasurement", () => {
 			- Dropped: 3
 			- Average Loss: 100.00%
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
 			Status: failed (resolver)
 			queryA ESERVFAIL dnssec-failed.org
 
-			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-alfredjophy
 			Status: failed (resolver)
 			queryA ESERVFAIL dnssec-failed.org
 
-			Probe 3: Lauterbourg, FR, EU, Contabo (AS51167)
+			Probe 3: Lauterbourg, FR, EU, Contabo (AS51167), tags: datacenter-network, u-herr-nandez
 			Resolved IP: 96.99.227.255
 			Packets: 3 sent, 0 received, 3 lost (100%)
 		`);
@@ -948,10 +948,10 @@ describe("formatMeasurement", () => {
 			Ping Results:
 			- Successful Probes: 0/2
 
-			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940)
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-Lusitaniae
 			Status: in-progress
 
-			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-dominhhieu1405
 			Status: failed (target)
 			queryA ENOTFOUND nonexistent.google.com
 		`);
@@ -979,7 +979,7 @@ describe("formatMeasurement", () => {
 			- Successful Probes: 0/0
 			- Excluded Probes: 1 (offline: 1)
 
-			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940)
+			Probe 1: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network, u-kneuper-it
 			Status: offline
 		`);
 	});
@@ -1512,7 +1512,7 @@ describe("formatMeasurement", () => {
 				})),
 			};
 
-			expect(formatMeasurement(long, "full")).toHaveLength(31206);
+			expect(formatMeasurement(long, "full")).toHaveLength(31268);
 			expect(formatMeasurement(long)).toMatchInlineSnapshot(`
 				Measurement ID: 2GaIM08nHIBGjG08y00321Wl5
 				Type: traceroute
@@ -1556,7 +1556,7 @@ describe("formatMeasurement", () => {
 				- Avg RTT: 4.33 ms
 				- Max RTT: 5.45 ms
 
-				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 				Resolved IP: 173.194.221.102
 				Packets: 3 sent, 3 received, 0 lost (0%)
 				RTT: min 3.199 ms, avg 3.375 ms, max 3.534 ms
@@ -1577,7 +1577,7 @@ describe("formatMeasurement", () => {
 				Options: {"request":{"method":"GET"}}
 				Probes: 2
 
-				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 				Resolved IP: 173.194.73.113
 				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 				TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
@@ -1619,7 +1619,7 @@ describe("formatMeasurement", () => {
 				Options: {"request":{"method":"GET"}}
 				Probes: 2
 
-				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
+				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network
 				Resolved IP: 173.194.73.113
 				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
 				TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid

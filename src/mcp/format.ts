@@ -221,7 +221,8 @@ function formatProbesFull(
 ): string {
 	return measurement.results
 		.map(({ probe, result }: any, index: number) => {
-			const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}\n`;
+			const tags = probe.tags.length > 0 ? `, tags: ${probe.tags.join(", ")}` : "";
+			const title = `\nProbe ${index + 1}: ${formatProbeLocation(probe)}${tags}\n`;
 
 			if (result.status === "finished") {
 				return title + formatResult(result, index + 1);
