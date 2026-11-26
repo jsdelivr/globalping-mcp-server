@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { OAuthError } from "@cloudflare/workers-oauth-provider";
 import type { GlobalpingEnv } from "../types";
 
 // Grants live in one Durable Object per user, not in KV.
@@ -17,14 +18,23 @@ export class GrantStore extends DurableObject {
 			return undefined;
 		}
 		if (entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) {
-			await this.ctx.storage.delete(key);
 			return null;
 		}
 		return entry.value;
 	}
 
-	async write(key: string, value: string, expiresAt?: number): Promise<void> {
+	async write(
+		key: string,
+		value: string,
+		expiresAt?: number,
+		expected?: string | null,
+	): Promise<boolean> {
+		if ((await this.read(key)) !== expected) {
+			return false;
+		}
 		await this.ctx.storage.put<Entry>(key, { value, expiresAt });
+		await this.scheduleCleanup();
+		return true;
 	}
 
 	async remove(key: string): Promise<void> {
@@ -33,10 +43,32 @@ export class GrantStore extends DurableObject {
 			value: null,
 			expiresAt: Date.now() + 60 * 60 * 1000,
 		});
+		await this.scheduleCleanup();
 	}
 
 	async list(): Promise<string[]> {
 		return [...(await this.ctx.storage.list()).keys()];
+	}
+
+	async alarm(): Promise<void> {
+		await this.deleteExpired();
+		await this.scheduleCleanup();
+	}
+
+	private async deleteExpired(): Promise<void> {
+		for (const [key, { expiresAt }] of await this.ctx.storage.list<Entry>()) {
+			if (expiresAt !== undefined && expiresAt <= Date.now()) {
+				await this.ctx.storage.delete(key);
+			}
+		}
+	}
+
+	private async scheduleCleanup(): Promise<void> {
+		const entries = [...(await this.ctx.storage.list<Entry>()).values()];
+		const expiryTimes = entries.flatMap(({ expiresAt }) => expiresAt ?? []);
+		if (expiryTimes.length > 0) {
+			await this.ctx.storage.setAlarm(Math.min(...expiryTimes));
+		}
 	}
 }
 
@@ -48,12 +80,16 @@ export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 			env.GRANT_STORE.idFromName(key.slice(GRANT_PREFIX.length, key.lastIndexOf(":"))),
 		);
 
+	// What the store returned for each grant that this request read.
+	const seen = new Map<string, string | null | undefined>();
+
 	const grantKV = {
 		async get(key: string, options?: any) {
 			if (!key.startsWith(GRANT_PREFIX)) {
 				return kv.get(key, options);
 			}
 			let value = await storeFor(key).read(key);
+			seen.set(key, value);
 
 			// Old grants are still in KV. Can be removed after 2027-01-01.
 			if (value === undefined) {
@@ -75,7 +111,13 @@ export function withGrantStore(env: GlobalpingEnv): GlobalpingEnv {
 				: options?.expirationTtl
 					? Date.now() + options.expirationTtl * 1000
 					: undefined;
-			await storeFor(key).write(key, value, expiresAt);
+			if (!(await storeFor(key).write(key, value, expiresAt, seen.get(key)))) {
+				throw new OAuthError("temporarily_unavailable", {
+					description: "The grant was changed by another request, retry",
+					statusCode: 503,
+					headers: { "Retry-After": "1" },
+				});
+			}
 		},
 
 		async delete(key: string) {

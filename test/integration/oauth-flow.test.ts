@@ -4,8 +4,9 @@
  * These tests verify OAuth route handling using SELF fetcher
  * to test the complete request/response cycle through the Worker.
  */
-import { SELF, env, runInDurableObject } from "cloudflare:test";
+import { SELF, env, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { withGrantStore } from "../../src/auth";
 import { exerciseLegacySSE } from "./sse";
 import { exerciseStreamableHTTP } from "./streamable-http";
 
@@ -579,10 +580,30 @@ describe("OAuth Routes Integration", () => {
 			expect(result.error_description).toBe("Grant not found");
 		});
 
+		it("rejects a write when another request changed the grant", async () => {
+			const key = "grant:race_user:1";
+			const first = withGrantStore(env as any).OAUTH_KV;
+			const second = withGrantStore(env as any).OAUTH_KV;
+			await first.put(key, "1");
+
+			await first.get(key);
+			await second.get(key);
+			await first.put(key, "2");
+
+			await expect(second.put(key, "3")).rejects.toMatchObject({ code: "temporarily_unavailable" });
+			expect(await second.get(key)).toBe("2");
+		});
+
 		it("drops expired grants", async () => {
 			const store = env.GRANT_STORE.get(env.GRANT_STORE.idFromName("expiry_user"));
-			await store.write("grant:expiry_user:old", "{}", Date.now() - 1);
+			await store.write("grant:expiry_user:live", "{}", Date.now() + 60_000);
+			await runInDurableObject(store, (_instance, state) =>
+				state.storage.put("grant:expiry_user:old", { value: "{}", expiresAt: Date.now() - 1 }),
+			);
 			expect(await store.read("grant:expiry_user:old")).toBeNull();
+
+			await runDurableObjectAlarm(store);
+			expect(await store.list()).toEqual(["grant:expiry_user:live"]);
 		});
 	});
 
