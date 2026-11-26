@@ -197,7 +197,7 @@ function formatDnsAnswers({ resolver, timings, answers }: any): string {
 
 function formatHttpFull(measurement: any, level: "headers" | "full", probes?: number[]): string {
 	const { results } = measurement;
-	const commonHeaders = findCommonHeaders(results);
+	const commonHeaders = findCommonHeaders(results, probes);
 	const sameTlsProbes = findSameProbes(results, probes, ({ tls }) => tls && JSON.stringify(tls));
 	const sameBodyProbes = findSameProbes(results, probes, ({ rawBody }) => rawBody);
 	const formatResult = (result: any, number: number) =>

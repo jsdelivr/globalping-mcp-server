@@ -1564,7 +1564,7 @@ describe("formatMeasurement", () => {
 			`);
 		});
 
-		it("should print the headers same for all probes when probes are chosen", () => {
+		it("should look for the same headers only in the chosen probes", () => {
 			expect(formatMeasurement(httpGet, undefined, [2])).toMatchInlineSnapshot(`
 				Measurement ID: 2WkcEkbEvXsFfNaww00321X49
 				Type: http
@@ -1576,19 +1576,6 @@ describe("formatMeasurement", () => {
 				Limit: 2
 				Options: {"request":{"method":"GET"}}
 				Probes: 2
-
-				Headers same for all probes:
-				Location: https://www.google.com/
-				Content-Type: text/html; charset=UTF-8
-				Date: Thu, 19 Nov 2026 11:09:57 GMT
-				Expires: Sat, 19 Dec 2026 11:09:57 GMT
-				Cache-Control: public, max-age=2592000
-				Server: gws
-				Content-Length: 220
-				X-XSS-Protection: 0
-				X-Frame-Options: SAMEORIGIN
-				Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-				Connection: close
 
 				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 				Resolved IP: 173.194.73.113
@@ -1604,8 +1591,18 @@ describe("formatMeasurement", () => {
 				- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
 				- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
 				HTTP/1.1 301 Moved Permanently
+				Location: https://www.google.com/
+				Content-Type: text/html; charset=UTF-8
 				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
-				Plus headers same for all probes (11), listed at the top.
+				Date: Thu, 19 Nov 2026 11:09:57 GMT
+				Expires: Sat, 19 Dec 2026 11:09:57 GMT
+				Cache-Control: public, max-age=2592000
+				Server: gws
+				Content-Length: 220
+				X-XSS-Protection: 0
+				X-Frame-Options: SAMEORIGIN
+				Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+				Connection: close
 			`);
 		});
 
@@ -1622,19 +1619,6 @@ describe("formatMeasurement", () => {
 				Options: {"request":{"method":"GET"}}
 				Probes: 2
 
-				Headers same for all probes:
-				Location: https://www.google.com/
-				Content-Type: text/html; charset=UTF-8
-				Date: Thu, 19 Nov 2026 11:09:57 GMT
-				Expires: Sat, 19 Dec 2026 11:09:57 GMT
-				Cache-Control: public, max-age=2592000
-				Server: gws
-				Content-Length: 220
-				X-XSS-Protection: 0
-				X-Frame-Options: SAMEORIGIN
-				Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-				Connection: close
-
 				Probe 2: Helsinki, FI, EU, Hetzner Online (AS24940)
 				Resolved IP: 173.194.73.113
 				Timings: total 26 ms, dns 1 ms, tcp 8 ms, tls 9 ms, firstByte 8 ms, download 0 ms
@@ -1649,8 +1633,18 @@ describe("formatMeasurement", () => {
 				- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
 				- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
 				HTTP/1.1 301 Moved Permanently
+				Location: https://www.google.com/
+				Content-Type: text/html; charset=UTF-8
 				Content-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-HWDRRrLPkLKxjGY1zyMXLQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp
-				Plus headers same for all probes (11), listed at the top.
+				Date: Thu, 19 Nov 2026 11:09:57 GMT
+				Expires: Sat, 19 Dec 2026 11:09:57 GMT
+				Cache-Control: public, max-age=2592000
+				Server: gws
+				Content-Length: 220
+				X-XSS-Protection: 0
+				X-Frame-Options: SAMEORIGIN
+				Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+				Connection: close
 
 				<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
 				<TITLE>301 Moved</TITLE></HEAD><BODY>

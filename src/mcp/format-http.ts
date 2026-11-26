@@ -3,10 +3,13 @@
  */
 import { formatMs, isSelected } from "./helpers";
 
-// Header lines that all finished probes have. One probe has nothing to share.
-export function findCommonHeaders(results: any): string[] {
+// Header lines that all selected finished probes have.
+export function findCommonHeaders(results: any, probes?: number[]): string[] {
 	const headers: string[][] = results
-		.filter(({ result }: any) => result.status === "finished")
+		.filter(
+			({ result }: any, index: number) =>
+				result.status === "finished" && isSelected(index, probes),
+		)
 		.map(({ result }: any) => splitHeaders(result));
 
 	if (headers.length < 2) {
