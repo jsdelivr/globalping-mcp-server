@@ -208,8 +208,13 @@ function formatHttpFull(measurement: any, level: "headers" | "full", probes?: nu
 			sameTlsProbes.get(number),
 			sameBodyProbes.get(number),
 		);
+	const formatFailed = (result: any, number: number) =>
+		formatHttpDetails(result, sameTlsProbes.get(number));
 
-	return formatCommonHeaders(commonHeaders) + formatProbesFull(measurement, formatResult, probes);
+	return (
+		formatCommonHeaders(commonHeaders) +
+		formatProbesFull(measurement, formatResult, probes, formatFailed)
+	);
 }
 
 // A probe that is still running has only a status.
@@ -218,6 +223,7 @@ function formatProbesFull(
 	measurement: any,
 	formatResult: (result: any, number: number) => string,
 	probes?: number[],
+	formatFailed?: (result: any, number: number) => string,
 ): string {
 	return measurement.results
 		.map(({ probe, result }: any, index: number) => {
@@ -234,7 +240,7 @@ function formatProbesFull(
 				return status;
 			}
 
-			const details = measurement.type === "http" ? formatHttpDetails(result) : "";
+			const details = formatFailed?.(result, index + 1) ?? "";
 			return status + details + formatRawOutput(result);
 		})
 		.filter((_text: string, index: number) => isSelected(index, probes))

@@ -39,7 +39,7 @@ export function findSameProbes(
 	results.forEach(({ result }: any, index: number) => {
 		const value = getValue(result);
 
-		if (result.status !== "finished" || !value || !isSelected(index, probes)) {
+		if (result.status === "in-progress" || !value || !isSelected(index, probes)) {
 			return;
 		}
 

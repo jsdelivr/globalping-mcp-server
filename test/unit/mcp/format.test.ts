@@ -859,6 +859,57 @@ describe("formatMeasurement", () => {
 		`);
 	});
 
+	it("should print the same TLS of http probes that failed only once", () => {
+		const failed = {
+			...http,
+			results: http.results.map(({ probe, result }) => ({
+				probe,
+				result: {
+					...result,
+					status: "failed",
+					failureSource: "target",
+					rawBody: null,
+					rawOutput: "Request timed out while downloading the response.",
+				},
+			})),
+		};
+
+		expect(formatMeasurement(failed)).toMatchInlineSnapshot(`
+			Measurement ID: 2P4xQQKCD6c75fZM200321Wl5
+			Type: http
+			Target: google.com
+			Status: finished
+			Created: 2026-11-18T15:27:48.383Z
+			Updated: 2026-11-18T15:27:48.676Z
+			Locations: [{"magic":"world"}]
+			Limit: 2
+			Probes: 2
+
+			Probe 1: Helsinki, FI, EU, Hetzner Online (AS24940), tags: datacenter-network, u-V8AA
+			Status: failed (target)
+			Resolved IP: 172.217.22.110
+			Timings: total 208 ms, dns 51 ms, tcp 45 ms, tls 56 ms, firstByte 56 ms, download 0 ms
+			TLS: TLSv1.3, TLS_AES_256_GCM_SHA384, valid
+			Certificate:
+			- Subject: *.google.com
+			- Alt names: DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com
+			- Issuer: WE2, Google Trust Services, US
+			- Dates: 2026-11-03T08:26:50.000Z to 2027-01-26T08:26:49.000Z
+			- Key: EC 256 bits
+			- Serial number: 53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA
+			- SHA-256 fingerprint: 2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2
+			- Public key: 04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61
+			Request timed out while downloading the response.
+
+			Probe 2: Falkenstein, DE, EU, Hetzner Online (AS24940), tags: datacenter-network
+			Status: failed (target)
+			Resolved IP: 142.251.110.101
+			Timings: total 63 ms, dns 2 ms, tcp 6 ms, tls 21 ms, firstByte 34 ms, download 0 ms
+			TLS: same as probe 1
+			Request timed out while downloading the response.
+		`);
+	});
+
 	it("should print the status of probes that did not finish", () => {
 		expect(formatMeasurement(pingFailed)).toMatchInlineSnapshot(`
 			Measurement ID: 2Ip3lgjB734k2LqT200321Wl5
