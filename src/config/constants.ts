@@ -24,6 +24,12 @@ export const HTTP_STATUS = {
 	FORBIDDEN: 403,
 };
 
+export const GLOBALPING_AUTH = {
+	AUTHORIZE_URL: "https://auth.globalping.io/oauth/authorize",
+	TOKEN_URL: "https://auth.globalping.io/oauth/token",
+	INTROSPECT_URL: "https://auth.globalping.io/oauth/token/introspect",
+};
+
 export const OAUTH_CONFIG = {
 	SCOPES: ["measurements"],
 	ENDPOINTS: {

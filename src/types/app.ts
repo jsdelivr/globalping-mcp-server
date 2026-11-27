@@ -9,7 +9,6 @@ export type Props = {
 
 // Define custom state for storing previous measurements
 export type State = {
-	lastMeasurementId?: string;
 	measurements: Record<string, any>;
 	storage?: DurableObjectStorage;
 	oAuth: any;

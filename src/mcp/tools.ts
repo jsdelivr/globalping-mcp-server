@@ -2,22 +2,47 @@
  * Globalping MCP Tools Registration
  */
 import { z } from "zod";
-import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
+import {
+	getLocations,
+	getMeasurement,
+	getRateLimits,
+	introspectToken,
+	runMeasurement,
+} from "../api";
 import { GLOBALPING_API } from "../config";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
 import { formatMeasurement } from "./format";
-import { parseLocations } from "./helpers";
+import { formatLocations } from "./format-locations";
+import { formatAccountName, parseLocations } from "./helpers";
 
-const continentNames: Record<string, string> = {
-	AF: "Africa",
-	AN: "Antarctica",
-	AS: "Asia",
-	EU: "Europe",
-	NA: "North America",
-	OC: "Oceania",
-	SA: "South America",
-};
+const locationsSchema = z
+	.union([z.array(z.string()), z.string()])
+	.optional()
+	.describe(
+		"Where to run the test from: a location or an array of locations. A location is a continent name ('Europe'), country ('US'), US state ('US-NY'), city ('London+UK'), network or ASN ('Comcast', 'AS13335'), cloud region ('aws-eu-west-1') or tag ('eyeball-network' for end-user networks, 'datacenter-network'). Use '+' to join up to 4 conditions that must all match: 'Berlin+DE+eyeball-network'. Probes are split between the locations of an array. Without locations, or with 'world', probes are picked from all over the world. Use the ID of a previous measurement to run on the same probes.",
+	);
+const limitSchema = z
+	.number()
+	.int()
+	.min(1)
+	.max(100)
+	.optional()
+	.describe(
+		"Number of probes to use (default: 3 or one per location, max: 100). Higher limits provide more diverse results when using 'world' location.",
+	);
+const outputSchema = z
+	.enum(["summary", "full"])
+	.optional()
+	.describe(
+		"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
+	);
+const packetsSchema = z.number().int().min(1).max(16).optional();
+const portSchema = z.number().int().min(0).max(65535).optional();
+const ipVersionSchema = z.literal([4, 6]).optional();
+const targetIpVersionSchema = ipVersionSchema.describe(
+	"IP version (default: 4). Only for domain targets.",
+);
 
 /**
  * Helper to wrap tool execution with error handling
@@ -62,28 +87,22 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.describe(
 						"Public domain name or IP address to test (e.g., 'google.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
 					),
-				locations: z
-					.union([z.array(z.string()), z.string()])
+				locations: locationsSchema,
+				limit: limitSchema,
+				packets: packetsSchema.describe("Number of packets to send (default: 3)"),
+				protocol: z
+					.enum(["ICMP", "TCP"])
 					.optional()
-					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
-					),
-				limit: z
-					.number()
-					.min(1)
-					.max(100)
-					.optional()
-					.describe("Number of probes to use (default: 3, max: 100)"),
-				packets: z.number().optional().describe("Number of packets to send (default: 3)"),
-				output: z
-					.enum(["summary", "full"])
-					.optional()
-					.describe(
-						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
-					),
+					.describe("Protocol to use (default: ICMP)"),
+				port: portSchema.describe("Port number for TCP (default: 80)"),
+				ipVersion: targetIpVersionSchema,
+				output: outputSchema,
 			},
 		},
-		async ({ target, locations, limit, packets, output }, { signal }) => {
+		async (
+			{ target, locations, limit, packets, protocol, port, ipVersion, output },
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -102,9 +121,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "ping",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							packets: packets || 3,
+							protocol,
+							port,
+							ipVersion,
 						},
 					},
 					token,
@@ -113,7 +135,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 				// Cache the measurement
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -140,35 +161,18 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.describe(
 						"Public domain name or IP address to test (e.g., 'cloudflare.com', '1.1.1.1'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
 					),
-				locations: z
-					.union([z.array(z.string()), z.string()])
-					.optional()
-					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
-					),
-				limit: z
-					.number()
-					.min(1)
-					.max(100)
-					.optional()
-					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
-					),
-
+				locations: locationsSchema,
+				limit: limitSchema,
 				protocol: z
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
-				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
-				output: z
-					.enum(["summary", "full"])
-					.optional()
-					.describe(
-						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
-					),
+				port: portSchema.describe("Port number for TCP (default: 80)"),
+				ipVersion: targetIpVersionSchema,
+				output: outputSchema,
 			},
 		},
-		async ({ target, locations, limit, protocol, port, output }, { signal }) => {
+		async ({ target, locations, limit, protocol, port, ipVersion, output }, { signal }) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -187,10 +191,11 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "traceroute",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							protocol: protocol as any,
-							port: port || 80,
+							port: port ?? 80,
+							ipVersion,
 						},
 					},
 					token,
@@ -198,7 +203,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -225,20 +229,8 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.describe(
 						"Public domain name to resolve (e.g., 'google.com'). Private domains, localhost, and link-local addresses are not supported.",
 					),
-				locations: z
-					.union([z.array(z.string()), z.string()])
-					.optional()
-					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
-					),
-				limit: z
-					.number()
-					.min(1)
-					.max(100)
-					.optional()
-					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
-					),
+				locations: locationsSchema,
+				limit: limitSchema,
 				queryType: z
 					.enum([
 						"A",
@@ -268,15 +260,32 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.boolean()
 					.optional()
 					.describe("Trace delegation path from root servers (default: false)"),
-				output: z
-					.enum(["summary", "full"])
+				protocol: z
+					.enum(["UDP", "TCP"])
 					.optional()
-					.describe(
-						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
-					),
+					.describe("Protocol to use (default: UDP)"),
+				port: portSchema.describe("Port number (default: 53)"),
+				ipVersion: ipVersionSchema.describe(
+					"IP version (default: 4). Only for a domain resolver.",
+				),
+				output: outputSchema,
 			},
 		},
-		async ({ target, locations, limit, queryType, resolver, trace, output }, { signal }) => {
+		async (
+			{
+				target,
+				locations,
+				limit,
+				queryType,
+				resolver,
+				trace,
+				protocol,
+				port,
+				ipVersion,
+				output,
+			},
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -295,13 +304,16 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "dns",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							query: {
 								type: queryType || "A",
 							},
 							resolver,
 							trace: trace || false,
+							protocol,
+							port,
+							ipVersion,
 						},
 					},
 					token,
@@ -309,7 +321,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -337,38 +348,24 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.describe(
 						"Public destination hostname or IP address to run the MTR against. Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
 					),
-				locations: z
-					.union([z.array(z.string()), z.string()])
-					.optional()
-					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
-					),
-				limit: z
-					.number()
-					.min(1)
-					.max(100)
-					.optional()
-					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
-					),
+				locations: locationsSchema,
+				limit: limitSchema,
 				protocol: z
 					.enum(["ICMP", "TCP", "UDP"])
 					.optional()
 					.describe("Protocol to use (default: ICMP)"),
-				port: z.number().optional().describe("Port number for TCP/UDP (default: 80)"),
-				packets: z
-					.number()
-					.optional()
-					.describe("Number of packets to send to each hop (default: 3)"),
-				output: z
-					.enum(["summary", "full"])
-					.optional()
-					.describe(
-						"How much to return for each probe. 'full': all parsed details of every probe. 'summary': one line per probe. Default: 'full', or 'summary' when the full output is longer than 30000 characters.",
-					),
+				port: portSchema.describe("Port number for TCP/UDP (default: 80)"),
+				packets: packetsSchema.describe(
+					"Number of packets to send to each hop (default: 3)",
+				),
+				ipVersion: targetIpVersionSchema,
+				output: outputSchema,
 			},
 		},
-		async ({ target, locations, limit, protocol, port, packets, output }, { signal }) => {
+		async (
+			{ target, locations, limit, protocol, port, packets, ipVersion, output },
+			{ signal },
+		) => {
 			return handleToolExecution(async () => {
 				// Validate target is public
 				const validation = isPublicTarget(target);
@@ -387,11 +384,12 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "mtr",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							protocol: protocol as any,
-							port: port || 80,
+							port: port ?? 80,
 							packets: packets || 3,
+							ipVersion,
 						},
 					},
 					token,
@@ -399,7 +397,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -414,7 +411,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "HTTP Request",
 			description:
-				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
+				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a host from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -424,42 +421,41 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				target: z
 					.string()
 					.describe(
-						"Public domain name or IP address to test (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+						"Public domain name or IP address to test, without protocol and path (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
 					),
-				locations: z
-					.union([z.array(z.string()), z.string()])
-					.optional()
-					.describe(
-						"Specific locations to run the test from using the Globalping magic field syntax. Use 'world' to select a diverse set of probes globally. It supports Globalping magic field syntax: ['US', 'Europe', 'AS13335', 'London+UK', 'Amazon+Germany', 'Greece']. You can also use a previous measurement ID to compare results with the same probes.",
-					),
-				limit: z
-					.number()
-					.min(1)
-					.max(100)
-					.optional()
-					.describe(
-						"Number of probes to use (default: 3, max: 100). Higher limits provide more diverse results when using 'world' location.",
-					),
+				locations: locationsSchema,
+				limit: limitSchema,
 				method: z
 					.enum(["GET", "HEAD", "OPTIONS"])
 					.optional()
 					.describe("HTTP method (default: GET)"),
 				protocol: z
-					.enum(["HTTP", "HTTPS"])
+					.enum(["HTTP", "HTTPS", "HTTP2"])
 					.optional()
 					.describe("Protocol to use (default: HTTPS)"),
 				path: z
 					.string()
 					.optional()
 					.describe("Path component of the URL (e.g., '/api/v1/status')"),
-				port: z
-					.number()
-					.optional()
-					.describe("Port number (default: 443 for HTTPS, 80 for HTTP)"),
+				port: portSchema.describe(
+					"Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)",
+				),
 				query: z
 					.string()
 					.optional()
 					.describe("Query string (e.g., 'param=value&another=123')"),
+				host: z.string().optional().describe("Host header value (default: the target)"),
+				headers: z
+					.record(z.string(), z.string())
+					.optional()
+					.describe(
+						"Request headers (e.g., { 'Accept-Encoding': 'br' }). Use 'host' to set the Host header. Headers are public: anyone with the measurement ID can read them, so do not send credentials.",
+					),
+				resolver: z
+					.string()
+					.optional()
+					.describe("IP address of the DNS resolver to use (e.g., '1.1.1.1')"),
+				ipVersion: targetIpVersionSchema,
 				output: z
 					.enum(["summary", "headers", "full"])
 					.optional()
@@ -469,7 +465,21 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 			},
 		},
 		async (
-			{ target, locations, limit, method, protocol, path, query, port, output },
+			{
+				target,
+				locations,
+				limit,
+				method,
+				protocol,
+				path,
+				query,
+				port,
+				host,
+				headers,
+				resolver,
+				ipVersion,
+				output,
+			},
 			{ signal },
 		) => {
 			return handleToolExecution(async () => {
@@ -492,15 +502,19 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						type: "http",
 						target,
 						locations: parsedLocations,
-						limit: limit || 3,
+						limit,
 						measurementOptions: {
 							request: {
 								method: method || "GET",
 								path,
 								query,
+								host,
+								headers,
 							},
+							resolver,
 							protocol: protocol,
-							port: port || (protocol === "HTTPS" ? 443 : 80),
+							port: port ?? (protocol === "HTTP" ? 80 : 443),
+							ipVersion,
 						},
 					},
 					token,
@@ -508,7 +522,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -523,61 +536,27 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "List Probe Locations",
 			description:
-				"Retrieve the list of available Globalping probe locations. Use this tool to find specific countries, cities, or ASNs to use as the 'locations' argument in other measurement tools. Avoid using this tool unless absolutely necessary, instead simply provide the location you need to the tools above, the field is smart and will auto select the right probes.",
+				"List the locations of Globalping probes. Without 'country': countries, the biggest networks and tags. With 'country': all cities, networks and tags of this country. Use this tool to find values for the 'locations' argument of the measurement tools. It is rarely needed: 'locations' finds a place, network or ASN by its name.",
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
 				openWorldHint: true,
 			},
+			inputSchema: {
+				country: z
+					.string()
+					.length(2)
+					.optional()
+					.describe("Two-letter country code (e.g., 'US')"),
+			},
 		},
-		async () => {
+		async ({ country }) => {
 			return handleToolExecution(async () => {
-				const token = getToken();
-				const probes = await getLocations(token);
-
-				// Group probes by continent and country
-				const grouped: Record<string, Record<string, any[]>> = {};
-
-				for (const probe of probes) {
-					const continent = probe.location.continent;
-					const country = probe.location.country;
-
-					if (!grouped[continent]) {
-						grouped[continent] = {};
-					}
-
-					if (!grouped[continent][country]) {
-						grouped[continent][country] = [];
-					}
-
-					grouped[continent][country].push(probe);
-				}
-
-				// Format the output
-				let textOutput = "Available Globalping Probe Locations:\n\n";
-
-				for (const [continent, countries] of Object.entries(grouped)) {
-					textOutput += `${continentNames[continent]}:\n`;
-
-					for (const [country, probes] of Object.entries(countries)) {
-						const cities = [...new Set(probes.map((p) => p.location.city))];
-						textOutput += `  ${country}: ${cities.join(", ")}\n`;
-					}
-
-					textOutput += "\n";
-				}
-
-				textOutput += `\nTotal Probes: ${probes.length}\n`;
-				textOutput +=
-					'\nNote: To specify locations, use the "magic" field syntax in the locations parameter. ';
-				textOutput += 'For example: ["US", "Europe", "AS13335", "London+UK"]\n';
+				const probes = await getLocations(getToken());
 
 				return {
 					content: [
-						{
-							type: "text",
-							text: textOutput,
-						},
+						{ type: "text", text: formatLocations(probes, country?.toUpperCase()) },
 					],
 				};
 			}, "Failed to list locations");
@@ -627,7 +606,16 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async () => {
 			return handleToolExecution(async () => {
 				const token = getToken();
-				const limits = await getRateLimits(agent, token);
+				const [limits, introspection] = await Promise.all([
+					getRateLimits(agent, token),
+					introspectToken(token).catch(() => null),
+				]);
+				const account = introspection?.active
+					? formatAccountName(introspection)
+					: undefined;
+				const authentication = agent.getIsAuthenticated()
+					? ["token", account].filter(Boolean).join(", ")
+					: "IP address";
 
 				const rateLimit = limits.rateLimit.measurements.create;
 				const pluralize = (count: number, singular: string) =>
@@ -645,7 +633,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 				const consumed = rateLimit.limit - rateLimit.remaining;
 
-				let textOutput = `Authentication: ${agent.getIsAuthenticated() ? "token" : "IP address"}\n\n`;
+				let textOutput = `Authentication: ${authentication}\n\n`;
 				textOutput += "Creating measurements:\n";
 				textOutput += ` - ${pluralize(rateLimit.limit, "test")} per hour\n`;
 				textOutput += ` - ${consumed} consumed, ${rateLimit.remaining} remaining\n`;

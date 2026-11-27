@@ -41,6 +41,8 @@ export interface PingMeasurementOptions extends BaseMeasurementOptions {
 	type: "ping";
 	measurementOptions?: {
 		packets?: number;
+		port?: number;
+		protocol?: "ICMP" | "TCP";
 		ipVersion?: 4 | 6;
 	};
 }

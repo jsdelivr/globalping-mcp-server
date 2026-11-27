@@ -14,6 +14,8 @@ const createMockGlobalpingAPI = () => {
 	const originalFetch = globalThis.fetch;
 	let pendingRequests = 0;
 	let idleResolvers: Array<() => void> = [];
+	const createdMeasurements: any[] = [];
+	const introspection: Record<string, unknown> = { active: true, username: "testuser" };
 
 	const mockFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
 		pendingRequests++;
@@ -29,6 +31,8 @@ const createMockGlobalpingAPI = () => {
 			// Mock Globalping API responses
 			if (urlString.includes("api.globalping.io/v1/measurements")) {
 				if (method === "POST") {
+					createdMeasurements.push(await (input as Request).json());
+
 					return new Response(
 						JSON.stringify({
 							id: "mockMeasurement123",
@@ -150,12 +154,43 @@ const createMockGlobalpingAPI = () => {
 				}
 			}
 
+			if (urlString.includes("auth.globalping.io/oauth/token/introspect")) {
+				return Response.json(introspection);
+			}
+
 			if (urlString.includes("/v1/probes")) {
 				return new Response(
 					JSON.stringify([
-						{ location: { continent: "NA", country: "US", city: "New York" } },
-						{ location: { continent: "NA", country: "US", city: "Los Angeles" } },
-						{ location: { continent: "EU", country: "DE", city: "Frankfurt" } },
+						{
+							location: {
+								continent: "NA",
+								country: "US",
+								city: "New York",
+								network: "Comcast",
+								asn: 7922,
+							},
+							tags: ["eyeball-network"],
+						},
+						{
+							location: {
+								continent: "NA",
+								country: "US",
+								city: "Los Angeles",
+								network: "Amazon.com",
+								asn: 16509,
+							},
+							tags: ["aws", "u-user-tag"],
+						},
+						{
+							location: {
+								continent: "EU",
+								country: "DE",
+								city: "Frankfurt",
+								network: "Hetzner Online",
+								asn: 24940,
+							},
+							tags: ["datacenter-network"],
+						},
 					]),
 					{
 						status: 200,
@@ -207,7 +242,7 @@ const createMockGlobalpingAPI = () => {
 		});
 	};
 
-	return { mockFetch, originalFetch, waitForIdle };
+	return { mockFetch, originalFetch, waitForIdle, createdMeasurements, introspection };
 };
 
 // Helper to create MCP requests with proper headers
@@ -565,6 +600,113 @@ describe("MCP Tools Integration", () => {
 		});
 	});
 
+	describe("Measurement options", () => {
+		const call = (name: string, args: object) =>
+			makeMCPRequest(
+				{ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } },
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+		it("should use one probe for each location by default", async () => {
+			await call("ping", { target: "google.com", locations: ["US", "DE", "JP", "BR", "AU"] });
+
+			expect(mockAPI.createdMeasurements[0].limit).toBe(5);
+		});
+
+		it("should keep the limit of the user", async () => {
+			await call("ping", {
+				target: "google.com",
+				locations: ["US", "DE", "JP", "BR", "AU"],
+				limit: 2,
+			});
+
+			expect(mockAPI.createdMeasurements[0].limit).toBe(2);
+		});
+
+		it("should send the ping options to the API", async () => {
+			await call("ping", { target: "google.com", protocol: "TCP", port: 443, ipVersion: 6 });
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				packets: 3,
+				protocol: "TCP",
+				port: 443,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the ip version of traceroute and mtr to the API", async () => {
+			await call("traceroute", { target: "google.com", ipVersion: 6 });
+			await call("mtr", { target: "google.com", ipVersion: 6 });
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				port: 80,
+				ipVersion: 6,
+			});
+			expect(mockAPI.createdMeasurements[1].measurementOptions).toEqual({
+				port: 80,
+				packets: 3,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the dns options to the API", async () => {
+			await call("dns", {
+				target: "google.com",
+				resolver: "dns.google",
+				protocol: "TCP",
+				port: 5353,
+				ipVersion: 6,
+			});
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				query: { type: "A" },
+				resolver: "dns.google",
+				trace: false,
+				protocol: "TCP",
+				port: 5353,
+				ipVersion: 6,
+			});
+		});
+
+		it("should send the http options to the API", async () => {
+			await call("http", {
+				target: "example.com",
+				protocol: "HTTP2",
+				host: "example.org",
+				headers: { "Accept-Encoding": "br" },
+				resolver: "1.1.1.1",
+				ipVersion: 6,
+			});
+
+			expect(mockAPI.createdMeasurements[0].measurementOptions).toEqual({
+				request: {
+					method: "GET",
+					host: "example.org",
+					headers: { "Accept-Encoding": "br" },
+				},
+				resolver: "1.1.1.1",
+				protocol: "HTTP2",
+				port: 443,
+				ipVersion: 6,
+			});
+		});
+
+		it.each([
+			["ping", { limit: 1.5 }],
+			["ping", { packets: 17 }],
+			["mtr", { packets: 0 }],
+			["traceroute", { port: 70000 }],
+			["dns", { port: -1 }],
+			["http", { port: 1.5 }],
+		])("should reject %s with %j without calling the API", async (name, args) => {
+			const data = await call(name, { target: "google.com", ...args });
+
+			expect(data.result.isError).toBe(true);
+			expect(mockAPI.mockFetch).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("Get Measurement Tool", () => {
 		const callGetMeasurement = async (id: string) => {
 			const response = await makeMCPRequest(
@@ -710,24 +852,106 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
 			expect(data.result.content[0].text).toMatchInlineSnapshot(`
-				"Available Globalping Probe Locations:
+				"Countries with Globalping probes and the number of probes:
 
 				North America:
-				  US: New York, Los Angeles
+				US: 2
 
 				Europe:
-				  DE: Frankfurt
+				DE: 1
 
+				Networks with 5 or more probes (0 of 3):
+
+
+				Tags:
+				aws, datacenter-network, eyeball-network
 
 				Total Probes: 3
 
-				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]
-				"
+				Call this tool with "country" to see all cities, networks and tags of one country.
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]"
 			`);
 			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+		});
+
+		it("should fetch the locations of one country", async () => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 7,
+					method: "tools/call",
+					params: { name: "locations", arguments: { country: "us" } },
+				},
+				validToken,
+				sessionId,
+			);
+			const data = await getMCPResponse(response);
+
+			expect(data.result.content[0].text).toMatchInlineSnapshot(`
+				"Globalping probes in US: 2
+
+				Cities with the number of probes:
+				New York: 1, Los Angeles: 1
+
+				Networks:
+				Comcast (AS7922), Amazon.com (AS16509)
+
+				Tags:
+				aws, eyeball-network
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]"
+			`);
+		});
+	});
+
+	describe("Auth Status Tool", () => {
+		const authStatus = async () => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 8,
+					method: "tools/call",
+					params: { name: "authStatus", arguments: {} },
+				},
+				validToken,
+				sessionId,
+			);
+
+			return (await getMCPResponse(response)).result;
+		};
+
+		it("should show the user of a valid token", async () => {
+			const result = await authStatus();
+
+			expect(result.content[0].text).toBe("Logged in as testuser.");
+			expect(result.structuredContent).toEqual({
+				authenticated: true,
+				status: "Authenticated",
+				message: "Logged in as testuser.",
+			});
+		});
+
+		it("should show the organization of a valid token", async () => {
+			mockAPI.introspection.organization = "testorg";
+
+			expect((await authStatus()).content[0].text).toBe(
+				"Logged in as testorg (via testuser).",
+			);
+		});
+
+		it("should say when the token is not valid", async () => {
+			mockAPI.introspection.active = false;
+
+			const result = await authStatus();
+
+			expect(result.content[0].text).toBe(
+				"Not logged in. To log in, reconnect to the Globalping MCP server and complete the OAuth login, or set a Globalping API token in the 'Authorization' header (Bearer <token>).",
+			);
+			expect(result.structuredContent.authenticated).toBe(false);
 		});
 	});
 
@@ -749,7 +973,7 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toBe(`Authentication: token
+			expect(data.result.content[0].text).toBe(`Authentication: token, testuser
 
 Creating measurements:
  - 1000 tests per hour
@@ -762,7 +986,7 @@ Credits:
 			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
-			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 

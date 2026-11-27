@@ -3,11 +3,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as agentcat from "agentcat";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import geminiExtension from "../gemini-extension.json";
+import { introspectToken } from "./api";
 import app from "./app";
 import { isAPITokenRequest, isValidAPIToken, sanitizeToken, withGrantStore } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
 import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOrigin } from "./lib";
-import { registerGlobalpingTools } from "./mcp";
+import { formatAccountName, registerGlobalpingTools } from "./mcp";
 import type { GlobalpingEnv, Props, State } from "./types";
 
 export { GrantStore } from "./auth";
@@ -26,18 +28,7 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 					listChanged: true,
 				},
 			},
-			instructions: `You have access to Globalping, a global network measurement platform. Use it to run ping, traceroute, DNS, MTR, and HTTP tests from thousands of locations worldwide.
-
-Key guidelines:
-- Always use the 'locations' argument to specify where to run tests from (e.g., 'London', 'US', 'AWS').
-- Use 'world' as a location for globally diverse results; increase the 'limit' to get a wider distribution.
-- Use 'compareLocations' to understand how to benchmark performance.
-- Authentication: You can authenticate via OAuth (prompted automatically) or by providing a Globalping API token in the 'Authorization' header (Bearer <token>) for higher rate limits.
-- If a user asks for 'latency' or 'reachability', use 'ping'.
-- If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
-- If a user asks about 'website availability', use 'http'.
-- If a user asks about 'dns propagation', use 'dns'.
-- Only when a user asks to view, open, or share a measurement, present its results URL as https://globalping.io?measurement=<measurement-id>.`,
+			instructions: geminiExtension.instructions,
 		},
 	);
 
@@ -118,7 +109,8 @@ This ensures the exact same probes are used for both measurements, allowing for 
 ## Tips for Accurate Comparisons
 
 - Make sure the second measurement is done shortly after the first one
-- Use the same measurement type for both tests (ping vs ping, traceroute vs traceroute)
+- For a like-for-like benchmark use the same measurement type and options
+- A measurement ID works as a location only until the original measurement expires
 - The probes' online status may change between measurements
 - Any probe that went offline will show as "offline" in the results
 
@@ -164,54 +156,67 @@ Available Tools:
    Parameters:
      - target: Domain name or IP to test (e.g., 'google.com', '1.1.1.1')
      - locations: Array of locations using magic field syntax (e.g., ['US', 'Europe', 'AS13335', 'London+UK'])
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - packets: Number of packets to send (default: 3)
+     - protocol: Protocol to use - "ICMP" or "TCP" (default: ICMP)
+     - port: Port number for TCP (default: 80)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 2. traceroute - Perform a traceroute test to a target
    Parameters:
      - target: Domain name or IP to test (e.g., 'cloudflare.com', '1.1.1.1')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
-     - port: Port number for TCP/UDP (default: 80)
+     - port: Port number for TCP (default: 80)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 3. dns - Perform a DNS lookup for a domain
    Parameters:
      - target: Domain name to resolve (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - queryType: DNS record type - "A", "AAAA", "ANY", "CNAME", "DNSKEY", "DS", "HTTPS", "MX", "NS", "NSEC", "PTR", "RRSIG", "SOA", "TXT", "SRV", "SVCB" (default: A)
      - resolver: Custom resolver to use (e.g., '1.1.1.1', '8.8.8.8')
      - trace: Trace delegation path from root servers (default: false)
+     - protocol: Protocol to use - "UDP" or "TCP" (default: UDP)
+     - port: Port number (default: 53)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for a domain resolver
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
 4. mtr - Perform an MTR (My Traceroute) test to a target
    Parameters:
      - target: Domain name or IP to test (e.g., 'google.com', '8.8.8.8')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - protocol: Protocol to use - "ICMP", "TCP", or "UDP" (default: ICMP)
      - port: Port number for TCP/UDP (default: 80)
      - packets: Number of packets to send to each hop (default: 3)
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
-5. http - Perform an HTTP request to a URL
+5. http - Perform an HTTP request to a host
    Parameters:
-     - target: Domain name or IP to test (e.g., 'example.com')
+     - target: Domain name or IP to test, without protocol and path (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
-     - limit: Number of probes to use (default: 3, max: 100)
+     - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)
-     - protocol: Protocol to use - "HTTP" or "HTTPS" (default: HTTPS)
+     - protocol: Protocol to use - "HTTP", "HTTPS" or "HTTP2" (default: HTTPS)
      - path: Path component of the URL (e.g., '/api/v1/status')
-     - port: Port number (default: 443 for HTTPS, 80 for HTTP)
+     - port: Port number (default: 443 for HTTPS and HTTP2, 80 for HTTP)
      - query: Query string (e.g., 'param=value&another=123')
+     - host: Host header value (default: the target)
+     - headers: Request headers (e.g., { 'Accept-Encoding': 'br' })
+     - resolver: IP address of the DNS resolver to use (e.g., '1.1.1.1')
+     - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary", "headers" or "full" (default: "headers", or "summary" when the output is longer than 30000 characters)
 
-6. locations - List all available Globalping probe locations
-   No parameters required
-   Returns a list of probe locations grouped by continent and country
+6. locations - List the locations of Globalping probes
+   Parameters:
+     - country: Two-letter country code (e.g., 'US'). Optional
+   Returns countries, the biggest networks and tags, or all cities, networks and tags of one country
 
 7. limits - Show your current free test allowance and credits for the Globalping API
    No parameters required
@@ -227,7 +232,7 @@ Available Tools:
    No parameters required
    Returns instructions for comparing measurements across locations
 
-10. authStatus - Check whether the user is logged in
+10. authStatus - Check the token and show the account it belongs to
    No parameters required
 
 Location Formats:
@@ -235,10 +240,13 @@ When specifying locations, use the magic field format in an array. Examples:
 - Global diversity: ["world"] (increase 'limit' for more locations)
 - Continents: ["Europe", "North America", "Asia"]
 - Countries: ["US", "DE", "JP"]
-- Cities: ["London", "Tokyo", "New York"]
+- US states: ["US-NY", "US-CA"]
+- Cities: ["London+UK", "Tokyo", "New York"]
 - Networks: ["Cloudflare", "Google"]
 - ASNs: ["AS13335", "AS15169"]
-- Combinations: ["London+UK", "Cloudflare+US"]
+- Cloud regions: ["aws-eu-west-1", "gcp-us-central1"]
+- Tags: ["eyeball-network"] (end-user networks), ["datacenter-network"]
+- Combinations with "+", all conditions must match (up to 4): ["Berlin+DE+eyeball-network", "Cloudflare+US"]
 - Previous measurement IDs (for comparison): ["01HT4DGF5ZS7B2M93QP5ZTS3DN"]
 
 For more information, visit: https://www.globalping.io
@@ -256,7 +264,7 @@ For more information, visit: https://www.globalping.io
 			{
 				title: "Authentication Status",
 				description:
-					"Check the current authentication status. Use this tool to verify if the user is logged in and has a valid token for executing measurements.",
+					"Check the token of this connection against Globalping. Use this tool to verify that the token is valid and to see the account it belongs to.",
 				annotations: {
 					readOnlyHint: true,
 					destructiveHint: false,
@@ -269,9 +277,18 @@ For more information, visit: https://www.globalping.io
 				},
 			},
 			async () => {
-				const authenticated = !!this.props?.isAuthenticated;
+				const token = sanitizeToken(this.getToken() ?? "");
+				const introspection = token ? await introspectToken(token) : { active: false };
+				const { active } = introspection;
+				const account = formatAccountName(introspection);
+
+				this.setIsAuthenticated(active);
+
+				const authenticated = active;
 				const status = authenticated ? "Authenticated" : "Not authenticated";
-				const message = authenticated ? "Logged in." : "Not logged in.";
+				const message = authenticated
+					? `Logged in${account ? ` as ${account}` : ""}.`
+					: "Not logged in. To log in, reconnect to the Globalping MCP server and complete the OAuth login, or set a Globalping API token in the 'Authorization' header (Bearer <token>).";
 
 				const output = {
 					authenticated,

@@ -2,7 +2,7 @@
  * Tests for mcp/helpers.ts
  */
 import { describe, expect, it } from "vitest";
-import { parseLocations } from "../../../src/mcp/helpers";
+import { formatAccountName, parseLocations } from "../../../src/mcp/helpers";
 
 describe("parseLocations", () => {
 	it("should return undefined for undefined input", () => {
@@ -43,5 +43,17 @@ describe("parseLocations", () => {
 	it("should handle empty string", () => {
 		const result = parseLocations("");
 		expect(result).toEqual(undefined);
+	});
+});
+
+describe("formatAccountName", () => {
+	it("should return the user of a personal token", () => {
+		expect(formatAccountName({ username: "testuser" })).toBe("testuser");
+	});
+
+	it("should return the organization with its user", () => {
+		expect(formatAccountName({ username: "testuser", organization: "testorg" })).toBe(
+			"testorg (via testuser)",
+		);
 	});
 });

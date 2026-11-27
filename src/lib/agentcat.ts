@@ -20,6 +20,12 @@ function redactAuthorizationHeader(headers: unknown): unknown {
  */
 export const redactAgentCatEvent: RedactEventFunction = (event) => {
 	let redactedEvent = event;
+
+	// The responses of these tools have the name of the account.
+	if (["authStatus", "limits"].includes(redactedEvent.resourceName ?? "")) {
+		redactedEvent = { ...redactedEvent, response: undefined };
+	}
+
 	const requestInfoHeaders = redactedEvent.parameters?.extra?.requestInfo?.headers;
 	if (requestInfoHeaders && typeof requestInfoHeaders === "object") {
 		redactedEvent = {

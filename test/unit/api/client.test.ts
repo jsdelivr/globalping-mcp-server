@@ -352,6 +352,35 @@ describe("runMeasurement", () => {
 		expect(createCall.limit).toBe(3); // Default limit
 	});
 
+	it("should use the number of locations as the default limit when it is above 3", async () => {
+		const createMeasurementMock = vi.fn().mockResolvedValue({
+			ok: true as const,
+			data: { id: "test", probesCount: 5 },
+		});
+
+		vi.mocked(Globalping).mockImplementation(function () {
+			return {
+				createMeasurement: createMeasurementMock,
+				awaitMeasurement: vi.fn().mockResolvedValue({ ok: true as const, data: {} }),
+			} as any;
+		});
+
+		const locations = ["US", "DE", "JP", "BR", "AU"].map((magic) => ({ magic }));
+		await runMeasurement(
+			createMockAgent() as any,
+			{ type: "ping", target: "google.com", locations },
+			"test-token-123",
+		);
+		await runMeasurement(
+			createMockAgent() as any,
+			{ type: "ping", target: "google.com", locations: locations.slice(0, 2) },
+			"test-token-123",
+		);
+
+		expect(createMeasurementMock.mock.calls[0][0].limit).toBe(5);
+		expect(createMeasurementMock.mock.calls[1][0].limit).toBe(3);
+	});
+
 	it("should cap limit at maximum", async () => {
 		const agent = createMockAgent();
 		const options: MeasurementOptions = {

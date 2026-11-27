@@ -2,7 +2,7 @@
  * Globalping API client wrapper for the official globalping library
  * Centralizes API communication and error handling
  */
-import { GLOBALPING_API } from "../config";
+import { GLOBALPING_API, GLOBALPING_AUTH } from "../config";
 import type { MeasurementOptions, CreateMeasurementResponse } from "../types";
 import type { GlobalpingMCP } from "../index";
 import { Globalping, type MeasurementResponse, type TypedMeasurementRequest } from "globalping";
@@ -94,15 +94,16 @@ export async function runMeasurement(
 ): Promise<MeasurementResponse> {
 	validateToken(token);
 
-	// Always enforce a default limit if not specified
-	if (!options.limit) {
-		options.limit = GLOBALPING_API.DEFAULT_LIMIT;
+	const defaultLimit = Math.max(
+		GLOBALPING_API.DEFAULT_LIMIT,
+		Array.isArray(options.locations) ? options.locations.length : 0,
+	);
+
+	if (!options.limit || options.limit < GLOBALPING_API.MIN_LIMIT) {
+		options.limit = defaultLimit;
 	}
 
-	// Ensure limit is within reasonable bounds
-	if (options.limit < GLOBALPING_API.MIN_LIMIT) {
-		options.limit = GLOBALPING_API.DEFAULT_LIMIT;
-	} else if (options.limit > GLOBALPING_API.MAX_LIMIT) {
+	if (options.limit > GLOBALPING_API.MAX_LIMIT) {
 		options.limit = GLOBALPING_API.MAX_LIMIT;
 	}
 
@@ -143,6 +144,26 @@ export async function getMeasurement(
 	}
 
 	return result.data;
+}
+
+/**
+ * Gets the state and the owner of a token from the Globalping auth server
+ * @param token The token to check
+ * @returns The state of the token, with its account when it is active
+ */
+export async function introspectToken(
+	token: string,
+): Promise<{ active: boolean; username?: string; organization?: string }> {
+	const response = await fetch(GLOBALPING_AUTH.INTROSPECT_URL, {
+		method: "POST",
+		body: new URLSearchParams({ token }),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Globalping auth error (${response.status})`);
+	}
+
+	return response.json();
 }
 
 /**
