@@ -9,6 +9,10 @@ import dnsManyAnswers from "./fixtures/dns-many-answers.json";
 import dnsNoAnswers from "./fixtures/dns-no-answers.json";
 import dnsNxdomain from "./fixtures/dns-nxdomain.json";
 import dnsTrace from "./fixtures/dns-trace.json";
+import dnsTraceCname from "./fixtures/dns-trace-cname.json";
+import dnsTraceMx from "./fixtures/dns-trace-mx.json";
+import dnsTraceNxdomain from "./fixtures/dns-trace-nxdomain.json";
+import dnsTraceStatus from "./fixtures/dns-trace-status.json";
 import http from "./fixtures/http.json";
 import httpFailed from "./fixtures/http-failed.json";
 import httpGet from "./fixtures/http-get.json";
@@ -247,6 +251,74 @@ describe("formatMeasurement", () => {
 			Response code: NXDOMAIN (3)
 			Resolver: private, total 32 ms
 			Answers: 0
+		`);
+	});
+
+	it("should print the response code of every hop of a dns trace", () => {
+		expect(formatMeasurement(dnsTraceStatus)).toMatchInlineSnapshot(`
+			Measurement ID: 2gpW6mK7qaVpM5FAP00021a5S
+			Type: dns
+			Target: nonexistent-abc-xyz.jsdelivr.com
+			Status: finished
+			Created: 2026-11-27T12:42:21.821Z
+			Updated: 2026-11-27T12:42:22.291Z
+			Locations: [{"country":"IE"}]
+			Options: {"trace":true}
+			Probes: 1
+
+			Probe 1: Dublin, IE, EU, Amazon.com (AS16509), tags: aws-eu-west-1, aws
+			Hop 1
+			Response code: NOERROR (0)
+			Resolver: 1.1.1.1, total 9 ms
+			Answers: 14
+			. 517425 IN NS a.root-servers.net.
+			. 517425 IN NS b.root-servers.net.
+			. 517425 IN NS c.root-servers.net.
+			. 517425 IN NS d.root-servers.net.
+			. 517425 IN NS e.root-servers.net.
+			. 517425 IN NS f.root-servers.net.
+			. 517425 IN NS g.root-servers.net.
+			. 517425 IN NS h.root-servers.net.
+			. 517425 IN NS i.root-servers.net.
+			. 517425 IN NS j.root-servers.net.
+			. 517425 IN NS k.root-servers.net.
+			. 517425 IN NS l.root-servers.net.
+			. 517425 IN NS m.root-servers.net.
+			. 517425 IN RRSIG NS 8 0 518400 20261210050000 20261127040000 8763 . fF9TxEoL4axAY5zjnjYWbSeKvJCceihj0U/h8QebQ6gqbfoIJDEDWqCJAhuY9SXhIjJq0qXBjFDaqDHhl4zTAFwOCFb7ooY0OT7uwEqp52xDNdHyMAkawkcJ3/3+PWN0EvheATmkWLhpuL/kn6RqRPN5QVr8/i13qvTv8YMiWo0P8UCluOWNAxtP+lTnp9j1Wr2QnphRJXv2/PG1mv5HMfOSVJxuT6DQFDVmfr86PNFMl2ydBa91ltpzKtpqurJ/1RrGV6GGvRC/wWvcmqik6yB+B3HPUJSR4wSccckBwD2HSQViTn+FPrhD0eclWrQmBu5auCpWgOh3EZJ1+jGmNA==
+			Hop 2
+			Response code: NOERROR (0)
+			Resolver: j.root-servers.net, total 26 ms
+			Answers: 15
+			com. 172800 IN NS a.gtld-servers.net.
+			com. 172800 IN NS b.gtld-servers.net.
+			com. 172800 IN NS c.gtld-servers.net.
+			com. 172800 IN NS d.gtld-servers.net.
+			com. 172800 IN NS e.gtld-servers.net.
+			com. 172800 IN NS f.gtld-servers.net.
+			com. 172800 IN NS g.gtld-servers.net.
+			com. 172800 IN NS h.gtld-servers.net.
+			com. 172800 IN NS i.gtld-servers.net.
+			com. 172800 IN NS j.gtld-servers.net.
+			com. 172800 IN NS k.gtld-servers.net.
+			com. 172800 IN NS l.gtld-servers.net.
+			com. 172800 IN NS m.gtld-servers.net.
+			com. 86400 IN DS 19718 13 2 8ACBB0CD28F41250A80A491389424D341522D946B0DA0C0291F2D3D771D7805A
+			com. 86400 IN RRSIG DS 8 1 86400 20261210050000 20261127040000 8763 . WLpsIe8iHvbcfe62C0jYWjX8AHF3pC0FvxSlHJT3ccZJwQBnV+MgSyhOMy3+T1BfERIa4buVWzie/N2CWWjEXEX4x/Sk9hcqWHULXOTVh/oiCmFMP+Ls0YQX/WcSZ3gJqVic0BpwJVL/6cU9YKgt2jU9UI3ZyiyCM+Ea0SsDQ86Q3qC8uiGWW9jA/bwfOjj725dqNrtVWkErTQr1DaJV907pn5CXOs80JmSIPhmRlO4Gnal/NFIMkRCtA5ZUWqAQZcvEcVLlD920yerQH/SNzOuBc0hUcjMfBSDiPuIsCyYWgnY6JRtUtoXl8rh3Ny4oJ1TuXbeu3jw64xtOUyrzXQ==
+			Hop 3
+			Response code: NOERROR (0)
+			Resolver: e.gtld-servers.net, total 122 ms
+			Answers: 6
+			jsdelivr.com. 172800 IN NS saanvi.ns.cloudflare.com.
+			jsdelivr.com. 172800 IN NS pedro.ns.cloudflare.com.
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN NSEC3 1 1 0 - CK0Q35HRS4H76G6CHNB9414CJN6S5UPL NS SOA RRSIG DNSKEY NSEC3PARAM
+			CK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN RRSIG NSEC3 13 2 900 20261204002623 20261126231623 65344 com. IcnPc2DtAVrNIkBsT15zrL3PGkkGpffAaocuFgyXjoCiVLqrcnPLzL7E/FSBpL0fiLzRqTJ68Lz2IGSI5avPng==
+			DFVRO6RKG6IE2A8NKI1T723I5E9OPK5Q.com. 900 IN NSEC3 1 1 0 - DFVRPM4IRCJVRNJ32DF0057VVOM3N5JS NS DS RRSIG
+			DFVRO6RKG6IE2A8NKI1T723I5E9OPK5Q.com. 900 IN RRSIG NSEC3 13 2 900 20261204033847 20261127022847 65344 com. mrubELkhhJARdXf2vcqHtg6oEU9+qa4yEye5v6zzBPnE9nVC3ty9pp2UZSteZbs4+g5yW+zvgrB5NoA7y/13PQ==
+			Hop 4
+			Response code: NXDOMAIN (3)
+			Resolver: pedro.ns.cloudflare.com, total 11 ms
+			Answers: 1
+			jsdelivr.com. 1800 IN SOA pedro.ns.cloudflare.com. dns.cloudflare.com. 2420252618 10000 2400 604800 1800
 		`);
 	});
 
@@ -1365,8 +1437,84 @@ describe("formatMeasurement", () => {
 				Probes: 2
 
 				Results, one line per probe:
-				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, resolver ns2.google.com, total 15 ms
-				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, resolver ns2.google.com, total 26 ms
+				1: Helsinki, FI, EU, Hetzner Online (AS24940) | A 64.233.164.138, 64.233.164.113, 64.233.164.139, 64.233.164.101, 64.233.164.102, 64.233.164.100, resolver ns2.google.com, total 49 ms
+				2: Falkenstein, DE, EU, Hetzner Online (AS24940) | A 142.250.154.138, 142.250.154.139, 142.250.154.101, 142.250.154.102, 142.250.154.100, 142.250.154.113, resolver ns2.google.com, total 71 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should keep the CNAME records in the summary of a dns trace", () => {
+			expect(formatMeasurement(dnsTraceCname, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2gimgM7oxj7zFWXeT00321Zh8
+				Type: dns
+				Target: www.github.com
+				Status: finished
+				Created: 2026-11-26T11:34:28.195Z
+				Updated: 2026-11-26T11:34:28.383Z
+				Locations: [{"magic":"Falkenstein"}]
+				Options: {"trace":true}
+				Probes: 1
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | CNAME github.com.; A 140.82.121.3, resolver ns-1283.awsdns-32.org, total 41 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should keep the records of the query type in the summary of a dns trace", () => {
+			expect(formatMeasurement(dnsTraceMx, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2B8mNUB8Hct8lkcfO00321a5E
+				Type: dns
+				Target: github.com
+				Status: finished
+				Created: 2026-11-27T12:28:38.468Z
+				Updated: 2026-11-27T12:28:38.613Z
+				Locations: [{"magic":"Falkenstein"}]
+				Options: {"trace":true,"query":{"type":"MX"}}
+				Probes: 1
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | MX 0 github-com.mail.protection.outlook.com., resolver ns-1283.awsdns-32.org, total 17 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize a dns trace without records of the query type", () => {
+			expect(formatMeasurement(dnsTraceNxdomain, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2bLaTtQEo3FnE1f7700321a5E
+				Type: dns
+				Target: nonexistent-abc-xyz.jsdelivr.com
+				Status: finished
+				Created: 2026-11-27T12:28:44.848Z
+				Updated: 2026-11-27T12:28:45.001Z
+				Locations: [{"magic":"Falkenstein"}]
+				Options: {"trace":true}
+				Probes: 1
+
+				Results, one line per probe:
+				1: Falkenstein, DE, EU, Hetzner Online (AS24940) | no answers, resolver saanvi.ns.cloudflare.com, total 72 ms
+
+				For details call getMeasurement with "probes" and output "full".
+			`);
+		});
+
+		it("should summarize a dns trace with the response code of its last hop", () => {
+			expect(formatMeasurement(dnsTraceStatus, "summary")).toMatchInlineSnapshot(`
+				Measurement ID: 2gpW6mK7qaVpM5FAP00021a5S
+				Type: dns
+				Target: nonexistent-abc-xyz.jsdelivr.com
+				Status: finished
+				Created: 2026-11-27T12:42:21.821Z
+				Updated: 2026-11-27T12:42:22.291Z
+				Locations: [{"country":"IE"}]
+				Options: {"trace":true}
+				Probes: 1
+
+				Results, one line per probe:
+				1: Dublin, IE, EU, Amazon.com (AS16509) | NXDOMAIN, no answers, resolver pedro.ns.cloudflare.com, total 168 ms
 
 				For details call getMeasurement with "probes" and output "full".
 			`);

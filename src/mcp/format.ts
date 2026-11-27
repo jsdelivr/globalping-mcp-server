@@ -167,13 +167,20 @@ const fullByType: Record<string, (result: any) => string> = {
 	dns: (result) => {
 		if (result.hops) {
 			return result.hops
-				.map((hop: any, index: number) => `Hop ${index + 1}\n${formatDnsAnswers(hop)}`)
+				.map((hop: any, index: number) => {
+					const code = hop.statusCodeName ? formatDnsResponseCode(hop) : "";
+					return `Hop ${index + 1}\n${code}${formatDnsAnswers(hop)}`;
+				})
 				.join("");
 		}
 
-		return `Response code: ${result.statusCodeName} (${result.statusCode})\n${formatDnsAnswers(result)}`;
+		return formatDnsResponseCode(result) + formatDnsAnswers(result);
 	},
 };
+
+function formatDnsResponseCode({ statusCodeName, statusCode }: any): string {
+	return `Response code: ${statusCodeName} (${statusCode})\n`;
+}
 
 function formatHost({ resolvedAddress, resolvedHostname }: any): string {
 	return resolvedHostname && resolvedHostname !== resolvedAddress
@@ -255,7 +262,7 @@ function formatSummary(measurement: any, probes?: number[]): string {
 	const lines = measurement.results
 		.map(
 			({ probe, result }: any, index: number) =>
-				`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement.type, result)}\n`,
+				`${index + 1}: ${formatProbeLocation(probe)} | ${formatProbeSummary(measurement, result)}\n`,
 		)
 		.filter((_line: string, index: number) => isSelected(index, probes));
 
@@ -264,7 +271,7 @@ function formatSummary(measurement: any, probes?: number[]): string {
 	return `\nResults, one line per probe:\n${lines.join("")}\nFor details call getMeasurement with "probes" and output ${levels}.\n`;
 }
 
-function formatProbeSummary(type: string, result: any): string {
+function formatProbeSummary(measurement: any, result: any): string {
 	if (result.status === "in-progress") {
 		return result.status;
 	}
@@ -276,10 +283,10 @@ function formatProbeSummary(type: string, result: any): string {
 		return isOneLine ? `${status}: ${output}` : status;
 	}
 
-	return summaryByType[type]?.(result) ?? result.status;
+	return summaryByType[measurement.type]?.(result, measurement) ?? result.status;
 }
 
-const summaryByType: Record<string, (result: any) => string> = {
+const summaryByType: Record<string, (result: any, measurement: any) => string> = {
 	ping: ({ resolvedAddress, stats }) => {
 		const rtt =
 			stats.rcv === 0 ? "" : `, rtt min/avg/max ${stats.min}/${stats.avg}/${stats.max} ms`;
@@ -312,9 +319,18 @@ const summaryByType: Record<string, (result: any) => string> = {
 			: `no reply from target, last reply from ${hop.resolvedAddress} on hop ${index + 1}`;
 		return `${result.hops.length} hops, ${target}, loss ${hop.stats.loss}%, rtt ${hop.stats.avg} ms`;
 	},
-	dns: (result) => {
+	dns: (result, measurement) => {
 		// A trace has the final answers in its last hop.
-		const { answers, timings, resolver } = result.hops ? result.hops.at(-1) : result;
+		const hops = result.hops ?? [result];
+		const last = hops.at(-1);
+		const total = hops.reduce((sum: number, hop: any) => sum + hop.timings.total, 0);
+		const queryType = measurement.measurementOptions?.query?.type ?? "A";
+		// Only the records of a trace hop that answer the query.
+		const answers = result.hops
+			? last.answers.filter(
+					({ type }: any) => queryType === "ANY" || [queryType, "CNAME"].includes(type),
+				)
+			: last.answers;
 		const shown = answers.slice(0, MAX_DNS_SUMMARY_ANSWERS);
 		const answersByType = Object.groupBy(shown, (answer: any) => answer.type);
 		const records = Object.entries(answersByType)
@@ -327,10 +343,10 @@ const summaryByType: Record<string, (result: any) => string> = {
 			answers.length > shown.length ? ` and ${answers.length - shown.length} more` : "";
 
 		return [
-			result.statusCodeName,
+			last.statusCodeName,
 			records ? records + more : "no answers",
-			resolver && resolver !== "private" && `resolver ${resolver}`,
-			`total ${formatMs(timings.total)}`,
+			last.resolver && last.resolver !== "private" && `resolver ${last.resolver}`,
+			`total ${formatMs(total)}`,
 		]
 			.filter(Boolean)
 			.join(", ");
