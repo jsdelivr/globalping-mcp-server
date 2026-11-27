@@ -201,9 +201,9 @@ Available Tools:
      - ipVersion: IP version - 4 or 6 (default: 4), only for domain targets
      - output: How much to return for each probe - "summary" or "full" (default: "full", or "summary" when the output is longer than 30000 characters)
 
-5. http - Perform an HTTP request to a URL
+5. http - Perform an HTTP request to a host
    Parameters:
-     - target: Domain name or IP to test (e.g., 'example.com')
+     - target: Domain name or IP to test, without protocol and path (e.g., 'example.com')
      - locations: Array of locations using magic field syntax
      - limit: Number of probes to use (default: 3 or one per location, max: 100)
      - method: HTTP method - "GET", "HEAD" or "OPTIONS" (default: GET)

@@ -459,7 +459,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		{
 			title: "HTTP Request",
 			description:
-				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a URL from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
+				"Send HTTP/HTTPS requests (GET, HEAD or OPTIONS) to a host from global locations. Use this tool to check website uptime, verify response status codes, analyze timing (TTFB, download), and debug CDN or caching issues. Note: Only public endpoints are supported. Private networks cannot be tested.",
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -469,7 +469,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				target: z
 					.string()
 					.describe(
-						"Public domain name or IP address to test (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
+						"Public domain name or IP address to test, without protocol and path (e.g., 'example.com'). Private IPs (RFC1918), localhost, and link-local addresses are not supported.",
 					),
 				locations: z
 					.union([z.array(z.string()), z.string()])
