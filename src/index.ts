@@ -240,10 +240,13 @@ When specifying locations, use the magic field format in an array. Examples:
 - Global diversity: ["world"] (increase 'limit' for more locations)
 - Continents: ["Europe", "North America", "Asia"]
 - Countries: ["US", "DE", "JP"]
-- Cities: ["London", "Tokyo", "New York"]
+- US states: ["US-NY", "US-CA"]
+- Cities: ["London+UK", "Tokyo", "New York"]
 - Networks: ["Cloudflare", "Google"]
 - ASNs: ["AS13335", "AS15169"]
-- Combinations: ["London+UK", "Cloudflare+US"]
+- Cloud regions: ["aws-eu-west-1", "gcp-us-central1"]
+- Tags: ["eyeball-network"] (end-user networks), ["datacenter-network"]
+- Combinations with "+", all conditions must match (up to 4): ["Berlin+DE+eyeball-network", "Cloudflare+US"]
 - Previous measurement IDs (for comparison): ["01HT4DGF5ZS7B2M93QP5ZTS3DN"]
 
 For more information, visit: https://www.globalping.io

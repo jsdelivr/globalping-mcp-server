@@ -206,17 +206,19 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 
 | Tool | Description |
 | --- | --- |
-| `ping` | Perform ICMP/packet ping tests to a destination |
+| `ping` | Perform ICMP or TCP ping tests to a destination |
 | `traceroute` | Trace network routing hops to a target |
-| `dns` | Resolve DNS queries using specific resolvers and record types |
+| `dns` | Resolve DNS queries using specific resolvers, record types and UDP or TCP |
 | `mtr` | Run combined ping and traceroute tests (My Traceroute) |
-| `http` | Execute HTTP/HTTPS requests from probes worldwide |
-| `locations` | List available Globalping probe regions and filters |
+| `http` | Execute HTTP, HTTPS or HTTP/2 requests with custom headers from probes worldwide |
+| `locations` | List the countries, networks and tags of the probes, or the cities, networks and tags of one country |
 | `limits` | Display the current free hourly test allowance and additional credits |
 | `getMeasurement` | Retrieve the current status and results of a measurement by ID |
 | `compareLocations` | Helper guide to compare multi-region performance metrics |
 | `help` | Tool reference and syntax documentation |
-| `authStatus` | Check the current MCP authentication status |
+| `authStatus` | Check the token and show the account it belongs to |
+
+The measurement tools can use IPv4 or IPv6 for a domain target.
 
 ---
 
@@ -250,12 +252,16 @@ What's the average response time for cloudflare.com across different continents?
 
 Locations can be specified using the location's `magic` parameter:
 
+* **Whole world**: `world`, or no location at all
 * **Continents**: `Europe`, `North America`, `Asia`, `Africa`, `Oceania`, `South America`
 * **Country codes**: `US`, `DE`, `JP`, `PL`, `BR`
+* **US states**: `US-NY`, `US-CA`
 * **Cities**: `London`, `Tokyo`, `New York`, `Warsaw`
 * **Networks & ASNs**: `Cloudflare`, `Google`, `AS13335`, `AS15169`
 * **Cloud regions**: `aws-us-east-1`, `gcp-us-central1`
-* **Combinations**: `London+UK`, `Cloudflare+US`, `AWS+Frankfurt`
+* **Network type tags**: `eyeball-network` (end-user networks), `datacenter-network`
+* **Combinations**: `London+UK`, `Cloudflare+US`, `AWS+Frankfurt`, `Berlin+DE+eyeball-network`
+* **Previous measurement ID**: runs the test on the same probes as that measurement
 
 ---
 
