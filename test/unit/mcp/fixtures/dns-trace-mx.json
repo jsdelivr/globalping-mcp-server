@@ -1,0 +1,401 @@
+{
+	"id": "2B8mNUB8Hct8lkcfO00321a5E",
+	"type": "dns",
+	"status": "finished",
+	"createdAt": "2026-11-27T12:28:38.468Z",
+	"updatedAt": "2026-11-27T12:28:38.613Z",
+	"target": "github.com",
+	"probesCount": 1,
+	"locations": [{ "magic": "Falkenstein" }],
+	"measurementOptions": { "trace": true, "query": { "type": "MX" } },
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "; <<>> DiG 9.18.49-1~deb12u1-Debian <<>> -t MX github.com -p 53 -4 +timeout=3 +tries=2 +nofail +nocookie +nosplit +nsid +trace\n;; global options: +cmd\n.\t\t\t82112\tIN\tNS\te.root-servers.net.\n.\t\t\t82112\tIN\tNS\tf.root-servers.net.\n.\t\t\t82112\tIN\tNS\tg.root-servers.net.\n.\t\t\t82112\tIN\tNS\th.root-servers.net.\n.\t\t\t82112\tIN\tNS\ti.root-servers.net.\n.\t\t\t82112\tIN\tNS\tj.root-servers.net.\n.\t\t\t82112\tIN\tNS\tk.root-servers.net.\n.\t\t\t82112\tIN\tNS\tl.root-servers.net.\n.\t\t\t82112\tIN\tNS\tm.root-servers.net.\n.\t\t\t82112\tIN\tNS\ta.root-servers.net.\n.\t\t\t82112\tIN\tNS\tb.root-servers.net.\n.\t\t\t82112\tIN\tNS\tc.root-servers.net.\n.\t\t\t82112\tIN\tNS\td.root-servers.net.\n;; Received 295 bytes from 127.0.0.53#53(127.0.0.53) in 0 ms\n\ncom.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t86400\tIN\tDS\t19718 13 2 8ACBB0CD28F41250A80A491389424D341522D946B0DA0C0291F2D3D771D7805A\ncom.\t\t\t86400\tIN\tRRSIG\tDS 8 1 86400 20261210050000 20261127040000 8763 . WLpsIe8iHvbcfe62C0jYWjX8AHF3pC0FvxSlHJT3ccZJwQBnV+MgSyhOMy3+T1BfERIa4buVWzie/N2CWWjEXEX4x/Sk9hcqWHULXOTVh/oiCmFMP+Ls0YQX/WcSZ3gJqVic0BpwJVL/6cU9YKgt2jU9UI3ZyiyCM+Ea0SsDQ86Q3qC8uiGWW9jA/bwfOjj725dqNrtVWkErTQr1DaJV907pn5CXOs80JmSIPhmRlO4Gnal/NFIMkRCtA5ZUWqAQZcvEcVLlD920yerQH/SNzOuBc0hUcjMfBSDiPuIsCyYWgnY6JRtUtoXl8rh3Ny4oJ1TuXbeu3jw64xtOUyrzXQ==\n;; Received 1199 bytes from 192.5.5.241#53(f.root-servers.net) in 6 ms\n\ngithub.com.\t\t172800\tIN\tNS\tns-520.awsdns-01.net.\ngithub.com.\t\t172800\tIN\tNS\tns-421.awsdns-52.com.\ngithub.com.\t\t172800\tIN\tNS\tns-1707.awsdns-21.co.uk.\ngithub.com.\t\t172800\tIN\tNS\tns-1283.awsdns-32.org.\ngithub.com.\t\t172800\tIN\tNS\tdns1.p08.nsone.net.\ngithub.com.\t\t172800\tIN\tNS\tdns2.p08.nsone.net.\ngithub.com.\t\t172800\tIN\tNS\tdns3.p08.nsone.net.\ngithub.com.\t\t172800\tIN\tNS\tdns4.p08.nsone.net.\nCK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN NSEC3 1 1 0 - CK0Q35HRS4H76G6CHNB9414CJN6S5UPL NS SOA RRSIG DNSKEY NSEC3PARAM\nCK0POJMG874LJREF7EFN8430QVIT8BSM.com. 900 IN RRSIG NSEC3 13 2 900 20261204002623 20261126231623 65344 com. IcnPc2DtAVrNIkBsT15zrL3PGkkGpffAaocuFgyXjoCiVLqrcnPLzL7E/FSBpL0fiLzRqTJ68Lz2IGSI5avPng==\n4KB4DFS71LEP8G8P8VT4CCUSQNL4CNCS.com. 900 IN NSEC3 1 1 0 - 4KB4V9IAMJL29MC1VBJ8NDO7E6SI2B8O NS DS RRSIG\n4KB4DFS71LEP8G8P8VT4CCUSQNL4CNCS.com. 900 IN RRSIG NSEC3 13 2 900 20261201023949 20261124012949 65344 com. x56Sw2yYf2Gm5CO8vzJijovHkcRYFwSnzxKxykKGE0Fmwb2P0pvCHWamQTT3NQQG0eHjEl/CjKYe5quLhWWI7g==\n;; Received 680 bytes from 192.52.178.30#53(k.gtld-servers.net) in 7 ms\n\ngithub.com.\t\t300\tIN\tMX\t0 github-com.mail.protection.outlook.com.\ngithub.com.\t\t900\tIN\tNS\tdns1.p08.nsone.net.\ngithub.com.\t\t900\tIN\tNS\tdns2.p08.nsone.net.\ngithub.com.\t\t900\tIN\tNS\tdns3.p08.nsone.net.\ngithub.com.\t\t900\tIN\tNS\tdns4.p08.nsone.net.\ngithub.com.\t\t900\tIN\tNS\tns-1283.awsdns-32.org.\ngithub.com.\t\t900\tIN\tNS\tns-1707.awsdns-21.co.uk.\ngithub.com.\t\t900\tIN\tNS\tns-421.awsdns-52.com.\ngithub.com.\t\t900\tIN\tNS\tns-520.awsdns-01.net.\n;; Received 352 bytes from 205.251.197.3#53(ns-1283.awsdns-32.org) in 4 ms",
+				"hops": [
+					{
+						"answers": [
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "e.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "f.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "g.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "h.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "i.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "j.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "k.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "l.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "m.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "a.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "b.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "c.root-servers.net."
+							},
+							{
+								"name": ".",
+								"type": "NS",
+								"ttl": 82112,
+								"class": "IN",
+								"value": "d.root-servers.net."
+							}
+						],
+						"timings": { "total": 0 },
+						"resolver": "127.0.0.53"
+					},
+					{
+						"answers": [
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "a.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "b.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "c.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "d.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "e.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "f.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "g.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "h.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "i.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "j.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "k.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "l.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "m.gtld-servers.net."
+							},
+							{
+								"name": "com.",
+								"type": "DS",
+								"ttl": 86400,
+								"class": "IN",
+								"value": "19718 13 2 8ACBB0CD28F41250A80A491389424D341522D946B0DA0C0291F2D3D771D7805A"
+							},
+							{
+								"name": "com.",
+								"type": "RRSIG",
+								"ttl": 86400,
+								"class": "IN",
+								"value": "DS 8 1 86400 20261210050000 20261127040000 8763 . WLpsIe8iHvbcfe62C0jYWjX8AHF3pC0FvxSlHJT3ccZJwQBnV+MgSyhOMy3+T1BfERIa4buVWzie/N2CWWjEXEX4x/Sk9hcqWHULXOTVh/oiCmFMP+Ls0YQX/WcSZ3gJqVic0BpwJVL/6cU9YKgt2jU9UI3ZyiyCM+Ea0SsDQ86Q3qC8uiGWW9jA/bwfOjj725dqNrtVWkErTQr1DaJV907pn5CXOs80JmSIPhmRlO4Gnal/NFIMkRCtA5ZUWqAQZcvEcVLlD920yerQH/SNzOuBc0hUcjMfBSDiPuIsCyYWgnY6JRtUtoXl8rh3Ny4oJ1TuXbeu3jw64xtOUyrzXQ=="
+							}
+						],
+						"timings": { "total": 6 },
+						"resolver": "f.root-servers.net"
+					},
+					{
+						"answers": [
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "ns-520.awsdns-01.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "ns-421.awsdns-52.com."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "ns-1707.awsdns-21.co.uk."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "ns-1283.awsdns-32.org."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "dns1.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "dns2.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "dns3.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 172800,
+								"class": "IN",
+								"value": "dns4.p08.nsone.net."
+							},
+							{
+								"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
+								"type": "NSEC3",
+								"ttl": 900,
+								"class": "IN",
+								"value": "1 1 0 - CK0Q35HRS4H76G6CHNB9414CJN6S5UPL NS SOA RRSIG DNSKEY NSEC3PARAM"
+							},
+							{
+								"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
+								"type": "RRSIG",
+								"ttl": 900,
+								"class": "IN",
+								"value": "NSEC3 13 2 900 20261204002623 20261126231623 65344 com. IcnPc2DtAVrNIkBsT15zrL3PGkkGpffAaocuFgyXjoCiVLqrcnPLzL7E/FSBpL0fiLzRqTJ68Lz2IGSI5avPng=="
+							},
+							{
+								"name": "4KB4DFS71LEP8G8P8VT4CCUSQNL4CNCS.com.",
+								"type": "NSEC3",
+								"ttl": 900,
+								"class": "IN",
+								"value": "1 1 0 - 4KB4V9IAMJL29MC1VBJ8NDO7E6SI2B8O NS DS RRSIG"
+							},
+							{
+								"name": "4KB4DFS71LEP8G8P8VT4CCUSQNL4CNCS.com.",
+								"type": "RRSIG",
+								"ttl": 900,
+								"class": "IN",
+								"value": "NSEC3 13 2 900 20261201023949 20261124012949 65344 com. x56Sw2yYf2Gm5CO8vzJijovHkcRYFwSnzxKxykKGE0Fmwb2P0pvCHWamQTT3NQQG0eHjEl/CjKYe5quLhWWI7g=="
+							}
+						],
+						"timings": { "total": 7 },
+						"resolver": "k.gtld-servers.net"
+					},
+					{
+						"answers": [
+							{
+								"name": "github.com.",
+								"type": "MX",
+								"ttl": 300,
+								"class": "IN",
+								"value": "0 github-com.mail.protection.outlook.com."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "dns1.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "dns2.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "dns3.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "dns4.p08.nsone.net."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "ns-1283.awsdns-32.org."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "ns-1707.awsdns-21.co.uk."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "ns-421.awsdns-52.com."
+							},
+							{
+								"name": "github.com.",
+								"type": "NS",
+								"ttl": 900,
+								"class": "IN",
+								"value": "ns-520.awsdns-01.net."
+							}
+						],
+						"timings": { "total": 4 },
+						"resolver": "ns-1283.awsdns-32.org"
+					}
+				]
+			}
+		}
+	]
+}

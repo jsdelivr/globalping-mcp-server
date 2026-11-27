@@ -1,0 +1,153 @@
+{
+	"id": "2P4xQQKCD6c75fZM200321Wl5",
+	"type": "http",
+	"status": "finished",
+	"createdAt": "2026-11-18T15:27:48.383Z",
+	"updatedAt": "2026-11-18T15:27:48.676Z",
+	"target": "google.com",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network", "u-V8AA"],
+				"resolvers": ["private", "9.9.9.9", "149.112.112.112"]
+			},
+			"result": {
+				"status": "finished",
+				"resolvedAddress": "172.217.22.110",
+				"headers": {
+					"location": "https://www.google.com/",
+					"content-type": "text/html; charset=UTF-8",
+					"content-security-policy-report-only": "object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp",
+					"date": "Wed, 18 Nov 2026 15:27:48 GMT",
+					"expires": "Fri, 18 Dec 2026 15:27:48 GMT",
+					"cache-control": "public, max-age=2592000",
+					"server": "gws",
+					"content-length": "220",
+					"x-xss-protection": "0",
+					"x-frame-options": "SAMEORIGIN",
+					"alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+					"connection": "close"
+				},
+				"rawHeaders": "Location: https://www.google.com/\nContent-Type: text/html; charset=UTF-8\nContent-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp\nDate: Wed, 18 Nov 2026 15:27:48 GMT\nExpires: Fri, 18 Dec 2026 15:27:48 GMT\nCache-Control: public, max-age=2592000\nServer: gws\nContent-Length: 220\nX-XSS-Protection: 0\nX-Frame-Options: SAMEORIGIN\nAlt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000\nConnection: close",
+				"rawBody": null,
+				"rawOutput": "HTTP/1.1 301\nLocation: https://www.google.com/\nContent-Type: text/html; charset=UTF-8\nContent-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-1sBldBVSbHwcKpQ78_a9Fw' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp\nDate: Wed, 18 Nov 2026 15:27:48 GMT\nExpires: Fri, 18 Dec 2026 15:27:48 GMT\nCache-Control: public, max-age=2592000\nServer: gws\nContent-Length: 220\nX-XSS-Protection: 0\nX-Frame-Options: SAMEORIGIN\nAlt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000\nConnection: close",
+				"truncated": false,
+				"statusCode": 301,
+				"statusCodeName": "Moved Permanently",
+				"timings": {
+					"total": 208,
+					"dns": 51,
+					"tcp": 45,
+					"tls": 56,
+					"firstByte": 56,
+					"download": 0
+				},
+				"tls": {
+					"authorized": true,
+					"protocol": "TLSv1.3",
+					"cipherName": "TLS_AES_256_GCM_SHA384",
+					"createdAt": "2026-11-03T08:26:50.000Z",
+					"expiresAt": "2027-01-26T08:26:49.000Z",
+					"issuer": {
+						"C": "US",
+						"O": "Google Trust Services",
+						"CN": "WE2"
+					},
+					"subject": {
+						"CN": "*.google.com",
+						"alt": "DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com"
+					},
+					"keyType": "EC",
+					"keyBits": 256,
+					"serialNumber": "53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA",
+					"fingerprint256": "2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2",
+					"publicKey": "04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61"
+				}
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"resolvedAddress": "142.251.110.101",
+				"headers": {
+					"location": "https://www.google.com/",
+					"content-type": "text/html; charset=UTF-8",
+					"content-security-policy-report-only": "object-src 'none';base-uri 'self';script-src 'nonce-4qzX9y7LbdqRUfstppMOBQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp",
+					"date": "Wed, 18 Nov 2026 15:27:48 GMT",
+					"expires": "Fri, 18 Dec 2026 15:27:48 GMT",
+					"cache-control": "public, max-age=2592000",
+					"server": "gws",
+					"content-length": "220",
+					"x-xss-protection": "0",
+					"x-frame-options": "SAMEORIGIN",
+					"alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+					"connection": "close"
+				},
+				"rawHeaders": "Location: https://www.google.com/\nContent-Type: text/html; charset=UTF-8\nContent-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-4qzX9y7LbdqRUfstppMOBQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp\nDate: Wed, 18 Nov 2026 15:27:48 GMT\nExpires: Fri, 18 Dec 2026 15:27:48 GMT\nCache-Control: public, max-age=2592000\nServer: gws\nContent-Length: 220\nX-XSS-Protection: 0\nX-Frame-Options: SAMEORIGIN\nAlt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000\nConnection: close",
+				"rawBody": null,
+				"rawOutput": "HTTP/1.1 301\nLocation: https://www.google.com/\nContent-Type: text/html; charset=UTF-8\nContent-Security-Policy-Report-Only: object-src 'none';base-uri 'self';script-src 'nonce-4qzX9y7LbdqRUfstppMOBQ' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/other-hp\nDate: Wed, 18 Nov 2026 15:27:48 GMT\nExpires: Fri, 18 Dec 2026 15:27:48 GMT\nCache-Control: public, max-age=2592000\nServer: gws\nContent-Length: 220\nX-XSS-Protection: 0\nX-Frame-Options: SAMEORIGIN\nAlt-Svc: h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000\nConnection: close",
+				"truncated": false,
+				"statusCode": 301,
+				"statusCodeName": "Moved Permanently",
+				"timings": {
+					"total": 63,
+					"dns": 2,
+					"tcp": 6,
+					"tls": 21,
+					"firstByte": 34,
+					"download": 0
+				},
+				"tls": {
+					"authorized": true,
+					"protocol": "TLSv1.3",
+					"cipherName": "TLS_AES_256_GCM_SHA384",
+					"createdAt": "2026-11-03T08:26:50.000Z",
+					"expiresAt": "2027-01-26T08:26:49.000Z",
+					"issuer": {
+						"C": "US",
+						"O": "Google Trust Services",
+						"CN": "WE2"
+					},
+					"subject": {
+						"CN": "*.google.com",
+						"alt": "DNS:*.google.com, DNS:*.admin.google.com, DNS:*.appengine.google.com, DNS:*.bdn.dev, DNS:*.origin-test.bdn.dev, DNS:*.cloud.google.com, DNS:*.crowdsource.google.com, DNS:*.datacompute.google.com, DNS:*.google.ca, DNS:*.google.cl, DNS:*.google.co.in, DNS:*.google.co.jp, DNS:*.google.co.uk, DNS:*.google.com.ar, DNS:*.google.com.au, DNS:*.google.com.br, DNS:*.google.com.co, DNS:*.google.com.mx, DNS:*.google.com.tr, DNS:*.google.com.vn, DNS:*.google.de, DNS:*.google.es, DNS:*.google.fr, DNS:*.google.hu, DNS:*.google.it, DNS:*.google.nl, DNS:*.google.pl, DNS:*.google.pt, DNS:*.gemini.cloud.google.com, DNS:*.gstatic.com, DNS:*.metric.gstatic.com, DNS:*.gvt1.com, DNS:*.gcpcdn.gvt1.com, DNS:*.gvt2.com, DNS:*.gcp.gvt2.com, DNS:*.url.google.com, DNS:*.youtube-nocookie.com, DNS:*.ytimg.com, DNS:ai.android, DNS:android.com, DNS:*.android.com, DNS:*.flash.android.com, DNS:g.co, DNS:*.g.co, DNS:goo.gl, DNS:www.goo.gl, DNS:google-analytics.com, DNS:*.google-analytics.com, DNS:google.com, DNS:googlecommerce.com, DNS:*.googlecommerce.com, DNS:urchin.com, DNS:*.urchin.com, DNS:youtu.be, DNS:youtube.com, DNS:*.youtube.com, DNS:music.youtube.com, DNS:*.music.youtube.com, DNS:youtubeeducation.com, DNS:*.youtubeeducation.com, DNS:youtubekids.com, DNS:*.youtubekids.com, DNS:yt.be, DNS:*.yt.be, DNS:android.clients.google.com, DNS:*.aistudio.google.com"
+					},
+					"keyType": "EC",
+					"keyBits": 256,
+					"serialNumber": "53:10:12:51:08:7F:FC:43:09:F2:7D:0B:33:C2:02:AA",
+					"fingerprint256": "2B:1E:9F:EC:6E:AD:F7:A8:70:AF:64:3F:92:4F:BB:95:2F:8C:C6:75:A9:3F:33:92:6C:5E:9B:39:2E:C5:74:F2",
+					"publicKey": "04:DB:2E:F7:8B:FC:68:DF:C0:B5:BB:CB:0A:ED:95:BE:C7:07:FA:4B:9B:68:14:C9:88:B2:95:05:57:85:12:C3:DF:EF:97:EF:86:18:53:C2:00:71:AE:76:A2:F1:DE:79:95:22:36:A2:A0:12:BB:6A:8F:99:C3:29:BB:BE:01:51:61"
+				}
+			}
+		}
+	]
+}

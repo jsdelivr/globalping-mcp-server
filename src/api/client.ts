@@ -3,9 +3,9 @@
  * Centralizes API communication and error handling
  */
 import { GLOBALPING_API } from "../config";
-import type { MeasurementOptions, MeasurementResponse, CreateMeasurementResponse } from "../types";
+import type { MeasurementOptions, CreateMeasurementResponse } from "../types";
 import type { GlobalpingMCP } from "../index";
-import { Globalping, type TypedMeasurementRequest } from "globalping";
+import { Globalping, type MeasurementResponse, type TypedMeasurementRequest } from "globalping";
 
 /**
  * Validate token is present
@@ -75,7 +75,7 @@ export async function pollMeasurementResult(
 		);
 	}
 
-	return result.data as MeasurementResponse;
+	return result.data;
 }
 
 /**
@@ -142,7 +142,7 @@ export async function getMeasurement(
 		);
 	}
 
-	return result.data as MeasurementResponse;
+	return result.data;
 }
 
 /**

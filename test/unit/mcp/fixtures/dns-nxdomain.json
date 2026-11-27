@@ -1,0 +1,69 @@
+{
+	"id": "2iz5JAV8tHTMdV2jT00321Wl5",
+	"type": "dns",
+	"status": "finished",
+	"createdAt": "2026-11-18T15:27:48.164Z",
+	"updatedAt": "2026-11-18T15:27:48.278Z",
+	"target": "nonexistent.google.com",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["2a01:4ff:ff00::add:2", "2a01:4ff:ff00::add:1", "185.12.64.2"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "; <<>> DiG 9.18.49-1~deb12u1-Debian <<>> -t A nonexistent.google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 11587\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 66 73 6e 31 (\"fsn1\")\n;; QUESTION SECTION:\n;nonexistent.google.com.\t\tIN\tA\n\n;; AUTHORITY SECTION:\ngoogle.com.\t\t60\tIN\tSOA\tns1.google.com. dns-admin.google.com. 1023587894 900 900 1800 60\n\n;; Query time: 15 msec\n;; SERVER: 185.12.64.2#53(185.12.64.2) (UDP)\n;; WHEN: Wed Nov 18 15:27:48 UTC 2026\n;; MSG SIZE  rcvd: 109",
+				"statusCodeName": "NXDOMAIN",
+				"statusCode": 3,
+				"answers": [],
+				"timings": {
+					"total": 15
+				},
+				"resolver": "185.12.64.2"
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "; <<>> DiG 9.16.44-Debian <<>> -t A nonexistent.google.com -p 53 -4 +timeout=5 +tries=2 +nofail +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 1812\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;nonexistent.google.com.\t\tIN\tA\n\n;; Query time: 32 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Wed Nov 18 15:27:48 UTC 2026\n;; MSG SIZE  rcvd: 51",
+				"statusCodeName": "NXDOMAIN",
+				"statusCode": 3,
+				"answers": [],
+				"timings": {
+					"total": 32
+				},
+				"resolver": "private"
+			}
+		}
+	]
+}

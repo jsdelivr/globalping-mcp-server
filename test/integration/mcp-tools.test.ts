@@ -5,7 +5,7 @@
  * to test the complete request/response cycle through the MCP protocol.
  */
 import { SELF } from "cloudflare:test";
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { exerciseLegacySSE } from "./sse";
 import { exerciseStreamableHTTP } from "./streamable-http";
 
@@ -376,9 +376,39 @@ describe("MCP Tools Integration", () => {
 			expect(data.result.content[0].text).toContain(
 				"Probe 1: New York, US, NA, Test Network (AS12345)",
 			);
+			expect(data.result.content[0].text).toContain(
+				"Resolved IP: 142.250.185.46\nPackets: 3 sent, 3 received, 0 lost (0%)\nRTT: min 10.12 ms, avg 15.34 ms, max 20.56 ms\n",
+			);
+			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
+		});
+
+		it("should return one line per probe when output is summary", async () => {
+			const call = (name: string, args: object) =>
+				makeMCPRequest(
+					{
+						jsonrpc: "2.0",
+						id: 1,
+						method: "tools/call",
+						params: { name, arguments: args },
+					},
+					validToken,
+					sessionId,
+				).then(getMCPResponse);
+
+			const created = await call("ping", { target: "google.com", output: "summary" });
+			const fetched = await call("getMeasurement", {
+				id: "mockMeasurement123",
+				output: "summary",
+			});
+
+			expect(created.result.content[0].text).toContain(
+				"1: New York, US, NA, Test Network (AS12345) | IP 142.250.185.46, 0/3 lost (0%), rtt min/avg/max 10.12/15.34/20.56 ms",
+			);
+			expect(created.result.content[0].text).not.toContain("Packets: 3 sent");
+			expect(fetched.result.content[0].text).toBe(created.result.content[0].text);
 		});
 
 		it("should use default values when parameters are missing", async () => {
@@ -487,6 +517,24 @@ describe("MCP Tools Integration", () => {
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
+		it("should accept headers as output", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 5,
+					method: "tools/call",
+					params: {
+						name: "http",
+						arguments: { target: "example.com", output: "headers" },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.content[0].text).toContain("mockMeasurement123");
+		});
 	});
 
 	describe("MTR Tool", () => {
@@ -537,13 +585,13 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("mockMeasurement123");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement).toMatchObject({
-				id: "mockMeasurement123",
-				status: "finished",
-				probesCount: 3,
-			});
-			expect(data.result.structuredContent.measurement.results).toHaveLength(1);
-			expect(data.result.content[0].text).toContain("mockMeasurement123");
+			expect(data.result.content[0].text).toContain(
+				"Measurement ID: mockMeasurement123\nType: ping\nTarget: google.com\nStatus: finished\nCreated: 2024-01-01T00:00:00Z\nUpdated: 2024-01-01T00:00:10Z\nProbes: 3\n",
+			);
+			expect(data.result.content[0].text).toContain(
+				"Resolved IP: 142.250.185.46\nPackets: 3 sent, 3 received, 0 lost (0%)\nRTT: min 10.12 ms, avg 15.34 ms, max 20.56 ms\n",
+			);
+			expect(data.result.structuredContent).toBeUndefined();
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
 		});
 
@@ -563,7 +611,7 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("mockMeasurement123");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
+			expect(data.result.content[0].text).toContain("Measurement ID: mockMeasurement123");
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 
@@ -571,9 +619,50 @@ describe("MCP Tools Integration", () => {
 			const data = await callGetMeasurement("runningMeasurement");
 
 			expect(data.result.isError).toBeUndefined();
-			expect(data.result.structuredContent.measurement.status).toBe("in-progress");
-			expect(JSON.parse(data.result.content[0].text).status).toBe("in-progress");
+			expect(data.result.content[0].text).toContain("Status: in-progress");
 			expect(data.result.content[1].text).toContain("Measurement is still in progress");
+		});
+
+		it("should return only the chosen probes", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: {
+						name: "getMeasurement",
+						arguments: { id: "mockMeasurement123", probes: [1] },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBeUndefined();
+			expect(data.result.content[0].text).toContain(
+				"Probe 1: New York, US, NA, Test Network (AS12345)",
+			);
+		});
+
+		it("should return a tool error for a probe number that does not exist", async () => {
+			const data = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 1,
+					method: "tools/call",
+					params: {
+						name: "getMeasurement",
+						arguments: { id: "mockMeasurement123", probes: [2] },
+					},
+				},
+				validToken,
+				sessionId,
+			).then(getMCPResponse);
+
+			expect(data.result.isError).toBe(true);
+			expect(data.result.content[0].text).toBe(
+				"Failed to get measurement: Probe 2 does not exist. This measurement has probe numbers from 1 to 1.",
+			);
 		});
 
 		it("should return a tool error when the measurement is not found", async () => {
@@ -597,19 +686,7 @@ describe("MCP Tools Integration", () => {
 		it("should trim spaces around the ID", async () => {
 			const data = await callGetMeasurement(" mockMeasurement123 ");
 
-			expect(data.result.structuredContent.measurement.id).toBe("mockMeasurement123");
-		});
-
-		it("should declare an output schema that allows measurement fields", async () => {
-			const response = await makeMCPRequest(
-				{ jsonrpc: "2.0", id: 1, method: "tools/list" },
-				validToken,
-				sessionId,
-			);
-			const data = await getMCPResponse(response);
-			const tool = data.result.tools.find((t: any) => t.name === "getMeasurement");
-
-			expect(tool.outputSchema.properties.measurement.additionalProperties).not.toBe(false);
+			expect(data.result.content[0].text).toContain("Measurement ID: mockMeasurement123");
 		});
 	});
 
@@ -632,7 +709,22 @@ describe("MCP Tools Integration", () => {
 			expect(data.result).toBeDefined();
 			expect(data.result.content).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toContain("Total Probes");
+			expect(data.result.content[0].text).toMatchInlineSnapshot(`
+				"Available Globalping Probe Locations:
+
+				North America:
+				  US: New York, Los Angeles
+
+				Europe:
+				  DE: Frankfurt
+
+
+				Total Probes: 3
+
+				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]
+				"
+			`);
+			expect(data.result.structuredContent).toBeUndefined();
 
 			// Verify mock API was called correctly
 			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);

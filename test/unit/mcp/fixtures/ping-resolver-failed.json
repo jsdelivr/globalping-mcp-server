@@ -1,0 +1,112 @@
+{
+	"id": "2CbzBns1VzVs8U55q00321ZNs",
+	"type": "ping",
+	"status": "finished",
+	"createdAt": "2026-11-25T15:40:50.559Z",
+	"updatedAt": "2026-11-25T15:40:56.794Z",
+	"target": "dnssec-failed.org",
+	"limit": 20,
+	"probesCount": 3,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "failed",
+				"failureSource": "resolver",
+				"rawOutput": "queryA ESERVFAIL dnssec-failed.org",
+				"resolvedAddress": null,
+				"resolvedHostname": null,
+				"timings": [],
+				"stats": {
+					"min": null,
+					"max": null,
+					"avg": null,
+					"total": null,
+					"loss": null,
+					"rcv": null,
+					"drop": null
+				}
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network", "u-alfredjophy"],
+				"resolvers": ["private", "private"]
+			},
+			"result": {
+				"status": "failed",
+				"failureSource": "resolver",
+				"rawOutput": "queryA ESERVFAIL dnssec-failed.org",
+				"resolvedAddress": null,
+				"resolvedHostname": null,
+				"timings": [],
+				"stats": {
+					"min": null,
+					"max": null,
+					"avg": null,
+					"total": null,
+					"loss": null,
+					"rcv": null,
+					"drop": null
+				}
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "FR",
+				"state": null,
+				"city": "Lauterbourg",
+				"asn": 51167,
+				"longitude": 8.18,
+				"latitude": 48.98,
+				"network": "Contabo",
+				"tags": ["datacenter-network", "u-herr-nandez"],
+				"resolvers": ["213.136.95.10", "213.136.95.11", "2a02:c207::1:53"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "PING dnssec-failed.org (96.99.227.255) 56(84) bytes of data.\nno answer yet for icmp_seq=1\nno answer yet for icmp_seq=2\n\n--- dnssec-failed.org ping statistics ---\n3 packets transmitted, 0 received, 100% packet loss, time 1043ms\n",
+				"resolvedAddress": "96.99.227.255",
+				"resolvedHostname": "dnssec-failed.org",
+				"timings": [],
+				"stats": {
+					"min": null,
+					"max": null,
+					"avg": null,
+					"total": 3,
+					"loss": 100,
+					"rcv": 0,
+					"drop": 3
+				}
+			}
+		}
+	]
+}

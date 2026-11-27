@@ -1,0 +1,488 @@
+{
+	"id": "2PIzPEd20eFYYef7e00321XXB",
+	"type": "traceroute",
+	"status": "finished",
+	"createdAt": "2026-11-20T17:09:55.610Z",
+	"updatedAt": "2026-11-20T17:10:10.817Z",
+	"target": "www.usp.br",
+	"limit": 25,
+	"probesCount": 2,
+	"locations": [
+		{
+			"magic": "world"
+		}
+	],
+	"results": [
+		{
+			"probe": {
+				"continent": "NA",
+				"region": "Northern America",
+				"country": "US",
+				"state": "CA",
+				"city": "Los Angeles",
+				"asn": 36352,
+				"longitude": -118.24,
+				"latitude": 34.05,
+				"network": "HostPapa",
+				"tags": ["datacenter-network", "u-TommyTuoTone"],
+				"resolvers": [
+					"1.1.1.1",
+					"1.0.0.1",
+					"9.9.9.9",
+					"208.67.222.222",
+					"208.67.220.220",
+					"8.8.8.8",
+					"8.8.4.4"
+				]
+			},
+			"result": {
+				"rawOutput": "traceroute to www.usp.br (200.144.235.134), 20 hops max, 60 byte packets\n 1  _gateway (66.212.16.129)  1.973 ms  3.928 ms\n 2  10.9.6.9 (10.9.6.9)  3.409 ms  3.398 ms\n 3  10.9.6.1 (10.9.6.1)  0.486 ms  0.478 ms\n 4  * *\n 5  be8767.agr22.lax01.atlas.cogentco.com (154.24.87.121)  0.903 ms  0.897 ms\n 6  be2586.ccr41.lax01.atlas.cogentco.com (154.54.29.245)  1.214 ms  1.374 ms\n 7  be3097.ccr81.sjc13.atlas.cogentco.com (154.54.40.157)  13.794 ms  13.788 ms\n 8  be3096.ccr21.sfo01.atlas.cogentco.com (154.54.40.42)  12.896 ms  12.891 ms\n 9  * *\n10  * *\n11  be6904.ccr31.oma02.atlas.cogentco.com (154.54.95.98)  48.417 ms  48.454 ms\n12  be5214.ccr41.ord01.atlas.cogentco.com (154.54.165.134)  56.927 ms  56.858 ms\n13  port-channel2717.ccr91.cle04.atlas.cogentco.com (154.54.6.222)  63.130 ms  63.118 ms\n14  be4985.ccr41.jfk02.atlas.cogentco.com (154.54.162.166)  72.388 ms  72.231 ms\n15  be3495.ccr31.jfk10.atlas.cogentco.com (66.28.4.182)  72.415 ms  72.416 ms\n16  be2531.ccr31.sao01.atlas.cogentco.com (154.54.88.2)  180.579 ms  180.623 ms\n17  * *\n18  * *\n19  * *\n20  e724-sp2-r17-nx-swc.uspnet.usp.br (143.107.151.62)  180.984 ms  181.072 ms",
+				"status": "finished",
+				"resolvedAddress": "200.144.235.134",
+				"resolvedHostname": "www.usp.br",
+				"hops": [
+					{
+						"resolvedAddress": "66.212.16.129",
+						"resolvedHostname": "_gateway",
+						"timings": [
+							{
+								"rtt": 1.973
+							},
+							{
+								"rtt": 3.928
+							}
+						]
+					},
+					{
+						"resolvedAddress": "10.9.6.9",
+						"resolvedHostname": "10.9.6.9",
+						"timings": [
+							{
+								"rtt": 3.409
+							},
+							{
+								"rtt": 3.398
+							}
+						]
+					},
+					{
+						"resolvedAddress": "10.9.6.1",
+						"resolvedHostname": "10.9.6.1",
+						"timings": [
+							{
+								"rtt": 0.486
+							},
+							{
+								"rtt": 0.478
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "154.24.87.121",
+						"resolvedHostname": "be8767.agr22.lax01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 0.903
+							},
+							{
+								"rtt": 0.897
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.29.245",
+						"resolvedHostname": "be2586.ccr41.lax01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 1.214
+							},
+							{
+								"rtt": 1.374
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.40.157",
+						"resolvedHostname": "be3097.ccr81.sjc13.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 13.794
+							},
+							{
+								"rtt": 13.788
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.40.42",
+						"resolvedHostname": "be3096.ccr21.sfo01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 12.896
+							},
+							{
+								"rtt": 12.891
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "154.54.95.98",
+						"resolvedHostname": "be6904.ccr31.oma02.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 48.417
+							},
+							{
+								"rtt": 48.454
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.165.134",
+						"resolvedHostname": "be5214.ccr41.ord01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 56.927
+							},
+							{
+								"rtt": 56.858
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.6.222",
+						"resolvedHostname": "port-channel2717.ccr91.cle04.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 63.13
+							},
+							{
+								"rtt": 63.118
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.162.166",
+						"resolvedHostname": "be4985.ccr41.jfk02.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 72.388
+							},
+							{
+								"rtt": 72.231
+							}
+						]
+					},
+					{
+						"resolvedAddress": "66.28.4.182",
+						"resolvedHostname": "be3495.ccr31.jfk10.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 72.415
+							},
+							{
+								"rtt": 72.416
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.88.2",
+						"resolvedHostname": "be2531.ccr31.sao01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 180.579
+							},
+							{
+								"rtt": 180.623
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "143.107.151.62",
+						"resolvedHostname": "e724-sp2-r17-nx-swc.uspnet.usp.br",
+						"timings": [
+							{
+								"rtt": 180.984
+							},
+							{
+								"rtt": 181.072
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"probe": {
+				"continent": "AS",
+				"region": "Eastern Asia",
+				"country": "JP",
+				"state": null,
+				"city": "Tokyo",
+				"asn": 3258,
+				"longitude": 139.69,
+				"latitude": 35.69,
+				"network": "xTom",
+				"tags": ["datacenter-network"],
+				"resolvers": ["1.1.1.1", "8.8.8.8", "2606:4700:4700::1111", "2001:4860:4860::8888"]
+			},
+			"result": {
+				"rawOutput": "traceroute to www.usp.br (200.144.235.134), 20 hops max, 60 byte packets\n 1  _gateway (43.239.249.1)  22.423 ms  22.391 ms\n 2  91.200.240.126 (91.200.240.126)  1.224 ms  1.237 ms\n 3  91.200.240.64 (91.200.240.64)  0.890 ms  0.926 ms\n 4  91.200.240.63 (91.200.240.63)  1.755 ms  1.750 ms\n 5  91.200.240.102 (91.200.240.102)  1.595 ms  1.618 ms\n 6  210.173.173.10 (210.173.173.10)  1.051 ms  1.063 ms\n 7  210.173.173.9 (210.173.173.9)  1.761 ms  1.827 ms\n 8  tky009bb11.IIJ.Net (58.138.98.77)  3.864 ms  3.979 ms\n 9  sea002bb00.IIJ.Net (58.138.88.230)  89.225 ms  89.279 ms\n10  * *\n11  * *\n12  be9528.ccr82.slc03.atlas.cogentco.com (154.54.92.222)  117.683 ms  117.728 ms\n13  * *\n14  be8568.ccr32.oma02.atlas.cogentco.com (154.54.95.110)  135.470 ms  135.475 ms\n15  be5068.ccr42.ord01.atlas.cogentco.com (154.54.166.74)  144.248 ms  144.298 ms\n16  port-channel2718.ccr92.cle04.atlas.cogentco.com (154.54.7.130)  150.375 ms  150.311 ms\n17  be4986.ccr42.jfk02.atlas.cogentco.com (154.54.162.170)  160.580 ms  160.590 ms\n18  be3496.ccr31.jfk10.atlas.cogentco.com (154.54.0.142)  160.338 ms  160.170 ms\n19  be2531.ccr31.sao01.atlas.cogentco.com (154.54.88.2)  267.817 ms  267.748 ms\n20  199.100.13.162 (199.100.13.162)  279.995 ms  279.925 ms",
+				"status": "finished",
+				"resolvedAddress": "200.144.235.134",
+				"resolvedHostname": "www.usp.br",
+				"hops": [
+					{
+						"resolvedAddress": "43.239.249.1",
+						"resolvedHostname": "_gateway",
+						"timings": [
+							{
+								"rtt": 22.423
+							},
+							{
+								"rtt": 22.391
+							}
+						]
+					},
+					{
+						"resolvedAddress": "91.200.240.126",
+						"resolvedHostname": "91.200.240.126",
+						"timings": [
+							{
+								"rtt": 1.224
+							},
+							{
+								"rtt": 1.237
+							}
+						]
+					},
+					{
+						"resolvedAddress": "91.200.240.64",
+						"resolvedHostname": "91.200.240.64",
+						"timings": [
+							{
+								"rtt": 0.89
+							},
+							{
+								"rtt": 0.926
+							}
+						]
+					},
+					{
+						"resolvedAddress": "91.200.240.63",
+						"resolvedHostname": "91.200.240.63",
+						"timings": [
+							{
+								"rtt": 1.755
+							},
+							{
+								"rtt": 1.75
+							}
+						]
+					},
+					{
+						"resolvedAddress": "91.200.240.102",
+						"resolvedHostname": "91.200.240.102",
+						"timings": [
+							{
+								"rtt": 1.595
+							},
+							{
+								"rtt": 1.618
+							}
+						]
+					},
+					{
+						"resolvedAddress": "210.173.173.10",
+						"resolvedHostname": "210.173.173.10",
+						"timings": [
+							{
+								"rtt": 1.051
+							},
+							{
+								"rtt": 1.063
+							}
+						]
+					},
+					{
+						"resolvedAddress": "210.173.173.9",
+						"resolvedHostname": "210.173.173.9",
+						"timings": [
+							{
+								"rtt": 1.761
+							},
+							{
+								"rtt": 1.827
+							}
+						]
+					},
+					{
+						"resolvedAddress": "58.138.98.77",
+						"resolvedHostname": "tky009bb11.IIJ.Net",
+						"timings": [
+							{
+								"rtt": 3.864
+							},
+							{
+								"rtt": 3.979
+							}
+						]
+					},
+					{
+						"resolvedAddress": "58.138.88.230",
+						"resolvedHostname": "sea002bb00.IIJ.Net",
+						"timings": [
+							{
+								"rtt": 89.225
+							},
+							{
+								"rtt": 89.279
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "154.54.92.222",
+						"resolvedHostname": "be9528.ccr82.slc03.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 117.683
+							},
+							{
+								"rtt": 117.728
+							}
+						]
+					},
+					{
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"timings": []
+					},
+					{
+						"resolvedAddress": "154.54.95.110",
+						"resolvedHostname": "be8568.ccr32.oma02.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 135.47
+							},
+							{
+								"rtt": 135.475
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.166.74",
+						"resolvedHostname": "be5068.ccr42.ord01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 144.248
+							},
+							{
+								"rtt": 144.298
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.7.130",
+						"resolvedHostname": "port-channel2718.ccr92.cle04.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 150.375
+							},
+							{
+								"rtt": 150.311
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.162.170",
+						"resolvedHostname": "be4986.ccr42.jfk02.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 160.58
+							},
+							{
+								"rtt": 160.59
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.0.142",
+						"resolvedHostname": "be3496.ccr31.jfk10.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 160.338
+							},
+							{
+								"rtt": 160.17
+							}
+						]
+					},
+					{
+						"resolvedAddress": "154.54.88.2",
+						"resolvedHostname": "be2531.ccr31.sao01.atlas.cogentco.com",
+						"timings": [
+							{
+								"rtt": 267.817
+							},
+							{
+								"rtt": 267.748
+							}
+						]
+					},
+					{
+						"resolvedAddress": "199.100.13.162",
+						"resolvedHostname": "199.100.13.162",
+						"timings": [
+							{
+								"rtt": 279.995
+							},
+							{
+								"rtt": 279.925
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

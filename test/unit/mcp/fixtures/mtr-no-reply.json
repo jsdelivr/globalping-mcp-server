@@ -1,0 +1,401 @@
+{
+	"id": "2mlumuc7i3j4ZmbHH00321X5p",
+	"type": "mtr",
+	"status": "finished",
+	"createdAt": "2026-11-19T12:53:56.797Z",
+	"updatedAt": "2026-11-19T12:54:03.577Z",
+	"target": "8.8.8.9",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [{ "magic": "world" }],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network", "u-alainstucki"],
+				"resolvers": ["private", "private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "Host                                                                  Loss% Drop Rcv Avg  StDev  Javg\n1. AS???   _gateway (172.31.1.1)                                       0.0%    0   3 0.2    0.0   0.2\n2. AS???   (waiting for reply)\n3. AS???   (waiting for reply)\n4. AS24940 core-spine-rdev1.cloud1.hel1.hetzner.com (213.239.228.2)    0.0%    0   3 0.6    0.3   0.6\n5. AS24940 core31.hel1.hetzner.com (213.239.228.1)                     0.0%    0   3 0.4    0.0   0.2\n6. AS24940 juniper4.dc1.hel1.hetzner.com (213.239.224.37)              0.0%    0   3 1.5    1.2   1.4\n7. AS24940 213-133-118-130.clients.your-server.de (213.133.118.130)    0.0%    0   3 1.6    0.1   0.9\n8. AS15169 142.250.225.39 (142.250.225.39)                             0.0%    0   3 2.0    0.1   1.1\n9. AS???   (waiting for reply)",
+				"resolvedAddress": "8.8.8.9",
+				"resolvedHostname": "8.8.8.9",
+				"hops": [
+					{
+						"asn": [],
+						"resolvedAddress": "172.31.1.1",
+						"resolvedHostname": "_gateway",
+						"stats": {
+							"min": 0.164,
+							"max": 0.268,
+							"avg": 0.2,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0,
+							"jMin": 0.1,
+							"jMax": 0.2,
+							"jAvg": 0.2
+						},
+						"timings": [{ "rtt": 0.268 }, { "rtt": 0.164 }, { "rtt": 0.231 }]
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.228.2",
+						"resolvedHostname": "core-spine-rdev1.cloud1.hel1.hetzner.com",
+						"stats": {
+							"min": 0.347,
+							"max": 1.045,
+							"avg": 0.6,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.3,
+							"jMin": 0.1,
+							"jMax": 1,
+							"jAvg": 0.6
+						},
+						"timings": [{ "rtt": 0.495 }, { "rtt": 0.347 }, { "rtt": 1.045 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.228.1",
+						"resolvedHostname": "core31.hel1.hetzner.com",
+						"stats": {
+							"min": 0.423,
+							"max": 0.47,
+							"avg": 0.4,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0,
+							"jMin": 0,
+							"jMax": 0.4,
+							"jAvg": 0.2
+						},
+						"timings": [{ "rtt": 0.428 }, { "rtt": 0.47 }, { "rtt": 0.423 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.224.37",
+						"resolvedHostname": "juniper4.dc1.hel1.hetzner.com",
+						"stats": {
+							"min": 0.518,
+							"max": 3.155,
+							"avg": 1.5,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 1.2,
+							"jMin": 0.5,
+							"jMax": 2.2,
+							"jAvg": 1.4
+						},
+						"timings": [{ "rtt": 0.918 }, { "rtt": 3.155 }, { "rtt": 0.518 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.133.118.130",
+						"resolvedHostname": "213-133-118-130.clients.your-server.de",
+						"stats": {
+							"min": 1.481,
+							"max": 1.66,
+							"avg": 1.6,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.1,
+							"jMin": 0.1,
+							"jMax": 1.7,
+							"jAvg": 0.9
+						},
+						"timings": [{ "rtt": 1.576 }, { "rtt": 1.481 }, { "rtt": 1.66 }]
+					},
+					{
+						"asn": [15169],
+						"resolvedAddress": "142.250.225.39",
+						"resolvedHostname": null,
+						"stats": {
+							"min": 1.965,
+							"max": 2.087,
+							"avg": 2,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.1,
+							"jMin": 0,
+							"jMax": 2.1,
+							"jAvg": 1.1
+						},
+						"timings": [{ "rtt": 1.965 }, { "rtt": 2.008 }, { "rtt": 2.087 }]
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					}
+				]
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"status": "finished",
+				"rawOutput": "Host                                                                    Loss% Drop Rcv Avg  StDev  Javg\n1. AS???   _gateway (172.21.0.1)                                         0.0%    0   3 0.1    0.0   0.1\n2. AS???   172.31.1.1 (172.31.1.1)                                       0.0%    0   3 2.2    0.6   1.7\n3. AS24940 32037.your-cloud.host (162.55.113.134)                        0.0%    0   3 0.8    0.4   0.8\n4. AS???   (waiting for reply)\n5. AS???   (waiting for reply)\n6. AS24940 core-spine-rdev1.cloud2.fsn1.hetzner.com (213.239.227.193)    0.0%    0   3 0.8    0.2   0.6\n7. AS24940 core22.fsn1.hetzner.com (213.239.227.198)                     0.0%    0   3 1.0    0.4   0.7\n8. AS24940 core0.fra.hetzner.com (213.239.224.10)                        0.0%    0   3 5.4    0.1   2.8\n9. AS???   (waiting for reply)",
+				"resolvedAddress": "8.8.8.9",
+				"resolvedHostname": "8.8.8.9",
+				"hops": [
+					{
+						"asn": [],
+						"resolvedAddress": "172.21.0.1",
+						"resolvedHostname": "_gateway",
+						"stats": {
+							"min": 0.12,
+							"max": 0.159,
+							"avg": 0.1,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0,
+							"jMin": 0,
+							"jMax": 0.2,
+							"jAvg": 0.1
+						},
+						"timings": [{ "rtt": 0.12 }, { "rtt": 0.142 }, { "rtt": 0.159 }]
+					},
+					{
+						"asn": [],
+						"resolvedAddress": "172.31.1.1",
+						"resolvedHostname": null,
+						"stats": {
+							"min": 1.684,
+							"max": 3.012,
+							"avg": 2.2,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.6,
+							"jMin": 1.3,
+							"jMax": 2,
+							"jAvg": 1.7
+						},
+						"timings": [{ "rtt": 3.012 }, { "rtt": 1.684 }, { "rtt": 1.976 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "162.55.113.134",
+						"resolvedHostname": "32037.your-cloud.host",
+						"stats": {
+							"min": 0.427,
+							"max": 1.423,
+							"avg": 0.8,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.4,
+							"jMin": 0.5,
+							"jMax": 1,
+							"jAvg": 0.8
+						},
+						"timings": [{ "rtt": 1.423 }, { "rtt": 0.427 }, { "rtt": 0.528 }]
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.227.193",
+						"resolvedHostname": "core-spine-rdev1.cloud2.fsn1.hetzner.com",
+						"stats": {
+							"min": 0.528,
+							"max": 1.102,
+							"avg": 0.8,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.2,
+							"jMin": 0.6,
+							"jMax": 0.7,
+							"jAvg": 0.6
+						},
+						"timings": [{ "rtt": 1.102 }, { "rtt": 0.528 }, { "rtt": 0.659 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.227.198",
+						"resolvedHostname": "core22.fsn1.hetzner.com",
+						"stats": {
+							"min": 0.656,
+							"max": 1.492,
+							"avg": 1,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.4,
+							"jMin": 0.7,
+							"jMax": 0.8,
+							"jAvg": 0.7
+						},
+						"timings": [{ "rtt": 1.492 }, { "rtt": 0.74 }, { "rtt": 0.656 }]
+					},
+					{
+						"asn": [24940],
+						"resolvedAddress": "213.239.224.10",
+						"resolvedHostname": "core0.fra.hetzner.com",
+						"stats": {
+							"min": 5.317,
+							"max": 5.603,
+							"avg": 5.4,
+							"total": 3,
+							"loss": 0,
+							"rcv": 3,
+							"drop": 0,
+							"stDev": 0.1,
+							"jMin": 0.3,
+							"jMax": 5.4,
+							"jAvg": 2.8
+						},
+						"timings": [{ "rtt": 5.603 }, { "rtt": 5.317 }, { "rtt": 5.373 }]
+					},
+					{
+						"asn": [],
+						"resolvedAddress": null,
+						"resolvedHostname": null,
+						"stats": {
+							"min": null,
+							"max": null,
+							"avg": null,
+							"total": 3,
+							"loss": 100,
+							"rcv": 0,
+							"drop": 3,
+							"stDev": null,
+							"jMin": null,
+							"jMax": null,
+							"jAvg": null
+						},
+						"timings": []
+					}
+				]
+			}
+		}
+	]
+}

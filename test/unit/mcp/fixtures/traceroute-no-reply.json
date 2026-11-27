@@ -1,0 +1,147 @@
+{
+	"id": "2Y2qmgd1qDGtRGxJM00321X5p",
+	"type": "traceroute",
+	"status": "finished",
+	"createdAt": "2026-11-19T12:53:56.258Z",
+	"updatedAt": "2026-11-19T12:54:05.488Z",
+	"target": "8.8.8.9",
+	"limit": 2,
+	"probesCount": 2,
+	"locations": [{ "magic": "world" }],
+	"results": [
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Western Europe",
+				"country": "DE",
+				"state": null,
+				"city": "Falkenstein",
+				"asn": 24940,
+				"longitude": 12.37,
+				"latitude": 50.48,
+				"network": "Hetzner Online",
+				"tags": [
+					"datacenter-network",
+					"u-sersoft-gmbh:server-web",
+					"u-sersoft-gmbh:monitoring"
+				],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"rawOutput": "traceroute to 8.8.8.9 (8.8.8.9), 20 hops max, 60 byte packets\n 1  _gateway (172.17.144.1)  0.075 ms  0.014 ms\n 2  172.31.1.1 (172.31.1.1)  3.050 ms  3.687 ms\n 3  15709.your-cloud.host (49.12.25.66)  1.336 ms  1.348 ms\n 4  * *\n 5  * *\n 6  core-spine-rdev1.cloud2.fsn1.hetzner.com (213.239.227.193)  1.894 ms  1.882 ms\n 7  core23.fsn1.hetzner.com (213.239.227.202)  2.020 ms  2.006 ms\n 8  core5.fra.hetzner.com (213.239.224.78)  6.932 ms  6.918 ms\n 9  * *\n10  * *\n11  * *\n12  * *\n13  * *\n14  * *\n15  * *\n16  * *\n17  * *\n18  * *\n19  * *\n20  * *",
+				"status": "finished",
+				"resolvedAddress": "8.8.8.9",
+				"resolvedHostname": "8.8.8.9",
+				"hops": [
+					{
+						"resolvedAddress": "172.17.144.1",
+						"resolvedHostname": "_gateway",
+						"timings": [{ "rtt": 0.075 }, { "rtt": 0.014 }]
+					},
+					{
+						"resolvedAddress": "172.31.1.1",
+						"resolvedHostname": "172.31.1.1",
+						"timings": [{ "rtt": 3.05 }, { "rtt": 3.687 }]
+					},
+					{
+						"resolvedAddress": "49.12.25.66",
+						"resolvedHostname": "15709.your-cloud.host",
+						"timings": [{ "rtt": 1.336 }, { "rtt": 1.348 }]
+					},
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{
+						"resolvedAddress": "213.239.227.193",
+						"resolvedHostname": "core-spine-rdev1.cloud2.fsn1.hetzner.com",
+						"timings": [{ "rtt": 1.894 }, { "rtt": 1.882 }]
+					},
+					{
+						"resolvedAddress": "213.239.227.202",
+						"resolvedHostname": "core23.fsn1.hetzner.com",
+						"timings": [{ "rtt": 2.02 }, { "rtt": 2.006 }]
+					},
+					{
+						"resolvedAddress": "213.239.224.78",
+						"resolvedHostname": "core5.fra.hetzner.com",
+						"timings": [{ "rtt": 6.932 }, { "rtt": 6.918 }]
+					},
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] }
+				]
+			}
+		},
+		{
+			"probe": {
+				"continent": "EU",
+				"region": "Northern Europe",
+				"country": "FI",
+				"state": null,
+				"city": "Helsinki",
+				"asn": 24940,
+				"longitude": 24.94,
+				"latitude": 60.17,
+				"network": "Hetzner Online",
+				"tags": ["datacenter-network"],
+				"resolvers": ["private"]
+			},
+			"result": {
+				"rawOutput": "traceroute to 8.8.8.9 (8.8.8.9), 20 hops max, 60 byte packets\n 1  _gateway (172.31.1.1)  2.020 ms  2.024 ms\n 2  28242.your-cloud.host (65.109.46.46)  0.667 ms  0.666 ms\n 3  * *\n 4  * *\n 5  core-spine-rdev1.cloud1.hel1.hetzner.com (213.239.228.2)  1.071 ms  1.069 ms\n 6  core32.hel1.hetzner.com (213.239.228.5)  1.181 ms  1.179 ms\n 7  juniper4.dc1.hel1.hetzner.com (213.239.224.25)  1.431 ms  1.428 ms\n 8  * *\n 9  * *\n10  * *\n11  * *\n12  * *\n13  * *\n14  * *\n15  * *\n16  * *\n17  * *\n18  * *\n19  * *\n20  * *",
+				"status": "finished",
+				"resolvedAddress": "8.8.8.9",
+				"resolvedHostname": "8.8.8.9",
+				"hops": [
+					{
+						"resolvedAddress": "172.31.1.1",
+						"resolvedHostname": "_gateway",
+						"timings": [{ "rtt": 2.02 }, { "rtt": 2.024 }]
+					},
+					{
+						"resolvedAddress": "65.109.46.46",
+						"resolvedHostname": "28242.your-cloud.host",
+						"timings": [{ "rtt": 0.667 }, { "rtt": 0.666 }]
+					},
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{
+						"resolvedAddress": "213.239.228.2",
+						"resolvedHostname": "core-spine-rdev1.cloud1.hel1.hetzner.com",
+						"timings": [{ "rtt": 1.071 }, { "rtt": 1.069 }]
+					},
+					{
+						"resolvedAddress": "213.239.228.5",
+						"resolvedHostname": "core32.hel1.hetzner.com",
+						"timings": [{ "rtt": 1.181 }, { "rtt": 1.179 }]
+					},
+					{
+						"resolvedAddress": "213.239.224.25",
+						"resolvedHostname": "juniper4.dc1.hel1.hetzner.com",
+						"timings": [{ "rtt": 1.431 }, { "rtt": 1.428 }]
+					},
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] },
+					{ "resolvedAddress": null, "resolvedHostname": null, "timings": [] }
+				]
+			}
+		}
+	]
+}
