@@ -3,16 +3,13 @@
  */
 import { Hono } from "hono";
 import { html } from "hono/html";
+import { GLOBALPING_AUTH } from "./config";
 import { layout, manualRedirectPage } from "./ui";
 import { createPKCECodes, generateRandomString, isTrustedRedirectUri } from "./lib";
 import type { AuthRequest, OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import type { StateData, GlobalpingEnv, GlobalpingOAuthTokenResponse } from "./types";
 import geminiExtension from "../gemini-extension.json";
 
-// Globalping OAuth configuration
-const GLOBALPING_AUTH_URL = "https://auth.globalping.io/oauth/authorize";
-const GLOBALPING_TOKEN_URL = "https://auth.globalping.io/oauth/token";
-const GLOBALPING_USERDATA_URL = "https://auth.globalping.io/oauth/token/introspect";
 const GLOBALPING_REPOSITORY_URL = "https://github.com/jsdelivr/globalping-mcp-server";
 
 interface Env extends GlobalpingEnv {
@@ -33,7 +30,7 @@ async function getUserData(accessToken: string): Promise<any> {
 	const params = new URLSearchParams();
 	params.append("token", accessToken);
 
-	const userInfoResponse = await fetch(GLOBALPING_USERDATA_URL, {
+	const userInfoResponse = await fetch(GLOBALPING_AUTH.INTROSPECT_URL, {
 		method: "POST",
 		body: params,
 	});
@@ -152,7 +149,7 @@ app.get("/authorize", async (c) => {
 		expirationTtl: 60 * 10, // 10 minutes
 	});
 
-	const authUrl = new URL(GLOBALPING_AUTH_URL);
+	const authUrl = new URL(GLOBALPING_AUTH.AUTHORIZE_URL);
 	authUrl.searchParams.append("client_id", c.env.GLOBALPING_CLIENT_ID);
 	authUrl.searchParams.append("response_type", "code");
 	authUrl.searchParams.append("redirect_uri", redirectUri);
@@ -242,7 +239,7 @@ app.get("/auth/callback", async (c) => {
 	tokenRequest.append("code_verifier", stateData.codeVerifier);
 
 	try {
-		const tokenResponse = await fetch(GLOBALPING_TOKEN_URL, {
+		const tokenResponse = await fetch(GLOBALPING_AUTH.TOKEN_URL, {
 			method: "POST",
 			body: tokenRequest,
 			headers: {

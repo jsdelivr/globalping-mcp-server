@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as agentcat from "agentcat";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import { introspectToken } from "./api";
 import app from "./app";
 import { isAPITokenRequest, isValidAPIToken, sanitizeToken, withGrantStore } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
@@ -114,7 +115,7 @@ This ensures the exact same probes are used for both measurements, allowing for 
 ## Tips for Accurate Comparisons
 
 - Make sure the second measurement is done shortly after the first one
-- Use the same measurement type for both tests (ping vs ping, traceroute vs traceroute)
+- For a like-for-like benchmark use the same measurement type and options
 - The probes' online status may change between measurements
 - Any probe that went offline will show as "offline" in the results
 
@@ -236,7 +237,7 @@ Available Tools:
    No parameters required
    Returns instructions for comparing measurements across locations
 
-10. authStatus - Check whether the user is logged in
+10. authStatus - Check the token and show the account it belongs to
    No parameters required
 
 Location Formats:
@@ -265,7 +266,7 @@ For more information, visit: https://www.globalping.io
 			{
 				title: "Authentication Status",
 				description:
-					"Check the current authentication status. Use this tool to verify if the user is logged in and has a valid token for executing measurements.",
+					"Check the token of this connection against Globalping. Use this tool to verify that the token is valid and to see the account it belongs to.",
 				annotations: {
 					readOnlyHint: true,
 					destructiveHint: false,
@@ -278,9 +279,19 @@ For more information, visit: https://www.globalping.io
 				},
 			},
 			async () => {
-				const authenticated = !!this.props?.isAuthenticated;
+				const token = sanitizeToken(this.getToken() ?? "");
+				const { active, username, organization } = token
+					? await introspectToken(token)
+					: { active: false };
+				const account = organization ? `${organization} (via ${username})` : username;
+
+				this.setIsAuthenticated(active);
+
+				const authenticated = active;
 				const status = authenticated ? "Authenticated" : "Not authenticated";
-				const message = authenticated ? "Logged in." : "Not logged in.";
+				const message = authenticated
+					? `Logged in${account ? ` as ${account}` : ""}.`
+					: "Not logged in.";
 
 				const output = {
 					authenticated,

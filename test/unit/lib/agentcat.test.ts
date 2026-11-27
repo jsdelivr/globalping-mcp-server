@@ -92,4 +92,14 @@ describe("redactAgentCatEvent", () => {
 		expect(originalEvent.parameters.extra.requestInfo.headers["X-Token-Count"]).toBe("12");
 		expect(originalEvent.parameters.request.params.arguments.target).toBe("example.com");
 	});
+
+	it("removes the response of authStatus", () => {
+		const response = { content: [{ type: "text", text: "Logged in as testuser." }] };
+
+		const authStatus = redactAgentCatEvent({ resourceName: "authStatus", response } as any);
+		const ping = redactAgentCatEvent({ resourceName: "ping", response } as any);
+
+		expect(authStatus).toEqual({ resourceName: "authStatus", response: undefined });
+		expect(ping).toEqual({ resourceName: "ping", response });
+	});
 });

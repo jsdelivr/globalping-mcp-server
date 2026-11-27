@@ -15,6 +15,7 @@ const createMockGlobalpingAPI = () => {
 	let pendingRequests = 0;
 	let idleResolvers: Array<() => void> = [];
 	const createdMeasurements: any[] = [];
+	const introspection: Record<string, unknown> = { active: true, username: "testuser" };
 
 	const mockFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
 		pendingRequests++;
@@ -153,6 +154,10 @@ const createMockGlobalpingAPI = () => {
 				}
 			}
 
+			if (urlString.includes("auth.globalping.io/oauth/token/introspect")) {
+				return Response.json(introspection);
+			}
+
 			if (urlString.includes("/v1/probes")) {
 				return new Response(
 					JSON.stringify([
@@ -237,7 +242,7 @@ const createMockGlobalpingAPI = () => {
 		});
 	};
 
-	return { mockFetch, originalFetch, waitForIdle, createdMeasurements };
+	return { mockFetch, originalFetch, waitForIdle, createdMeasurements, introspection };
 };
 
 // Helper to create MCP requests with proper headers
@@ -900,6 +905,51 @@ describe("MCP Tools Integration", () => {
 
 				Note: To specify locations, use the "magic" field syntax in the locations parameter. For example: ["US", "Europe", "AS13335", "London+UK"]"
 			`);
+		});
+	});
+
+	describe("Auth Status Tool", () => {
+		const authStatus = async () => {
+			const response = await makeMCPRequest(
+				{
+					jsonrpc: "2.0",
+					id: 8,
+					method: "tools/call",
+					params: { name: "authStatus", arguments: {} },
+				},
+				validToken,
+				sessionId,
+			);
+
+			return (await getMCPResponse(response)).result;
+		};
+
+		it("should show the user of a valid token", async () => {
+			const result = await authStatus();
+
+			expect(result.content[0].text).toBe("Logged in as testuser.");
+			expect(result.structuredContent).toEqual({
+				authenticated: true,
+				status: "Authenticated",
+				message: "Logged in as testuser.",
+			});
+		});
+
+		it("should show the organization of a valid token", async () => {
+			mockAPI.introspection.organization = "testorg";
+
+			expect((await authStatus()).content[0].text).toBe(
+				"Logged in as testorg (via testuser).",
+			);
+		});
+
+		it("should say when the token is not valid", async () => {
+			mockAPI.introspection.active = false;
+
+			const result = await authStatus();
+
+			expect(result.content[0].text).toBe("Not logged in.");
+			expect(result.structuredContent.authenticated).toBe(false);
 		});
 	});
 
