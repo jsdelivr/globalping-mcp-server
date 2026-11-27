@@ -203,7 +203,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						limit,
 						measurementOptions: {
 							protocol: protocol as any,
-							port: port || 80,
+							port: port ?? 80,
 							ipVersion,
 						},
 					},
@@ -434,7 +434,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 						limit,
 						measurementOptions: {
 							protocol: protocol as any,
-							port: port || 80,
+							port: port ?? 80,
 							packets: packets || 3,
 							ipVersion,
 						},
@@ -510,7 +510,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 					.record(z.string(), z.string())
 					.optional()
 					.describe(
-						"Request headers (e.g., { 'Accept-Encoding': 'br' }). Use 'host' to set the Host header.",
+						"Request headers (e.g., { 'Accept-Encoding': 'br' }). Use 'host' to set the Host header. Headers are public: anyone with the measurement ID can read them, so do not send credentials.",
 					),
 				resolver: z
 					.string()
@@ -574,7 +574,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 							},
 							resolver,
 							protocol: protocol,
-							port: port || (protocol === "HTTP" ? 80 : 443),
+							port: port ?? (protocol === "HTTP" ? 80 : 443),
 							ipVersion,
 						},
 					},

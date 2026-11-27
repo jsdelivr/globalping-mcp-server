@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as agentcat from "agentcat";
 import { McpAgent } from "agents/mcp";
 import { z } from "zod";
+import geminiExtension from "../gemini-extension.json";
 import { introspectToken } from "./api";
 import app from "./app";
 import { isAPITokenRequest, isValidAPIToken, sanitizeToken, withGrantStore } from "./auth";
@@ -27,14 +28,7 @@ export class GlobalpingMCP extends McpAgent<GlobalpingEnv, State, Props> {
 					listChanged: true,
 				},
 			},
-			instructions: `Globalping runs ping, traceroute, DNS, MTR and HTTP measurements from thousands of probes worldwide.
-
-- Authentication: You can authenticate via OAuth (prompted automatically) or by providing a Globalping API token in the 'Authorization' header (Bearer <token>) for higher rate limits.
-- If a user asks for 'latency' or 'reachability', use 'ping'.
-- If a user asks about 'routing' or 'hops', use 'traceroute' or 'mtr'.
-- If a user asks about 'website availability', use 'http'.
-- If a user asks about 'dns propagation', use 'dns'.
-- Only when a user asks to view, open, or share a measurement, present its results URL as https://globalping.io?measurement=<measurement-id>.`,
+			instructions: geminiExtension.instructions,
 		},
 	);
 
