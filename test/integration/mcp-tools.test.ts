@@ -948,7 +948,9 @@ describe("MCP Tools Integration", () => {
 
 			const result = await authStatus();
 
-			expect(result.content[0].text).toBe("Not logged in.");
+			expect(result.content[0].text).toBe(
+				"Not logged in. To log in, reconnect to the Globalping MCP server and complete the OAuth login, or set a Globalping API token in the 'Authorization' header (Bearer <token>).",
+			);
 			expect(result.structuredContent.authenticated).toBe(false);
 		});
 	});
@@ -971,7 +973,7 @@ describe("MCP Tools Integration", () => {
 			const data = await getMCPResponse(response);
 			expect(data.result).toBeDefined();
 			expect(data.result.content[0]).toHaveProperty("type", "text");
-			expect(data.result.content[0].text).toBe(`Authentication: token
+			expect(data.result.content[0].text).toBe(`Authentication: token, testuser
 
 Creating measurements:
  - 1000 tests per hour
@@ -984,7 +986,7 @@ Credits:
 			expect(data.result.content[0].text).not.toContain("Token:");
 
 			// Verify mock API was called correctly
-			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(1);
+			expect(mockAPI.mockFetch).toHaveBeenCalledTimes(2);
 		});
 	});
 

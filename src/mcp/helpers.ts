@@ -17,6 +17,13 @@ export function parseLocations(locations?: string[] | string): { magic: string }
 	return locations.map((loc) => ({ magic: loc }));
 }
 
+export function formatAccountName(owner: {
+	username?: string;
+	organization?: string;
+}): string | undefined {
+	return owner.organization ? `${owner.organization} (via ${owner.username})` : owner.username;
+}
+
 // Probe numbers start from 1. Without probes every probe is selected.
 export function isSelected(index: number, probes?: number[]): boolean {
 	return !probes || probes.includes(index + 1);

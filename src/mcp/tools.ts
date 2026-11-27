@@ -2,13 +2,19 @@
  * Globalping MCP Tools Registration
  */
 import { z } from "zod";
-import { getLocations, getMeasurement, getRateLimits, runMeasurement } from "../api";
+import {
+	getLocations,
+	getMeasurement,
+	getRateLimits,
+	introspectToken,
+	runMeasurement,
+} from "../api";
 import { GLOBALPING_API } from "../config";
 import type { GlobalpingMCP } from "../index";
 import { isPublicTarget } from "../lib";
 import { formatMeasurement } from "./format";
 import { formatLocations } from "./format-locations";
-import { parseLocations } from "./helpers";
+import { formatAccountName, parseLocations } from "./helpers";
 
 const packetsSchema = z.number().int().min(1).max(16).optional();
 const portSchema = z.number().int().min(0).max(65535).optional();
@@ -668,7 +674,16 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 		async () => {
 			return handleToolExecution(async () => {
 				const token = getToken();
-				const limits = await getRateLimits(agent, token);
+				const [limits, introspection] = await Promise.all([
+					getRateLimits(agent, token),
+					introspectToken(token).catch(() => null),
+				]);
+				const account = introspection?.active
+					? formatAccountName(introspection)
+					: undefined;
+				const authentication = agent.getIsAuthenticated()
+					? ["token", account].filter(Boolean).join(", ")
+					: "IP address";
 
 				const rateLimit = limits.rateLimit.measurements.create;
 				const pluralize = (count: number, singular: string) =>
@@ -686,7 +701,7 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 				const consumed = rateLimit.limit - rateLimit.remaining;
 
-				let textOutput = `Authentication: ${agent.getIsAuthenticated() ? "token" : "IP address"}\n\n`;
+				let textOutput = `Authentication: ${authentication}\n\n`;
 				textOutput += "Creating measurements:\n";
 				textOutput += ` - ${pluralize(rateLimit.limit, "test")} per hour\n`;
 				textOutput += ` - ${consumed} consumed, ${rateLimit.remaining} remaining\n`;

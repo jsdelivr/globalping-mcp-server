@@ -9,7 +9,7 @@ import app from "./app";
 import { isAPITokenRequest, isValidAPIToken, sanitizeToken, withGrantStore } from "./auth";
 import { AGENTCAT_CONFIG, MCP_CONFIG, OAUTH_CONFIG } from "./config";
 import { getCorsOptionsForRequest, redactAgentCatEvent, validateHost, validateOrigin } from "./lib";
-import { registerGlobalpingTools } from "./mcp";
+import { formatAccountName, registerGlobalpingTools } from "./mcp";
 import type { GlobalpingEnv, Props, State } from "./types";
 
 export { GrantStore } from "./auth";
@@ -275,10 +275,9 @@ For more information, visit: https://www.globalping.io
 			},
 			async () => {
 				const token = sanitizeToken(this.getToken() ?? "");
-				const { active, username, organization } = token
-					? await introspectToken(token)
-					: { active: false };
-				const account = organization ? `${organization} (via ${username})` : username;
+				const introspection = token ? await introspectToken(token) : { active: false };
+				const { active } = introspection;
+				const account = formatAccountName(introspection);
 
 				this.setIsAuthenticated(active);
 
@@ -286,7 +285,7 @@ For more information, visit: https://www.globalping.io
 				const status = authenticated ? "Authenticated" : "Not authenticated";
 				const message = authenticated
 					? `Logged in${account ? ` as ${account}` : ""}.`
-					: "Not logged in.";
+					: "Not logged in. To log in, reconnect to the Globalping MCP server and complete the OAuth login, or set a Globalping API token in the 'Authorization' header (Bearer <token>).";
 
 				const output = {
 					authenticated,

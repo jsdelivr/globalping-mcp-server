@@ -21,8 +21,8 @@ function redactAuthorizationHeader(headers: unknown): unknown {
 export const redactAgentCatEvent: RedactEventFunction = (event) => {
 	let redactedEvent = event;
 
-	// The response of authStatus has the name of the account.
-	if (redactedEvent.resourceName === "authStatus") {
+	// The responses of these tools have the name of the account.
+	if (["authStatus", "limits"].includes(redactedEvent.resourceName ?? "")) {
 		redactedEvent = { ...redactedEvent, response: undefined };
 	}
 
