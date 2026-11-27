@@ -116,6 +116,7 @@ This ensures the exact same probes are used for both measurements, allowing for 
 
 - Make sure the second measurement is done shortly after the first one
 - For a like-for-like benchmark use the same measurement type and options
+- A measurement ID works as a location only until the original measurement expires
 - The probes' online status may change between measurements
 - Any probe that went offline will show as "offline" in the results
 
