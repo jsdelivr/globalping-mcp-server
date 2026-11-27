@@ -322,7 +322,7 @@ const summaryByType: Record<string, (result: any, measurement: any) => string> =
 	dns: (result, measurement) => {
 		// A trace has the final answers in its last hop.
 		const hops = result.hops ?? [result];
-		const last = hops.at(-1);
+		const last = hops.at(-1) ?? { answers: [] };
 		const total = hops.reduce((sum: number, hop: any) => sum + hop.timings.total, 0);
 		const queryType = measurement.measurementOptions?.query?.type ?? "A";
 		// Only the records of a trace hop that answer the query.
