@@ -130,7 +130,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 
 				// Cache the measurement
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -218,7 +217,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -355,7 +353,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -450,7 +447,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
@@ -589,7 +585,6 @@ export function registerGlobalpingTools(agent: GlobalpingMCP, getToken: () => st
 				);
 
 				agent.state.measurements[result.id] = result;
-				agent.state.lastMeasurementId = result.id;
 
 				return {
 					content: [{ type: "text", text: formatMeasurement(result, output) }],
