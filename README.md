@@ -218,8 +218,6 @@ To use Globalping directly with Anthropic's Messages API (MCP Connector), pass t
 | `help` | Tool reference and syntax documentation |
 | `authStatus` | Check the token and show the account it belongs to |
 
-The measurement tools can use IPv4 or IPv6 for a domain target.
-
 ---
 
 ## Usage Examples
